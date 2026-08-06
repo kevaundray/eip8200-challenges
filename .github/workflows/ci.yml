@@ -11,6 +11,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  submission-policy-test:
+    name: Submission boundary policy self-test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Exercise acceptance and rejection controls
+        run: scripts/check-submission-boundary.sh --self-test
+
   # Build and check the direct-EVM proof layer once. Every challenge imports
   # this layer, so challenge jobs restore this exact cache instead of racing to
   # compile and save three copies of it.
@@ -151,7 +162,10 @@ jobs:
           path: |
             .lake/build
             .lake/packages/*/.lake/build/ir
-          key: project-${{ matrix.slug }}-v2-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-${{ hashFiles(format('Challenge/{0}.lean', matrix.directory), format('Challenge/{0}/**', matrix.directory), matrix.main, format('Checks/{0}.lean', matrix.directory)) }}
+          # Only compiled Lean inputs belong in this hash. Documentation and
+          # generated gas reports are checked separately and must not trigger
+          # a cold proof rebuild.
+          key: project-${{ matrix.slug }}-v2-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-${{ hashFiles(format('Challenge/{0}.lean', matrix.directory), format('Challenge/{0}/**/*.lean', matrix.directory), matrix.main, format('Checks/{0}.lean', matrix.directory)) }}
           # The final prefix can bootstrap the split from a base-branch cache
           # during migration; challenge-local caches always take precedence.
           restore-keys: |
