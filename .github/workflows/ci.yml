@@ -165,10 +165,11 @@ jobs:
           # Only compiled Lean inputs belong in this hash. Documentation and
           # generated gas reports are checked separately and must not trigger
           # a cold proof rebuild.
-          key: project-${{ matrix.slug }}-v2-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-${{ hashFiles(format('Challenge/{0}.lean', matrix.directory), format('Challenge/{0}/**/*.lean', matrix.directory), matrix.main, format('Checks/{0}.lean', matrix.directory)) }}
-          # The final prefix can bootstrap the split from a base-branch cache
-          # during migration; challenge-local caches always take precedence.
+          key: project-${{ matrix.slug }}-v3-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-${{ hashFiles(format('Challenge/{0}.lean', matrix.directory), format('Challenge/{0}/**/*.lean', matrix.directory), matrix.main, format('Checks/{0}.lean', matrix.directory)) }}
+          # Prefer the Lean-only v3 namespace. Older namespaces bootstrap the
+          # migration; challenge-local caches always take precedence.
           restore-keys: |
+            project-${{ matrix.slug }}-v3-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-
             project-${{ matrix.slug }}-v2-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-
             project-${{ matrix.slug }}-v1-${{ runner.os }}-${{ runner.arch }}-
             project-lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
