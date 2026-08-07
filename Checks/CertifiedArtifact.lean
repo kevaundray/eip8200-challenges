@@ -69,6 +69,10 @@ theorem selected_tiny_sound : ∃ trace : GasSteps start finish, trace.cost = 8 
     artifact.runSelected_sound selectedPath run_selected_tiny context
   exact ⟨trace, hcost⟩
 
+theorem selected_tiny_sound_exists :
+    ∃ trace : GasSteps start finish, trace.cost = 8 :=
+  artifact.runSelected_sound_exists selectedPath run_selected_tiny context
+
 example : artifact.run [] start = some (start, 0) := by
   rfl
 
@@ -139,9 +143,8 @@ theorem abstract_selected_sound
     running := rfl
     notPrecompile := Challenge.Ripemd160.deployAddress_not_precompile
   }
-  obtain ⟨trace, hcost⟩ :=
-    abstractArtifact.runSelected_sound [selected] result abstractContext
-  exact ⟨trace, hcost⟩
+  exact abstractArtifact.runSelected_sound_exists [selected] result
+    abstractContext
 
 def haltingRows : Array CertifiedArtifact.Entry := #[
   ⟨0, .op .INVALID⟩,

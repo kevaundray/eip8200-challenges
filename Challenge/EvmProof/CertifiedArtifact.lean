@@ -403,6 +403,18 @@ def runSelected_sound (artifact : CertifiedArtifact fork code)
         executionContext.fork_eq pc_eq)
     path result context
 
+/-- Proposition-valued sealing boundary for selected-site soundness.  Apply
+this theorem directly when only existence of an exact-cost trace is needed:
+because theorem bodies are opaque downstream, a concrete path does not force
+normalization of the Type-valued trace produced by `runSelected_sound`. -/
+theorem runSelected_sound_exists (artifact : CertifiedArtifact fork code)
+    (path : List (SelectedEntry fork code)) {start finish : State} {cost : Nat}
+    (result : artifact.runSelected path start = some (finish, cost))
+    (context : ExecutionContext artifact start) :
+    ∃ trace : GasSteps start finish, trace.cost = cost := by
+  obtain ⟨trace, hcost⟩ := artifact.runSelected_sound path result context
+  exact ⟨trace, hcost⟩
+
 end CertifiedArtifact
 
 end Challenge.EvmProof
