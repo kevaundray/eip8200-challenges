@@ -13,11 +13,103 @@ def atPC (input : ByteArray) (pc : Nat) : State :=
 
 def mainStart (input : ByteArray) : State := atPC input 0x03ef
 
+private def wfOp {op : Operation}
+    (hopcode : Decode.opcodeOf (YulEvmCompiler.Instr.opByte op) = some op)
+    (hplain : YulEvmCompiler.plainOp op)
+    (havailable : op.availableInFork .Osaka = true) :
+    Challenge.EvmProof.Stepper.WellFormed .Osaka (.op op) :=
+  ⟨hopcode, hplain, havailable⟩
+
+/-! The `path_*` definitions are compatibility views of the corresponding
+`Artifact.entryPath_*` selected-site segments. New execution proofs should use
+the selected-site paths, which carry compact decoder certificates. -/
+
+def path_start : List
+    (Challenge.EvmProof.Stepper.Located Artifact.referenceArtifact .Osaka) :=
+  [⟨0, .push ⟨2, by decide⟩ (UInt256.ofNat 0x1b), by rfl, by decide⟩,
+   ⟨1, .op .JUMP, by rfl, wfOp (by decide) trivial rfl⟩]
+
+def path_1b : List
+    (Challenge.EvmProof.Stepper.Located Artifact.referenceArtifact .Osaka) :=
+  [⟨20, .op .JUMPDEST, by rfl, wfOp (by decide) trivial rfl⟩,
+   ⟨21, .push ⟨2, by decide⟩ (UInt256.ofNat 0x2e), by rfl, by decide⟩,
+   ⟨22, .op .JUMP, by rfl, wfOp (by decide) trivial rfl⟩]
+
+def path_2e : List
+    (Challenge.EvmProof.Stepper.Located Artifact.referenceArtifact .Osaka) :=
+  [⟨35, .op .JUMPDEST, by rfl, wfOp (by decide) trivial rfl⟩,
+   ⟨36, .push ⟨2, by decide⟩ (UInt256.ofNat 0x46), by rfl, by decide⟩,
+   ⟨37, .op .JUMP, by rfl, wfOp (by decide) trivial rfl⟩]
+
+def path_46 : List
+    (Challenge.EvmProof.Stepper.Located Artifact.referenceArtifact .Osaka) :=
+  [⟨52, .op .JUMPDEST, by rfl, wfOp (by decide) trivial rfl⟩,
+   ⟨53, .push ⟨2, by decide⟩ (UInt256.ofNat 0x5a), by rfl, by decide⟩,
+   ⟨54, .op .JUMP, by rfl, wfOp (by decide) trivial rfl⟩]
+
+def path_5a : List
+    (Challenge.EvmProof.Stepper.Located Artifact.referenceArtifact .Osaka) :=
+  [⟨67, .op .JUMPDEST, by rfl, wfOp (by decide) trivial rfl⟩,
+   ⟨68, .push ⟨2, by decide⟩ (UInt256.ofNat 0x73), by rfl, by decide⟩,
+   ⟨69, .op .JUMP, by rfl, wfOp (by decide) trivial rfl⟩]
+
+def path_73 : List
+    (Challenge.EvmProof.Stepper.Located Artifact.referenceArtifact .Osaka) :=
+  [⟨83, .op .JUMPDEST, by rfl, wfOp (by decide) trivial rfl⟩,
+   ⟨84, .push ⟨2, by decide⟩ (UInt256.ofNat 0x8e), by rfl, by decide⟩,
+   ⟨85, .op .JUMP, by rfl, wfOp (by decide) trivial rfl⟩]
+
+def path_8e : List
+    (Challenge.EvmProof.Stepper.Located Artifact.referenceArtifact .Osaka) :=
+  [⟨105, .op .JUMPDEST, by rfl, wfOp (by decide) trivial rfl⟩,
+   ⟨106, .push ⟨2, by decide⟩ (UInt256.ofNat 0x10f), by rfl, by decide⟩,
+   ⟨107, .op .JUMP, by rfl, wfOp (by decide) trivial rfl⟩]
+
+def path_10f : List
+    (Challenge.EvmProof.Stepper.Located Artifact.referenceArtifact .Osaka) :=
+  [⟨205, .op .JUMPDEST, by rfl, wfOp (by decide) trivial rfl⟩,
+   ⟨206, .push ⟨2, by decide⟩ (UInt256.ofNat 0x1b2), by rfl, by decide⟩,
+   ⟨207, .op .JUMP, by rfl, wfOp (by decide) trivial rfl⟩]
+
+def path_1b2 : List
+    (Challenge.EvmProof.Stepper.Located Artifact.referenceArtifact .Osaka) :=
+  [⟨313, .op .JUMPDEST, by rfl, wfOp (by decide) trivial rfl⟩,
+   ⟨314, .push ⟨2, by decide⟩ (UInt256.ofNat 0x1db), by rfl, by decide⟩,
+   ⟨315, .op .JUMP, by rfl, wfOp (by decide) trivial rfl⟩]
+
+def path_1db : List
+    (Challenge.EvmProof.Stepper.Located Artifact.referenceArtifact .Osaka) :=
+  [⟨346, .op .JUMPDEST, by rfl, wfOp (by decide) trivial rfl⟩,
+   ⟨347, .push ⟨2, by decide⟩ (UInt256.ofNat 0x231), by rfl, by decide⟩,
+   ⟨348, .op .JUMP, by rfl, wfOp (by decide) trivial rfl⟩]
+
+def path_231 : List
+    (Challenge.EvmProof.Stepper.Located Artifact.referenceArtifact .Osaka) :=
+  [⟨410, .op .JUMPDEST, by rfl, wfOp (by decide) trivial rfl⟩,
+   ⟨411, .push ⟨2, by decide⟩ (UInt256.ofNat 0x268), by rfl, by decide⟩,
+   ⟨412, .op .JUMP, by rfl, wfOp (by decide) trivial rfl⟩]
+
+def path_268 : List
+    (Challenge.EvmProof.Stepper.Located Artifact.referenceArtifact .Osaka) :=
+  [⟨448, .op .JUMPDEST, by rfl, wfOp (by decide) trivial rfl⟩,
+   ⟨449, .push ⟨2, by decide⟩ (UInt256.ofNat 0x3c1), by rfl, by decide⟩,
+   ⟨450, .op .JUMP, by rfl, wfOp (by decide) trivial rfl⟩]
+
+def path_3c1 : List
+    (Challenge.EvmProof.Stepper.Located Artifact.referenceArtifact .Osaka) :=
+  [⟨647, .op .JUMPDEST, by rfl, wfOp (by decide) trivial rfl⟩,
+   ⟨648, .push ⟨2, by decide⟩ (UInt256.ofNat 0x3ee), by rfl, by decide⟩,
+   ⟨649, .op .JUMP, by rfl, wfOp (by decide) trivial rfl⟩]
+
+def path_3ee : List
+    (Challenge.EvmProof.Stepper.Located Artifact.referenceArtifact .Osaka) :=
+  [⟨682, .op .JUMPDEST, by rfl, wfOp (by decide) trivial rfl⟩]
+
 def entryPath := Artifact.entrySelectedPath
 
-private def entryContext (input : ByteArray) :
+private def entryContext (input : ByteArray) (pc : Nat) :
     Challenge.EvmProof.CertifiedArtifact.ExecutionContext
-      Artifact.referenceCertifiedArtifact (atPC input 0) := {
+      Artifact.referenceCertifiedArtifact (atPC input pc) := {
   code_eq := rfl
   fork_eq := rfl
   running := rfl
@@ -150,6 +242,92 @@ private theorem run_3ee (input : ByteArray) :
     EntryTemplates.runJumpdest input 0x3ee (by norm_num)
       Artifact.entryDecoder_682
 
+private def selectedTrace (path : List Artifact.EntrySite)
+    {start finish : State} {cost : Nat}
+    (result : Artifact.referenceCertifiedArtifact.runSelected path start =
+      some (finish, cost))
+    (context : Challenge.EvmProof.CertifiedArtifact.ExecutionContext
+      Artifact.referenceCertifiedArtifact start) :
+    Challenge.EvmProof.GasSteps start finish :=
+  (Artifact.referenceCertifiedArtifact.runSelected_sound
+    path result context).1
+
+/-! Compatibility segment traces. Their implementations consume the compact
+selected-site paths above; new proofs should normally use `gasSteps_entry` and
+`gasSteps_entry_cost` at the whole-entry boundary. -/
+
+def gasSteps_start (input : ByteArray) :
+    Challenge.EvmProof.GasSteps (initialState referenceBytecode input 0)
+      (atPC input 0x1b) :=
+  Challenge.EvmProof.GasSteps.cast
+    (selectedTrace Artifact.entryPath_start (run_start input)
+      (entryContext input 0)) rfl rfl
+
+def gasSteps_1b (input : ByteArray) :
+    Challenge.EvmProof.GasSteps (atPC input 0x1b) (atPC input 0x2e) :=
+  selectedTrace Artifact.entryPath_1b (run_1b input)
+    (entryContext input 0x1b)
+
+def gasSteps_2e (input : ByteArray) :
+    Challenge.EvmProof.GasSteps (atPC input 0x2e) (atPC input 0x46) :=
+  selectedTrace Artifact.entryPath_2e (run_2e input)
+    (entryContext input 0x2e)
+
+def gasSteps_46 (input : ByteArray) :
+    Challenge.EvmProof.GasSteps (atPC input 0x46) (atPC input 0x5a) :=
+  selectedTrace Artifact.entryPath_46 (run_46 input)
+    (entryContext input 0x46)
+
+def gasSteps_5a (input : ByteArray) :
+    Challenge.EvmProof.GasSteps (atPC input 0x5a) (atPC input 0x73) :=
+  selectedTrace Artifact.entryPath_5a (run_5a input)
+    (entryContext input 0x5a)
+
+def gasSteps_73 (input : ByteArray) :
+    Challenge.EvmProof.GasSteps (atPC input 0x73) (atPC input 0x8e) :=
+  selectedTrace Artifact.entryPath_73 (run_73 input)
+    (entryContext input 0x73)
+
+def gasSteps_8e (input : ByteArray) :
+    Challenge.EvmProof.GasSteps (atPC input 0x8e) (atPC input 0x10f) :=
+  selectedTrace Artifact.entryPath_8e (run_8e input)
+    (entryContext input 0x8e)
+
+def gasSteps_10f (input : ByteArray) :
+    Challenge.EvmProof.GasSteps (atPC input 0x10f) (atPC input 0x1b2) :=
+  selectedTrace Artifact.entryPath_10f (run_10f input)
+    (entryContext input 0x10f)
+
+def gasSteps_1b2 (input : ByteArray) :
+    Challenge.EvmProof.GasSteps (atPC input 0x1b2) (atPC input 0x1db) :=
+  selectedTrace Artifact.entryPath_1b2 (run_1b2 input)
+    (entryContext input 0x1b2)
+
+def gasSteps_1db (input : ByteArray) :
+    Challenge.EvmProof.GasSteps (atPC input 0x1db) (atPC input 0x231) :=
+  selectedTrace Artifact.entryPath_1db (run_1db input)
+    (entryContext input 0x1db)
+
+def gasSteps_231 (input : ByteArray) :
+    Challenge.EvmProof.GasSteps (atPC input 0x231) (atPC input 0x268) :=
+  selectedTrace Artifact.entryPath_231 (run_231 input)
+    (entryContext input 0x231)
+
+def gasSteps_268 (input : ByteArray) :
+    Challenge.EvmProof.GasSteps (atPC input 0x268) (atPC input 0x3c1) :=
+  selectedTrace Artifact.entryPath_268 (run_268 input)
+    (entryContext input 0x268)
+
+def gasSteps_3c1 (input : ByteArray) :
+    Challenge.EvmProof.GasSteps (atPC input 0x3c1) (atPC input 0x3ee) :=
+  selectedTrace Artifact.entryPath_3c1 (run_3c1 input)
+    (entryContext input 0x3c1)
+
+def gasSteps_3ee (input : ByteArray) :
+    Challenge.EvmProof.GasSteps (atPC input 0x3ee) (mainStart input) :=
+  selectedTrace Artifact.entryPath_3ee (run_3ee input)
+    (entryContext input 0x3ee)
+
 private theorem run_entry (input : ByteArray) :
     Artifact.referenceCertifiedArtifact.runSelected entryPath (atPC input 0) =
       some (mainStart input, 156) := by
@@ -202,8 +380,10 @@ private theorem entrySound (input : ByteArray) :
   exact Challenge.EvmProof.CertifiedArtifact.runSelected_sound_exists
     (start := atPC input 0) (finish := mainStart input) (cost := 156)
     Artifact.referenceCertifiedArtifact entryPath (run_entry input)
-      (entryContext input)
+      (entryContext input 0)
 
+/-- Certified entry trace. Its exact cost is intentionally exposed through
+`gasSteps_entry_cost` instead of reduction through the selected-site proof. -/
 noncomputable def gasSteps_entry (input : ByteArray) :
     Challenge.EvmProof.GasSteps (initialState referenceBytecode input 0)
       (mainStart input) :=
