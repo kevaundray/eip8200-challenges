@@ -1,5 +1,6 @@
 import Challenge.EvmProof
 import Challenge.EvmProof.CertifiedArtifact
+import Challenge.Ripemd160.Reference.Proofs.Bytecode.Artifact
 import Checks.CertifiedArtifact
 set_option warningAsError true
 /-!
@@ -17,6 +18,18 @@ If a `sorry` (which appears as `sorryAx`), a `native_decide`
 /-- info: 'Challenge.EvmProof.Bytecode.JumpDestCertificate.valid' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Challenge.EvmProof.Bytecode.JumpDestCertificate.valid
+
+/-- info: 'Challenge.EvmProof.CertifiedArtifact.rowsOfBytecode_valid' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.EvmProof.CertifiedArtifact.rowsOfBytecode_valid
+
+/-- info: 'Challenge.EvmProof.CertifiedArtifact.fromBytecode' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.EvmProof.CertifiedArtifact.fromBytecode
+
+/-- info: 'Challenge.Ripemd160.Reference.Proofs.Bytecode.Artifact.referenceRows_valid' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.Ripemd160.Reference.Proofs.Bytecode.Artifact.referenceRows_valid
 
 /-- info: 'Challenge.EvmProof.eval_of_steps' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
