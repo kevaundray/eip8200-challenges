@@ -43,7 +43,24 @@ theorem tiny_sound : ∃ trace : GasSteps start finish, trace.cost = 8 := by
   obtain ⟨trace, hcost⟩ := artifact.run_sound path run_tiny context
   exact ⟨trace, hcost⟩
 
+def selectedPath : List (CertifiedArtifact.SelectedEntry artifact) :=
+  [⟨⟨0, by decide⟩, ⟨0, .push 2 258⟩, rfl⟩,
+   ⟨⟨1, by decide⟩, ⟨3, .push 0 0⟩, rfl⟩,
+   ⟨⟨2, by decide⟩, ⟨4, .op .ADD⟩, rfl⟩]
+
+theorem run_selected_tiny :
+    artifact.runSelected selectedPath start = some (finish, 8) := by
+  rfl
+
+theorem selected_tiny_sound : ∃ trace : GasSteps start finish, trace.cost = 8 := by
+  obtain ⟨trace, hcost⟩ :=
+    artifact.runSelected_sound selectedPath run_selected_tiny context
+  exact ⟨trace, hcost⟩
+
 example : artifact.run [] start = some (start, 0) := by
+  rfl
+
+example : artifact.runSelected [] start = some (start, 0) := by
   rfl
 
 def firstPath : List (Fin artifact.rows.size) := [⟨0, by decide⟩]
@@ -58,6 +75,28 @@ def wrongPC : EVM.State :=
   { start with pc := 1 }
 
 example : artifact.run firstPath wrongPC = none := by
+  rfl
+
+def selectedFirst : CertifiedArtifact.SelectedEntry artifact :=
+  ⟨⟨0, by decide⟩, ⟨0, .push 2 258⟩, rfl⟩
+
+def selectedFirstPath : List (CertifiedArtifact.SelectedEntry artifact) :=
+  [selectedFirst]
+
+example : artifact.runSelected selectedFirstPath start = some (afterFirst, 3) := by
+  rfl
+
+example : artifact.runSelected selectedFirstPath wrongPC = none := by
+  rfl
+
+/-- Reduction guard: even when the certified artifact is abstract, selected
+execution computes from the carried snapshot rather than indexing its table. -/
+example (abstractArtifact : CertifiedArtifact .Osaka code)
+    (index : Fin abstractArtifact.rows.size)
+    (bound : abstractArtifact.rows[index] = ⟨0, .push 2 258⟩) :
+    abstractArtifact.runSelected
+      [⟨index, ⟨0, .push 2 258⟩, bound⟩] start =
+        some (afterFirst, 3) := by
   rfl
 
 def haltingRows : Array CertifiedArtifact.Entry := #[
@@ -91,6 +130,23 @@ def haltOnlyPath : List (Fin haltingArtifact.rows.size) :=
   [⟨0, by decide⟩]
 
 example : haltingArtifact.run haltOnlyPath haltingStart = some (halted, 0) := by
+  rfl
+
+def selectedHaltingPath :
+    List (CertifiedArtifact.SelectedEntry haltingArtifact) :=
+  [⟨⟨0, by decide⟩, ⟨0, .op .INVALID⟩, rfl⟩,
+   ⟨⟨1, by decide⟩, ⟨1, .push 0 0⟩, rfl⟩]
+
+example : haltingArtifact.runSelected selectedHaltingPath haltingStart = none := by
+  rfl
+
+def selectedHaltOnlyPath :
+    List (CertifiedArtifact.SelectedEntry haltingArtifact) :=
+  [⟨⟨0, by decide⟩, ⟨0, .op .INVALID⟩, rfl⟩]
+
+example :
+    haltingArtifact.runSelected selectedHaltOnlyPath haltingStart =
+      some (halted, 0) := by
   rfl
 
 example : ¬ CertifiedArtifact.Table.Valid .Osaka ByteArray.empty rows := by

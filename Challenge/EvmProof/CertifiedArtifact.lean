@@ -161,6 +161,14 @@ def certify {fork : Fork} {code : ByteArray} (rows : Array Entry)
     (valid : Table.Valid fork code rows) : CertifiedArtifact fork code :=
   ⟨rows, valid⟩
 
+/-- A selected instruction site carrying its cached row as data.  The index is
+used to recover certification facts, while evaluators consume `entry` directly
+and therefore do not repeatedly reduce a large artifact table. -/
+structure SelectedEntry (artifact : CertifiedArtifact fork code) where
+  index : Fin artifact.rows.size
+  entry : Entry
+  bound : artifact.rows[index] = entry
+
 /-- Execute a cached path and return the final state with its exact gas cost. -/
 def run (artifact : CertifiedArtifact fork code) :
     List (Fin artifact.rows.size) → State → Option (State × Nat)
@@ -178,6 +186,31 @@ def run (artifact : CertifiedArtifact fork code) :
                 match next.halt with
                 | .Running =>
                     match run artifact rest next with
+                    | none => none
+                    | some (finish, restCost) =>
+                        some (finish, cost + restCost)
+                | _ => none
+      else none
+
+/-- Execute proof-carrying selected sites without indexing the artifact table.
+This is the scalable evaluator for proofs that mention a small path through a
+large artifact; `run` remains available as the index-only compatibility API. -/
+def runSelected (artifact : CertifiedArtifact fork code) :
+    List (SelectedEntry artifact) → State → Option (State × Nat)
+  | [], state => some (state, 0)
+  | selected :: rest, state =>
+      let entry := selected.entry
+      if state.pc.toNat = entry.pc then
+        match Stepper.runInstr entry.instruction state with
+        | none => none
+        | some next =>
+            let cost := Stepper.instrCost entry.instruction state
+            match rest with
+            | [] => some (next, cost)
+            | _ :: _ =>
+                match next.halt with
+                | .Running =>
+                    match runSelected artifact rest next with
                     | none => none
                     | some (finish, restCost) =>
                         some (finish, cost + restCost)
@@ -217,6 +250,18 @@ private theorem decodes_at_index (artifact : CertifiedArtifact fork code)
     rfl
   · exact row_at_index artifact index
   · simpa [context.fork_eq] using artifact.valid.wellFormed index
+
+private theorem decodes_at_selected (artifact : CertifiedArtifact fork code)
+    (selected : SelectedEntry artifact) (state : State)
+    (context : ExecutionContext artifact state)
+    (pc_eq : state.pc.toNat = selected.entry.pc) :
+    Stepper.Decodes state selected.entry.instruction := by
+  have indexed_pc_eq :
+      state.pc.toNat = artifact.rows[selected.index].pc := by
+    simpa only [selected.bound] using pc_eq
+  have decoded := decodes_at_index artifact selected.index state context
+    indexed_pc_eq
+  simpa only [selected.bound] using decoded
 
 private theorem next_context (artifact : CertifiedArtifact fork code)
     {instruction : Instr} {state next : State}
@@ -319,6 +364,93 @@ def run_sound (artifact : CertifiedArtifact fork code)
                 simp only at result
                 cases result
       · rw [run, if_neg pc_eq] at result
+        cases result
+
+/-- A successful selected-site execution denotes a relational trace with the
+exact cost computed by `runSelected`.  Artifact indices occur only in the
+binding proof used to recover decoding and well-formedness facts; execution
+and gas computation use each carried `SelectedEntry.entry` snapshot. -/
+def runSelected_sound (artifact : CertifiedArtifact fork code)
+    (path : List (SelectedEntry artifact)) {start finish : State} {cost : Nat}
+    (result : artifact.runSelected path start = some (finish, cost))
+    (context : ExecutionContext artifact start) :
+    { trace : GasSteps start finish // trace.cost = cost } := by
+  induction path generalizing start finish cost with
+  | nil =>
+      have pair_eq := Option.some.inj result
+      have finish_eq := congrArg Prod.fst pair_eq
+      have cost_eq := congrArg Prod.snd pair_eq
+      simp only at finish_eq cost_eq
+      subst finish
+      subst cost
+      exact ⟨GasSteps.refl start, rfl⟩
+  | cons selected rest ih =>
+      by_cases pc_eq : start.pc.toNat = selected.entry.pc
+      · cases instr_result :
+          Stepper.runInstr selected.entry.instruction start with
+        | none =>
+            rw [runSelected, if_pos pc_eq, instr_result] at result
+            simp only at result
+            cases result
+        | some next =>
+          cases rest with
+          | nil =>
+              rw [runSelected, if_pos pc_eq, instr_result] at result
+              simp only at result
+              have pair_eq := Option.some.inj result
+              have finish_eq := congrArg Prod.fst pair_eq
+              have cost_eq := congrArg Prod.snd pair_eq
+              simp only at finish_eq cost_eq
+              subst finish
+              subst cost
+              let trace := Stepper.runInstr_sound
+                (decodes_at_selected artifact selected start context pc_eq)
+                instr_result context.running context.notPrecompile
+              exact ⟨trace, rfl⟩
+          | cons nextSelected tail =>
+            rw [runSelected, if_pos pc_eq, instr_result] at result
+            simp only at result
+            cases next_running : next.halt with
+            | Running =>
+              cases rest_result :
+                  artifact.runSelected (nextSelected :: tail) next with
+              | none =>
+                  rw [next_running, rest_result] at result
+                  simp only at result
+                  cases result
+              | some rest_pair =>
+                rcases rest_pair with ⟨rest_finish, rest_cost⟩
+                rw [next_running, rest_result] at result
+                simp only at result
+                have pair_eq := Option.some.inj result
+                have finish_eq := congrArg Prod.fst pair_eq
+                have cost_eq := congrArg Prod.snd pair_eq
+                simp only at finish_eq cost_eq
+                subst finish
+                subst cost
+                let head := Stepper.runInstr_sound
+                  (decodes_at_selected artifact selected start context pc_eq)
+                  instr_result context.running context.notPrecompile
+                obtain ⟨rest_trace, rest_cost_eq⟩ := ih rest_result
+                  (next_context artifact context instr_result next_running)
+                exact ⟨head.trans rest_trace, by simp [head, rest_cost_eq]⟩
+            | Success =>
+                rw [next_running] at result
+                simp only at result
+                cases result
+            | Returned =>
+                rw [next_running] at result
+                simp only at result
+                cases result
+            | Reverted =>
+                rw [next_running] at result
+                simp only at result
+                cases result
+            | Exception error =>
+                rw [next_running] at result
+                simp only at result
+                cases result
+      · rw [runSelected, if_neg pc_eq] at result
         cases result
 
 end CertifiedArtifact

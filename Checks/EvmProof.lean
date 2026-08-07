@@ -30,6 +30,14 @@ If a `sorry` (which appears as `sorryAx`), a `native_decide`
 #guard_msgs in
 #print axioms Challenge.EvmProof.CertifiedArtifact.run_sound
 
+/-- info: 'Challenge.EvmProof.CertifiedArtifact.runSelected_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.EvmProof.CertifiedArtifact.runSelected_sound
+
 /-- info: 'Checks.CertifiedArtifact.tiny_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Checks.CertifiedArtifact.tiny_sound
+
+/-- info: 'Checks.CertifiedArtifact.selected_tiny_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Checks.CertifiedArtifact.selected_tiny_sound
