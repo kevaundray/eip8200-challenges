@@ -1079,7 +1079,7 @@ theorem lengthLoopMemory_eight (input : ByteArray) (hfit : CalldataFits input) :
 
 /-- Complete certified execution from the challenge initial state through the
 RIPEMD-160 padding function. -/
-private def gasSteps_padPrefix (input : ByteArray) :
+private noncomputable def gasSteps_padPrefix (input : ByteArray) :
     Challenge.EvmProof.GasSteps (initialState referenceBytecode input 0)
       (padLengthReady input) :=
   (Main.gasSteps_initialize input).trans

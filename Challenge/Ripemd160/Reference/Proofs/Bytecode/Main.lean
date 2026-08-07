@@ -197,7 +197,7 @@ def gasSteps_bodyInitialization (input : ByteArray) :
   exact Challenge.EvmProof.GasSteps.cast body rfl
     (by simp [initializedState])
 
-def gasSteps_initialize (input : ByteArray) :
+noncomputable def gasSteps_initialize (input : ByteArray) :
     Challenge.EvmProof.GasSteps (initialState referenceBytecode input 0)
       (initializedState input) :=
   (Execution.gasSteps_entry input).trans (gasSteps_bodyInitialization input)

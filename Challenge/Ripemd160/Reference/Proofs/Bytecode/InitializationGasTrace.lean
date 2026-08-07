@@ -9,46 +9,9 @@ namespace Challenge.Ripemd160.Reference.Proofs.Bytecode.InitializationGasTrace
 
 open Challenge.Ripemd160
 open EvmSemantics EvmSemantics.EVM
-
-private theorem entry_start_cost (input : ByteArray) :
-    (Execution.gasSteps_start input).cost = 11 := by rfl
-private theorem entry_1b_cost (input : ByteArray) :
-    (Execution.gasSteps_1b input).cost = 12 := by rfl
-private theorem entry_2e_cost (input : ByteArray) :
-    (Execution.gasSteps_2e input).cost = 12 := by rfl
-private theorem entry_46_cost (input : ByteArray) :
-    (Execution.gasSteps_46 input).cost = 12 := by rfl
-private theorem entry_5a_cost (input : ByteArray) :
-    (Execution.gasSteps_5a input).cost = 12 := by rfl
-private theorem entry_73_cost (input : ByteArray) :
-    (Execution.gasSteps_73 input).cost = 12 := by rfl
-private theorem entry_8e_cost (input : ByteArray) :
-    (Execution.gasSteps_8e input).cost = 12 := by rfl
-private theorem entry_10f_cost (input : ByteArray) :
-    (Execution.gasSteps_10f input).cost = 12 := by rfl
-private theorem entry_1b2_cost (input : ByteArray) :
-    (Execution.gasSteps_1b2 input).cost = 12 := by rfl
-private theorem entry_1db_cost (input : ByteArray) :
-    (Execution.gasSteps_1db input).cost = 12 := by rfl
-private theorem entry_231_cost (input : ByteArray) :
-    (Execution.gasSteps_231 input).cost = 12 := by rfl
-private theorem entry_268_cost (input : ByteArray) :
-    (Execution.gasSteps_268 input).cost = 12 := by rfl
-private theorem entry_3c1_cost (input : ByteArray) :
-    (Execution.gasSteps_3c1 input).cost = 12 := by rfl
-private theorem entry_3ee_cost (input : ByteArray) :
-    (Execution.gasSteps_3ee input).cost = 1 := by rfl
-
 theorem entry_cost (input : ByteArray) :
-    (Execution.gasSteps_entry input).cost = 156 := by
-  unfold Execution.gasSteps_entry
-  simp only [Challenge.EvmProof.GasSteps.trans_cost]
-  rw [entry_start_cost input, entry_1b_cost input, entry_2e_cost input,
-    entry_46_cost input, entry_5a_cost input, entry_73_cost input,
-    entry_8e_cost input, entry_10f_cost input, entry_1b2_cost input,
-    entry_1db_cost input, entry_231_cost input, entry_268_cost input,
-    entry_3c1_cost input, entry_3ee_cost input]
-
+    (Execution.gasSteps_entry input).cost = 156 :=
+  Execution.gasSteps_entry_cost input
 private def initStoreWork (w : Artifact.InitStore) : Nat :=
   Challenge.EvmProof.Meter.instrStaticCost .Osaka
       (.push w.valueWidth w.value) +
