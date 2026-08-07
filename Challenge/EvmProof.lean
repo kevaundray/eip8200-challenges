@@ -1,5 +1,6 @@
 import Challenge.EvmProof.Bytecode
 import Challenge.EvmProof.CertifiedArtifact
+import Challenge.EvmProof.CertifiedArtifact.FromBytecode
 import Challenge.EvmProof.Execution
 import Challenge.EvmProof.Gas
 import Challenge.EvmProof.GasFormula

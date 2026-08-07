@@ -66,6 +66,12 @@ private theorem plainOperation_valid (operation : Operation)
   cases operation <;>
     simp [plainOperation, YulEvmCompiler.plainOp] at valid ⊢
 
+private theorem plainOperation_complete (operation : Operation)
+    (valid : YulEvmCompiler.plainOp operation) :
+    plainOperation operation = true := by
+  cases operation <;>
+    simp [plainOperation, YulEvmCompiler.plainOp] at valid ⊢
+
 private def wellFormed (fork : Fork) : Instr → Bool
   | .push width value =>
       decide (value.toNat < 256 ^ width.val) &&
@@ -86,6 +92,27 @@ private theorem wellFormed_valid {fork : Fork} {instruction : Instr}
       exact ⟨of_decide_eq_true valid.1,
         plainOperation_valid operation valid.2.1, valid.2.2⟩
 
+private theorem wellFormed_complete {fork : Fork} {instruction : Instr}
+    (valid : Stepper.WellFormed fork instruction) :
+    wellFormed fork instruction = true := by
+  cases instruction with
+  | push width value =>
+      simp only [Stepper.WellFormed] at valid
+      simp [wellFormed, valid.1, valid.2]
+  | op operation =>
+      simp only [Stepper.WellFormed] at valid
+      simp [wellFormed, valid.1, plainOperation_complete operation valid.2.1,
+        valid.2.2]
+
+/-- Executable fork and encoding check used by structural artifact builders. -/
+def wellFormedBool (fork : Fork) (instruction : Instr) : Bool :=
+  wellFormed fork instruction
+
+theorem wellFormedBool_valid {fork : Fork} {instruction : Instr}
+    (valid : wellFormedBool fork instruction = true) :
+    Stepper.WellFormed fork instruction :=
+  wellFormed_valid valid
+
 private def allWellFormed (fork : Fork) : List Entry → Bool
   | [] => true
   | row :: rest =>
@@ -105,6 +132,33 @@ private theorem allWellFormed_valid {fork : Fork} {rows : List Entry}
         exact wellFormed_valid hhead
       · exact ih htail hmem
 
+private theorem allWellFormed_complete {fork : Fork} {rows : List Entry}
+    (valid : ∀ row ∈ rows, Stepper.WellFormed fork row.instruction) :
+    allWellFormed fork rows = true := by
+  induction rows with
+  | nil => rfl
+  | cons head tail ih =>
+      simp only [allWellFormed, Bool.and_eq_true]
+      exact ⟨wellFormed_complete (valid head (by simp)),
+        ih (fun row hmem => valid row (by simp [hmem]))⟩
+
+/-- A structural cached-PC invariant: the first row starts at `pc`, and every
+following row starts after the preceding encoded instruction. -/
+def SequentialFrom : Nat → List Entry → Prop
+  | _, [] => True
+  | pc, row :: rest =>
+      row.pc = pc ∧
+        SequentialFrom (pc + row.instruction.bytes.length) rest
+
+private theorem sequentialFrom_pcs {pc : Nat} {rows : List Entry}
+    (valid : SequentialFrom pc rows) :
+    rows.map (·.pc) = instructionPCsFrom pc rows := by
+  induction rows generalizing pc with
+  | nil => rfl
+  | cons row rest ih =>
+      simp only [SequentialFrom] at valid
+      simp [instructionPCsFrom, valid.1, ih valid.2]
+
 /-- A table is valid when it assembles to the exact submitted bytes, every
 cached offset is exact, and every instruction is available on the selected
 fork with a well-formed encoding. -/
@@ -119,6 +173,17 @@ instance (fork : Fork) (code : ByteArray) (rows : Array Entry) :
   infer_instance
 
 namespace Valid
+
+/-- Construct table validity from its public semantic components.  Structural
+builders can establish well-formedness by induction without exposing the
+table's private Boolean representation. -/
+theorem ofComponents {fork : Fork} {code : ByteArray} {rows : Array Entry}
+    (assembly : assemble (instructions rows) = code)
+    (pcs : SequentialFrom 0 rows.toList)
+    (wellFormed : ∀ row ∈ rows.toList,
+      Stepper.WellFormed fork row.instruction) :
+    Valid fork code rows :=
+  ⟨assembly, sequentialFrom_pcs pcs, allWellFormed_complete wellFormed⟩
 
 theorem assembly_eq {fork : Fork} {code : ByteArray} {rows : Array Entry}
     (valid : Valid fork code rows) : assemble (instructions rows) = code :=

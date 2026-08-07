@@ -7,6 +7,53 @@ namespace Checks.CertifiedArtifact
 open EvmSemantics EvmSemantics.EVM YulEvmCompiler
 open Challenge.EvmProof
 
+/-! Typed disassembly constructs certified rows directly from submitted bytes. -/
+
+def disassembledCode : ByteArray := ByteArray.mk #[0x61, 0x01, 0x02, 0x01]
+
+def disassembledRows : Array CertifiedArtifact.Entry :=
+  CertifiedArtifact.rowsOfBytecode disassembledCode
+
+example : disassembledRows = #[
+    ⟨0, .push 2 258⟩,
+    ⟨3, .op .ADD⟩
+  ] := by
+  rfl
+
+example :
+    (Challenge.EvmProof.Bytecode.disassemble disassembledCode).map
+      RawInstr.toCandidate = [.push 2 258, .op .ADD] := by
+  rfl
+
+example : RawInstr.accepted .Osaka
+    { opcode := 0x61, immediate := [0x01, 0x02] } = true := by
+  decide
+
+example : RawInstr.accepted .Osaka
+    { opcode := 0x61, immediate := [0xaa] } = false := by
+  decide
+
+example : RawInstr.accepted .Osaka
+    { opcode := 0xe6, immediate := [0x01] } = false := by
+  decide
+
+example : RawInstr.accepted .Osaka
+    { opcode := 0x0c, immediate := [] } = false := by
+  decide
+
+theorem disassembledCertificate :
+    CertifiedArtifact.BytecodeCertificate .Osaka disassembledCode := by
+  decide
+
+def disassembledArtifact : CertifiedArtifact .Osaka disassembledCode :=
+  CertifiedArtifact.fromBytecode disassembledCertificate
+
+example : disassembledArtifact.rows = disassembledRows := rfl
+
+example : assemble (CertifiedArtifact.instructions disassembledArtifact.rows) =
+    disassembledCode :=
+  disassembledArtifact.valid.assembly_eq
+
 def rows : Array CertifiedArtifact.Entry := #[
   ⟨0, .push 2 258⟩,
   ⟨3, .push 0 0⟩,
