@@ -1,4 +1,5 @@
 import Checks.EvmProof
+import Checks.CertifiedArtifact
 import Checks.Blake2f
 import Checks.Modexp
 import Checks.Ripemd160

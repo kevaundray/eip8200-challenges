@@ -1,4 +1,4 @@
-import Challenge.EvmProof.CertifiedArtifact
+import Challenge.EvmProof
 import Challenge.Ripemd160.ProofSupport.InitialState
 import Challenge.Ripemd160.Spec
 
