@@ -169,12 +169,12 @@ structure SelectedEntry (artifact : CertifiedArtifact fork code) where
   entry : Entry
   bound : artifact.rows[index] = entry
 
-/-- Execute a cached path and return the final state with its exact gas cost. -/
-def run (artifact : CertifiedArtifact fork code) :
-    List (Fin artifact.rows.size) → State → Option (State × Nat)
+/-- Shared executable semantics for paths whose sites provide cached entries. -/
+private def runEntries {Site : Type} (entryOf : Site → Entry) :
+    List Site → State → Option (State × Nat)
   | [], state => some (state, 0)
-  | index :: rest, state =>
-      let entry := artifact.rows[index]
+  | site :: rest, state =>
+      let entry := entryOf site
       if state.pc.toNat = entry.pc then
         match Stepper.runInstr entry.instruction state with
         | none => none
@@ -185,37 +185,26 @@ def run (artifact : CertifiedArtifact fork code) :
             | _ :: _ =>
                 match next.halt with
                 | .Running =>
-                    match run artifact rest next with
+                    match runEntries entryOf rest next with
                     | none => none
                     | some (finish, restCost) =>
                         some (finish, cost + restCost)
                 | _ => none
       else none
 
+/-- Execute a cached path and return the final state with its exact gas cost. -/
+def run (artifact : CertifiedArtifact fork code)
+    (path : List (Fin artifact.rows.size)) (state : State) :
+    Option (State × Nat) :=
+  runEntries (fun index => artifact.rows[index]) path state
+
 /-- Execute proof-carrying selected sites without indexing the artifact table.
 This is the scalable evaluator for proofs that mention a small path through a
 large artifact; `run` remains available as the index-only compatibility API. -/
-def runSelected (artifact : CertifiedArtifact fork code) :
-    List (SelectedEntry artifact) → State → Option (State × Nat)
-  | [], state => some (state, 0)
-  | selected :: rest, state =>
-      let entry := selected.entry
-      if state.pc.toNat = entry.pc then
-        match Stepper.runInstr entry.instruction state with
-        | none => none
-        | some next =>
-            let cost := Stepper.instrCost entry.instruction state
-            match rest with
-            | [] => some (next, cost)
-            | _ :: _ =>
-                match next.halt with
-                | .Running =>
-                    match runSelected artifact rest next with
-                    | none => none
-                    | some (finish, restCost) =>
-                        some (finish, cost + restCost)
-                | _ => none
-      else none
+def runSelected (artifact : CertifiedArtifact fork code)
+    (path : List (SelectedEntry artifact)) (state : State) :
+    Option (State × Nat) :=
+  runEntries (fun selected => selected.entry) path state
 
 /-- Stable execution premises needed to lift a certified evaluator run into
 the relational EVM semantics. -/
@@ -283,11 +272,14 @@ private theorem next_context (artifact : CertifiedArtifact fork code)
     exact context.fork_eq
   · simpa [env_eq] using context.notPrecompile
 
-/-- A successful cached execution path denotes a relational trace with exactly
-the cost computed by `run`. -/
-def run_sound (artifact : CertifiedArtifact fork code)
-    (path : List (Fin artifact.rows.size)) {start finish : State} {cost : Nat}
-    (result : artifact.run path start = some (finish, cost))
+private def runEntries_sound (artifact : CertifiedArtifact fork code)
+    {Site : Type} (entryOf : Site → Entry)
+    (decodes : ∀ (site : Site) (state : State),
+      ExecutionContext artifact state →
+      state.pc.toNat = (entryOf site).pc →
+      Stepper.Decodes state (entryOf site).instruction)
+    (path : List Site) {start finish : State} {cost : Nat}
+    (result : runEntries entryOf path start = some (finish, cost))
     (context : ExecutionContext artifact start) :
     { trace : GasSteps start finish // trace.cost = cost } := by
   induction path generalizing start finish cost with
@@ -299,17 +291,17 @@ def run_sound (artifact : CertifiedArtifact fork code)
       subst finish
       subst cost
       exact ⟨GasSteps.refl start, rfl⟩
-  | cons index rest ih =>
-      by_cases pc_eq : start.pc.toNat = artifact.rows[index].pc
-      · cases instr_result : Stepper.runInstr artifact.rows[index].instruction start with
+  | cons site rest ih =>
+      by_cases pc_eq : start.pc.toNat = (entryOf site).pc
+      · cases instr_result : Stepper.runInstr (entryOf site).instruction start with
         | none =>
-            rw [run, if_pos pc_eq, instr_result] at result
+            rw [runEntries, if_pos pc_eq, instr_result] at result
             simp only at result
             cases result
         | some next =>
           cases rest with
           | nil =>
-              rw [run, if_pos pc_eq, instr_result] at result
+              rw [runEntries, if_pos pc_eq, instr_result] at result
               simp only at result
               have pair_eq := Option.some.inj result
               have finish_eq := congrArg Prod.fst pair_eq
@@ -318,15 +310,16 @@ def run_sound (artifact : CertifiedArtifact fork code)
               subst finish
               subst cost
               let trace := Stepper.runInstr_sound
-                (decodes_at_index artifact index start context pc_eq)
+                (decodes site start context pc_eq)
                 instr_result context.running context.notPrecompile
               exact ⟨trace, rfl⟩
-          | cons nextIndex tail =>
-            rw [run, if_pos pc_eq, instr_result] at result
+          | cons nextSite tail =>
+            rw [runEntries, if_pos pc_eq, instr_result] at result
             simp only at result
             cases next_running : next.halt with
             | Running =>
-              cases rest_result : artifact.run (nextIndex :: tail) next with
+              cases rest_result :
+                  runEntries entryOf (nextSite :: tail) next with
               | none =>
                   rw [next_running, rest_result] at result
                   simp only at result
@@ -342,7 +335,7 @@ def run_sound (artifact : CertifiedArtifact fork code)
                 subst finish
                 subst cost
                 let head := Stepper.runInstr_sound
-                  (decodes_at_index artifact index start context pc_eq)
+                  (decodes site start context pc_eq)
                   instr_result context.running context.notPrecompile
                 obtain ⟨rest_trace, rest_cost_eq⟩ := ih rest_result
                   (next_context artifact context instr_result next_running)
@@ -363,8 +356,20 @@ def run_sound (artifact : CertifiedArtifact fork code)
                 rw [next_running] at result
                 simp only at result
                 cases result
-      · rw [run, if_neg pc_eq] at result
+      · rw [runEntries, if_neg pc_eq] at result
         cases result
+
+/-- A successful cached execution path denotes a relational trace with exactly
+the cost computed by `run`. -/
+def run_sound (artifact : CertifiedArtifact fork code)
+    (path : List (Fin artifact.rows.size)) {start finish : State} {cost : Nat}
+    (result : artifact.run path start = some (finish, cost))
+    (context : ExecutionContext artifact start) :
+    { trace : GasSteps start finish // trace.cost = cost } :=
+  runEntries_sound artifact (fun index => artifact.rows[index])
+    (fun index state executionContext pc_eq =>
+      decodes_at_index artifact index state executionContext pc_eq)
+    path result context
 
 /-- A successful selected-site execution denotes a relational trace with the
 exact cost computed by `runSelected`.  Artifact indices occur only in the
@@ -374,84 +379,12 @@ def runSelected_sound (artifact : CertifiedArtifact fork code)
     (path : List (SelectedEntry artifact)) {start finish : State} {cost : Nat}
     (result : artifact.runSelected path start = some (finish, cost))
     (context : ExecutionContext artifact start) :
-    { trace : GasSteps start finish // trace.cost = cost } := by
-  induction path generalizing start finish cost with
-  | nil =>
-      have pair_eq := Option.some.inj result
-      have finish_eq := congrArg Prod.fst pair_eq
-      have cost_eq := congrArg Prod.snd pair_eq
-      simp only at finish_eq cost_eq
-      subst finish
-      subst cost
-      exact ⟨GasSteps.refl start, rfl⟩
-  | cons selected rest ih =>
-      by_cases pc_eq : start.pc.toNat = selected.entry.pc
-      · cases instr_result :
-          Stepper.runInstr selected.entry.instruction start with
-        | none =>
-            rw [runSelected, if_pos pc_eq, instr_result] at result
-            simp only at result
-            cases result
-        | some next =>
-          cases rest with
-          | nil =>
-              rw [runSelected, if_pos pc_eq, instr_result] at result
-              simp only at result
-              have pair_eq := Option.some.inj result
-              have finish_eq := congrArg Prod.fst pair_eq
-              have cost_eq := congrArg Prod.snd pair_eq
-              simp only at finish_eq cost_eq
-              subst finish
-              subst cost
-              let trace := Stepper.runInstr_sound
-                (decodes_at_selected artifact selected start context pc_eq)
-                instr_result context.running context.notPrecompile
-              exact ⟨trace, rfl⟩
-          | cons nextSelected tail =>
-            rw [runSelected, if_pos pc_eq, instr_result] at result
-            simp only at result
-            cases next_running : next.halt with
-            | Running =>
-              cases rest_result :
-                  artifact.runSelected (nextSelected :: tail) next with
-              | none =>
-                  rw [next_running, rest_result] at result
-                  simp only at result
-                  cases result
-              | some rest_pair =>
-                rcases rest_pair with ⟨rest_finish, rest_cost⟩
-                rw [next_running, rest_result] at result
-                simp only at result
-                have pair_eq := Option.some.inj result
-                have finish_eq := congrArg Prod.fst pair_eq
-                have cost_eq := congrArg Prod.snd pair_eq
-                simp only at finish_eq cost_eq
-                subst finish
-                subst cost
-                let head := Stepper.runInstr_sound
-                  (decodes_at_selected artifact selected start context pc_eq)
-                  instr_result context.running context.notPrecompile
-                obtain ⟨rest_trace, rest_cost_eq⟩ := ih rest_result
-                  (next_context artifact context instr_result next_running)
-                exact ⟨head.trans rest_trace, by simp [head, rest_cost_eq]⟩
-            | Success =>
-                rw [next_running] at result
-                simp only at result
-                cases result
-            | Returned =>
-                rw [next_running] at result
-                simp only at result
-                cases result
-            | Reverted =>
-                rw [next_running] at result
-                simp only at result
-                cases result
-            | Exception error =>
-                rw [next_running] at result
-                simp only at result
-                cases result
-      · rw [runSelected, if_neg pc_eq] at result
-        cases result
+    { trace : GasSteps start finish // trace.cost = cost } :=
+  runEntries_sound artifact
+    (fun selected : SelectedEntry artifact => selected.entry)
+    (fun selected state executionContext pc_eq =>
+      decodes_at_selected artifact selected state executionContext pc_eq)
+    path result context
 
 end CertifiedArtifact
 

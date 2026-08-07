@@ -89,6 +89,15 @@ example : artifact.runSelected selectedFirstPath start = some (afterFirst, 3) :=
 example : artifact.runSelected selectedFirstPath wrongPC = none := by
   rfl
 
+def addUnderflow : EVM.State :=
+  { start with pc := 4 }
+
+def selectedAdd : CertifiedArtifact.SelectedEntry artifact :=
+  ⟨⟨2, by decide⟩, ⟨4, .op .ADD⟩, rfl⟩
+
+example : artifact.runSelected [selectedAdd] addUnderflow = none := by
+  rfl
+
 /-- Reduction guard: even when the certified artifact is abstract, selected
 execution computes from the carried snapshot rather than indexing its table. -/
 example (abstractArtifact : CertifiedArtifact .Osaka code)
