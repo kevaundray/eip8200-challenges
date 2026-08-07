@@ -222,10 +222,10 @@ private shared evaluator. -/
     (state : State) : artifact.runSelected [] state = some (state, 0) := by
   rfl
 
-/-- Public one-step equation for bounded simplification.  Its recursive branch
-calls `runSelected` again, allowing clients to expose exactly as many literal
-sites as their simplifier traverses while `runEntries` remains private. -/
-@[simp] theorem runSelected_cons (artifact : CertifiedArtifact fork code)
+/-- Public one-step equation for explicit, bounded simplification.  It is not a
+global simp rule: clients opt in with `rw` or `simp only`.  Its recursive branch
+calls `runSelected` again while `runEntries` remains private. -/
+theorem runSelected_cons (artifact : CertifiedArtifact fork code)
     (selected : SelectedEntry fork code)
     (rest : List (SelectedEntry fork code)) (state : State) :
     artifact.runSelected (selected :: rest) state =
