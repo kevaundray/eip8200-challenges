@@ -43,10 +43,22 @@ theorem tiny_sound : ∃ trace : GasSteps start finish, trace.cost = 8 := by
   obtain ⟨trace, hcost⟩ := artifact.run_sound path run_tiny context
   exact ⟨trace, hcost⟩
 
-def selectedPath : List (CertifiedArtifact.SelectedEntry artifact) :=
-  [⟨⟨0, by decide⟩, ⟨0, .push 2 258⟩, rfl⟩,
-   ⟨⟨1, by decide⟩, ⟨3, .push 0 0⟩, rfl⟩,
-   ⟨⟨2, by decide⟩, ⟨4, .op .ADD⟩, rfl⟩]
+theorem row0_decoder : CertifiedArtifact.DecoderCertificate
+    .Osaka code ⟨0, .push 2 258⟩ :=
+  artifact.decoderCertificate ⟨0, by decide⟩ ⟨0, .push 2 258⟩ rfl
+
+theorem row1_decoder : CertifiedArtifact.DecoderCertificate
+    .Osaka code ⟨3, .push 0 0⟩ :=
+  artifact.decoderCertificate ⟨1, by decide⟩ ⟨3, .push 0 0⟩ rfl
+
+theorem row2_decoder : CertifiedArtifact.DecoderCertificate
+    .Osaka code ⟨4, .op .ADD⟩ :=
+  artifact.decoderCertificate ⟨2, by decide⟩ ⟨4, .op .ADD⟩ rfl
+
+def selectedPath : List (CertifiedArtifact.SelectedEntry .Osaka code) :=
+  [⟨⟨0, .push 2 258⟩, row0_decoder⟩,
+   ⟨⟨3, .push 0 0⟩, row1_decoder⟩,
+   ⟨⟨4, .op .ADD⟩, row2_decoder⟩]
 
 theorem run_selected_tiny :
     artifact.runSelected selectedPath start = some (finish, 8) := by
@@ -77,10 +89,10 @@ def wrongPC : EVM.State :=
 example : artifact.run firstPath wrongPC = none := by
   rfl
 
-def selectedFirst : CertifiedArtifact.SelectedEntry artifact :=
-  ⟨⟨0, by decide⟩, ⟨0, .push 2 258⟩, rfl⟩
+def selectedFirst : CertifiedArtifact.SelectedEntry .Osaka code :=
+  ⟨⟨0, .push 2 258⟩, row0_decoder⟩
 
-def selectedFirstPath : List (CertifiedArtifact.SelectedEntry artifact) :=
+def selectedFirstPath : List (CertifiedArtifact.SelectedEntry .Osaka code) :=
   [selectedFirst]
 
 example : artifact.runSelected selectedFirstPath start = some (afterFirst, 3) := by
@@ -92,8 +104,8 @@ example : artifact.runSelected selectedFirstPath wrongPC = none := by
 def addUnderflow : EVM.State :=
   { start with pc := 4 }
 
-def selectedAdd : CertifiedArtifact.SelectedEntry artifact :=
-  ⟨⟨2, by decide⟩, ⟨4, .op .ADD⟩, rfl⟩
+def selectedAdd : CertifiedArtifact.SelectedEntry .Osaka code :=
+  ⟨⟨4, .op .ADD⟩, row2_decoder⟩
 
 example : artifact.runSelected [selectedAdd] addUnderflow = none := by
   rfl
@@ -101,12 +113,35 @@ example : artifact.runSelected [selectedAdd] addUnderflow = none := by
 /-- Reduction guard: even when the certified artifact is abstract, selected
 execution computes from the carried snapshot rather than indexing its table. -/
 example (abstractArtifact : CertifiedArtifact .Osaka code)
-    (index : Fin abstractArtifact.rows.size)
-    (bound : abstractArtifact.rows[index] = ⟨0, .push 2 258⟩) :
+    (decoder : CertifiedArtifact.DecoderCertificate
+      .Osaka code ⟨0, .push 2 258⟩) :
     abstractArtifact.runSelected
-      [⟨index, ⟨0, .push 2 258⟩, bound⟩] start =
+      [⟨⟨0, .push 2 258⟩, decoder⟩] start =
         some (afterFirst, 3) := by
   rfl
+
+/-- Soundness guard: the selected path and its decoder are compact, so an
+abstract artifact supplies only the stable execution context, never a row. -/
+theorem abstract_selected_sound
+    (abstractArtifact : CertifiedArtifact .Osaka code)
+    (decoder : CertifiedArtifact.DecoderCertificate
+      .Osaka code ⟨0, .push 2 258⟩) :
+    ∃ trace : GasSteps start afterFirst, trace.cost = 3 := by
+  let selected : CertifiedArtifact.SelectedEntry .Osaka code :=
+    ⟨⟨0, .push 2 258⟩, decoder⟩
+  have result : abstractArtifact.runSelected [selected] start =
+      some (afterFirst, 3) := by
+    rfl
+  let abstractContext :
+      CertifiedArtifact.ExecutionContext abstractArtifact start := {
+    code_eq := rfl
+    fork_eq := rfl
+    running := rfl
+    notPrecompile := Challenge.Ripemd160.deployAddress_not_precompile
+  }
+  obtain ⟨trace, hcost⟩ :=
+    abstractArtifact.runSelected_sound [selected] result abstractContext
+  exact ⟨trace, hcost⟩
 
 def haltingRows : Array CertifiedArtifact.Entry := #[
   ⟨0, .op .INVALID⟩,
@@ -141,17 +176,27 @@ def haltOnlyPath : List (Fin haltingArtifact.rows.size) :=
 example : haltingArtifact.run haltOnlyPath haltingStart = some (halted, 0) := by
   rfl
 
+theorem halting0_decoder : CertifiedArtifact.DecoderCertificate
+    .Osaka haltingCode ⟨0, .op .INVALID⟩ :=
+  haltingArtifact.decoderCertificate ⟨0, by decide⟩
+    ⟨0, .op .INVALID⟩ rfl
+
+theorem halting1_decoder : CertifiedArtifact.DecoderCertificate
+    .Osaka haltingCode ⟨1, .push 0 0⟩ :=
+  haltingArtifact.decoderCertificate ⟨1, by decide⟩
+    ⟨1, .push 0 0⟩ rfl
+
 def selectedHaltingPath :
-    List (CertifiedArtifact.SelectedEntry haltingArtifact) :=
-  [⟨⟨0, by decide⟩, ⟨0, .op .INVALID⟩, rfl⟩,
-   ⟨⟨1, by decide⟩, ⟨1, .push 0 0⟩, rfl⟩]
+    List (CertifiedArtifact.SelectedEntry .Osaka haltingCode) :=
+  [⟨⟨0, .op .INVALID⟩, halting0_decoder⟩,
+   ⟨⟨1, .push 0 0⟩, halting1_decoder⟩]
 
 example : haltingArtifact.runSelected selectedHaltingPath haltingStart = none := by
   rfl
 
 def selectedHaltOnlyPath :
-    List (CertifiedArtifact.SelectedEntry haltingArtifact) :=
-  [⟨⟨0, by decide⟩, ⟨0, .op .INVALID⟩, rfl⟩]
+    List (CertifiedArtifact.SelectedEntry .Osaka haltingCode) :=
+  [⟨⟨0, .op .INVALID⟩, halting0_decoder⟩]
 
 example :
     haltingArtifact.runSelected selectedHaltOnlyPath haltingStart =

@@ -161,13 +161,23 @@ def certify {fork : Fork} {code : ByteArray} (rows : Array Entry)
     (valid : Table.Valid fork code rows) : CertifiedArtifact fork code :=
   ⟨rows, valid⟩
 
-/-- A selected instruction site carrying its cached row as data.  The index is
-used to recover certification facts, while evaluators consume `entry` directly
-and therefore do not repeatedly reduce a large artifact table. -/
-structure SelectedEntry (artifact : CertifiedArtifact fork code) where
-  index : Fin artifact.rows.size
+/-- Compact evidence that a cached entry decodes from stable bytecode and fork
+premises.  Its type deliberately contains no artifact row, index, or binding
+equality, so downstream soundness proofs cannot unfold a large table. -/
+structure DecoderCertificate (fork : Fork) (code : ByteArray)
+    (entry : Entry) : Prop where
+  decodes : ∀ (state : State),
+    state.executionEnv.code = code →
+    state.fork = fork →
+    state.pc.toNat = entry.pc →
+    Stepper.Decodes state entry.instruction
+
+/-- A selected instruction site containing only its cached entry and compact
+decoder certificate.  Artifact lookup is discharged before this value enters
+a downstream execution proof. -/
+structure SelectedEntry (fork : Fork) (code : ByteArray) where
   entry : Entry
-  bound : artifact.rows[index] = entry
+  decoder : DecoderCertificate fork code entry
 
 /-- Shared executable semantics for paths whose sites provide cached entries. -/
 private def runEntries {Site : Type} (entryOf : Site → Entry) :
@@ -201,8 +211,8 @@ def run (artifact : CertifiedArtifact fork code)
 /-- Execute proof-carrying selected sites without indexing the artifact table.
 This is the scalable evaluator for proofs that mention a small path through a
 large artifact; `run` remains available as the index-only compatibility API. -/
-def runSelected (artifact : CertifiedArtifact fork code)
-    (path : List (SelectedEntry artifact)) (state : State) :
+def runSelected (_artifact : CertifiedArtifact fork code)
+    (path : List (SelectedEntry fork code)) (state : State) :
     Option (State × Nat) :=
   runEntries (fun selected => selected.entry) path state
 
@@ -230,27 +240,32 @@ private theorem row_at_index (artifact : CertifiedArtifact fork code)
 
 private theorem decodes_at_index (artifact : CertifiedArtifact fork code)
     (index : Fin artifact.rows.size) (state : State)
-    (context : ExecutionContext artifact state)
+    (code_eq : state.executionEnv.code = code)
+    (fork_eq : state.fork = fork)
     (pc_eq : state.pc.toNat = artifact.rows[index].pc) :
     Stepper.Decodes state artifact.rows[index].instruction := by
   apply Stepper.decodes_of_artifact (program artifact) state index.val
-  · simpa [program] using context.code_eq
+  · simpa [program] using code_eq
   · rw [pc_eq, artifact.valid.pc_eq index]
     rfl
   · exact row_at_index artifact index
-  · simpa [context.fork_eq] using artifact.valid.wellFormed index
+  · simpa [fork_eq] using artifact.valid.wellFormed index
 
-private theorem decodes_at_selected (artifact : CertifiedArtifact fork code)
-    (selected : SelectedEntry artifact) (state : State)
-    (context : ExecutionContext artifact state)
-    (pc_eq : state.pc.toNat = selected.entry.pc) :
-    Stepper.Decodes state selected.entry.instruction := by
+/-- Discharge one artifact lookup into a compact decoder certificate.  Give
+the resulting proof a name near a large artifact, then build `SelectedEntry`
+values from that named certificate so downstream proof terms mention no rows. -/
+theorem decoderCertificate (artifact : CertifiedArtifact fork code)
+    (index : Fin artifact.rows.size) (entry : Entry)
+    (bound : artifact.rows[index] = entry) :
+    DecoderCertificate fork code entry := by
+  constructor
+  intro state code_eq fork_eq pc_eq
   have indexed_pc_eq :
-      state.pc.toNat = artifact.rows[selected.index].pc := by
-    simpa only [selected.bound] using pc_eq
-  have decoded := decodes_at_index artifact selected.index state context
+      state.pc.toNat = artifact.rows[index].pc := by
+    simpa only [bound] using pc_eq
+  have decoded := decodes_at_index artifact index state code_eq fork_eq
     indexed_pc_eq
-  simpa only [selected.bound] using decoded
+  simpa only [bound] using decoded
 
 private theorem next_context (artifact : CertifiedArtifact fork code)
     {instruction : Instr} {state next : State}
@@ -368,22 +383,24 @@ def run_sound (artifact : CertifiedArtifact fork code)
     { trace : GasSteps start finish // trace.cost = cost } :=
   runEntries_sound artifact (fun index => artifact.rows[index])
     (fun index state executionContext pc_eq =>
-      decodes_at_index artifact index state executionContext pc_eq)
+      decodes_at_index artifact index state executionContext.code_eq
+        executionContext.fork_eq pc_eq)
     path result context
 
 /-- A successful selected-site execution denotes a relational trace with the
-exact cost computed by `runSelected`.  Artifact indices occur only in the
-binding proof used to recover decoding and well-formedness facts; execution
-and gas computation use each carried `SelectedEntry.entry` snapshot. -/
+exact cost computed by `runSelected`.  Artifact indices and binding equalities
+have already been discharged into compact certificates; this theorem consumes
+only each carried entry and its decoder. -/
 def runSelected_sound (artifact : CertifiedArtifact fork code)
-    (path : List (SelectedEntry artifact)) {start finish : State} {cost : Nat}
+    (path : List (SelectedEntry fork code)) {start finish : State} {cost : Nat}
     (result : artifact.runSelected path start = some (finish, cost))
     (context : ExecutionContext artifact start) :
     { trace : GasSteps start finish // trace.cost = cost } :=
   runEntries_sound artifact
-    (fun selected : SelectedEntry artifact => selected.entry)
+    (fun selected : SelectedEntry fork code => selected.entry)
     (fun selected state executionContext pc_eq =>
-      decodes_at_selected artifact selected state executionContext pc_eq)
+      selected.decoder.decodes state executionContext.code_eq
+        executionContext.fork_eq pc_eq)
     path result context
 
 end CertifiedArtifact
