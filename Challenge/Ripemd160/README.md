@@ -108,11 +108,11 @@ route, `Reference/Proofs.lean` for both the bytecode and Yul routes, and
 ### Fast proof iteration
 
 The reference artifact now derives its complete `(pc, instruction)` row table
-structurally from `referenceBytecode`.  Execution proofs select only the rows
-they use and run those cached locations; they do not repeatedly normalize an
-assembled prefix to rediscover each program counter.  The resulting trace
-still carries its exact computed cost, exposed at the complete entry boundary
-by `Execution.gasSteps_entry_cost`.
+structurally from `referenceBytecode`.  The reference entry-path execution
+proof selects only the rows it uses and runs those cached locations; it does
+not repeatedly normalize an assembled prefix to rediscover each program
+counter.  The resulting trace still carries its exact computed cost, exposed
+at the complete entry boundary by `Execution.gasSteps_entry_cost`.
 
 The small compatibility snapshot in
 [`ArtifactSnapshots.lean`](Reference/Proofs/Bytecode/ArtifactSnapshots.lean)

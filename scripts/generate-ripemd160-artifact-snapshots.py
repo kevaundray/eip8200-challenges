@@ -5,8 +5,11 @@ from __future__ import annotations
 
 import argparse
 import difflib
+import os
 import re
+import stat
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -19,6 +22,8 @@ DEFAULT_SNAPSHOT = (
 DEFAULT_BYTECODE = REPOSITORY / "Challenge/Ripemd160/Reference/reference.hex"
 BEGIN_MARKER = "  -- BEGIN GENERATED ENTRIES"
 END_MARKER = "  -- END GENERATED ENTRIES"
+BEGIN_LABEL = "BEGIN GENERATED ENTRIES"
+END_LABEL = "END GENERATED ENTRIES"
 
 
 class GenerationError(Exception):
@@ -71,15 +76,67 @@ def disassemble(bytecode: bytes) -> list[Instruction]:
     return instructions
 
 
+def strip_lean_comments(source: str, path: Path) -> str:
+    """Replace nested block and line comments with whitespace."""
+    stripped: list[str] = []
+    index = 0
+    block_depth = 0
+    while index < len(source):
+        if block_depth > 0:
+            if source.startswith("/-", index):
+                stripped.extend("  ")
+                block_depth += 1
+                index += 2
+            elif source.startswith("-/", index):
+                stripped.extend("  ")
+                block_depth -= 1
+                index += 2
+            else:
+                character = source[index]
+                stripped.append(character if character in "\r\n" else " ")
+                index += 1
+        elif source.startswith("--", index):
+            end = source.find("\n", index)
+            if end < 0:
+                stripped.extend(" " * (len(source) - index))
+                index = len(source)
+            else:
+                stripped.extend(" " * (end - index))
+                index = end
+        elif source.startswith("/-", index):
+            stripped.extend("  ")
+            block_depth = 1
+            index += 2
+        else:
+            stripped.append(source[index])
+            index += 1
+    if block_depth != 0:
+        raise GenerationError(f"unterminated Lean block comment in {path}")
+    return "".join(stripped)
+
+
 def parse_indices(snapshot: str, path: Path) -> list[int]:
-    match = re.search(
-        r"def indices\s*:\s*List \(Fin \d+\)\s*:=\s*\[\s*(.*?)\s*\]",
-        snapshot,
-        flags=re.DOTALL,
+    uncommented = strip_lean_comments(snapshot, path)
+    header = re.compile(
+        r"\bdef\s+indices\s*:\s*List\s*\(\s*Fin\s+[0-9]+\s*\)\s*:=\s*\["
     )
-    if match is None:
-        raise GenerationError(f"cannot find `def indices` in {path}")
-    return [int(value) for value in re.findall(r"\d+", match.group(1))]
+    matches = list(header.finditer(uncommented))
+    if len(matches) != 1:
+        raise GenerationError(
+            f"expected exactly one supported `def indices` declaration in {path}"
+        )
+    body_start = matches[0].end()
+    body_end = uncommented.find("]", body_start)
+    if body_end < 0:
+        raise GenerationError(f"unterminated `def indices` list in {path}")
+    body = uncommented[body_start:body_end]
+    grammar = r"\s*(?:[0-9]+(?:\s*,\s*[0-9]+)*\s*,?)?\s*"
+    if re.fullmatch(grammar, body) is None:
+        raise GenerationError(
+            f"unsupported indices syntax in {path}; "
+            "expected decimal literals separated by commas"
+        )
+    return [int(value) for value in re.findall(r"[0-9]+", body)]
 
 
 def format_entry(instruction: Instruction) -> str:
@@ -104,17 +161,67 @@ def generated_region(snapshot: str, snapshot_path: Path, bytecode_path: Path) ->
 
 
 def replace_region(snapshot: str, generated: str, path: Path) -> str:
-    begin = snapshot.find(BEGIN_MARKER)
-    end = snapshot.find(END_MARKER)
-    if begin < 0 or end < 0 or end <= begin:
+    lines = snapshot.splitlines(keepends=True)
+    bare_lines = [line.rstrip("\r\n") for line in lines]
+    begin_lines = [
+        index for index, line in enumerate(bare_lines) if line == BEGIN_MARKER
+    ]
+    end_lines = [index for index, line in enumerate(bare_lines) if line == END_MARKER]
+    begin_mentions = [line for line in bare_lines if BEGIN_LABEL in line]
+    end_mentions = [line for line in bare_lines if END_LABEL in line]
+    if (
+        len(begin_lines) != 1
+        or len(end_lines) != 1
+        or len(begin_mentions) != 1
+        or len(end_mentions) != 1
+    ):
         raise GenerationError(
-            f"cannot find ordered generated-entry markers in {path}; "
-            "expected `BEGIN GENERATED ENTRIES` and `END GENERATED ENTRIES`"
+            f"expected exactly one exact standalone begin and end marker in {path}"
         )
-    content_start = snapshot.find("\n", begin)
-    if content_start < 0:
-        raise GenerationError(f"begin marker in {path} is not followed by a newline")
-    return snapshot[: content_start + 1] + generated + "\n" + snapshot[end:]
+    begin = begin_lines[0]
+    end = end_lines[0]
+    if end <= begin:
+        raise GenerationError(f"generated-entry markers are out of order in {path}")
+    begin_line = lines[begin]
+    if begin_line.endswith("\r\n"):
+        newline = "\r\n"
+    elif begin_line.endswith("\n"):
+        newline = "\n"
+    else:
+        raise GenerationError(f"begin marker in {path} is not a standalone line")
+    region = generated.replace("\n", newline)
+    if region:
+        region += newline
+    return "".join(lines[: begin + 1]) + region + "".join(lines[end:])
+
+
+def atomic_write(path: Path, contents: str) -> None:
+    mode = stat.S_IMODE(path.stat().st_mode)
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            newline="",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as temporary:
+            temporary_path = Path(temporary.name)
+            temporary.write(contents)
+            temporary.flush()
+            os.fchmod(temporary.fileno(), mode)
+            os.fsync(temporary.fileno())
+        os.replace(temporary_path, path)
+        temporary_path = None
+    except Exception:
+        if temporary_path is not None:
+            try:
+                temporary_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+        raise
 
 
 def parse_args() -> argparse.Namespace:
@@ -148,28 +255,26 @@ def main() -> int:
             generated_region(original, args.snapshot_file, args.bytecode_file),
             args.snapshot_file,
         )
-    except (OSError, GenerationError) as error:
+        if original == expected:
+            print(f"up to date: {args.snapshot_file}")
+            return 0
+        if args.check:
+            print(f"stale generated entries: {args.snapshot_file}", file=sys.stderr)
+            sys.stderr.writelines(
+                difflib.unified_diff(
+                    original.splitlines(keepends=True),
+                    expected.splitlines(keepends=True),
+                    fromfile=str(args.snapshot_file),
+                    tofile=f"{args.snapshot_file} (generated)",
+                )
+            )
+            return 1
+        atomic_write(args.snapshot_file, expected)
+        print(f"updated: {args.snapshot_file}")
+        return 0
+    except (OSError, UnicodeError, GenerationError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
-
-    if original == expected:
-        print(f"up to date: {args.snapshot_file}")
-        return 0
-    if args.check:
-        print(f"stale generated entries: {args.snapshot_file}", file=sys.stderr)
-        sys.stderr.writelines(
-            difflib.unified_diff(
-                original.splitlines(keepends=True),
-                expected.splitlines(keepends=True),
-                fromfile=str(args.snapshot_file),
-                tofile=f"{args.snapshot_file} (generated)",
-            )
-        )
-        return 1
-
-    args.snapshot_file.write_text(expected, encoding="utf-8")
-    print(f"updated: {args.snapshot_file}")
-    return 0
 
 
 if __name__ == "__main__":
