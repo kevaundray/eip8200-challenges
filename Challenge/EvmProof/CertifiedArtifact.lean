@@ -161,6 +161,29 @@ def certify {fork : Fork} {code : ByteArray} (rows : Array Entry)
     (valid : Table.Valid fork code rows) : CertifiedArtifact fork code :=
   ⟨rows, valid⟩
 
+/-- Execute a cached path and return the final state with its exact gas cost. -/
+def run (artifact : CertifiedArtifact fork code) :
+    List (Fin artifact.rows.size) → State → Option (State × Nat)
+  | [], state => some (state, 0)
+  | index :: rest, state =>
+      let entry := artifact.rows[index]
+      if state.pc.toNat = entry.pc then
+        match Stepper.runInstr entry.instruction state with
+        | none => none
+        | some next =>
+            let cost := Stepper.instrCost entry.instruction state
+            match rest with
+            | [] => some (next, cost)
+            | _ :: _ =>
+                match next.halt with
+                | .Running =>
+                    match run artifact rest next with
+                    | none => none
+                    | some (finish, restCost) =>
+                        some (finish, cost + restCost)
+                | _ => none
+      else none
+
 end CertifiedArtifact
 
 end Challenge.EvmProof

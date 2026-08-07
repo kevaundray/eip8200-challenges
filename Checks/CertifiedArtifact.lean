@@ -1,4 +1,5 @@
 import Challenge.EvmProof.CertifiedArtifact
+import Challenge.Ripemd160.Spec
 
 namespace Checks.CertifiedArtifact
 
@@ -18,6 +19,18 @@ theorem rows_valid : CertifiedArtifact.Table.Valid .Osaka code rows := by
 
 def artifact : CertifiedArtifact .Osaka code :=
   CertifiedArtifact.certify rows rows_valid
+
+def path : List (Fin artifact.rows.size) :=
+  [⟨0, by decide⟩, ⟨1, by decide⟩, ⟨2, by decide⟩]
+
+def start : EVM.State :=
+  Challenge.Ripemd160.initialState code ByteArray.empty 0
+
+def finish : EVM.State :=
+  { start with pc := 5, stack := [258] }
+
+example : artifact.run path start = some (finish, 8) := by
+  rfl
 
 example : ¬ CertifiedArtifact.Table.Valid .Osaka ByteArray.empty rows := by
   decide
