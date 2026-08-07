@@ -153,6 +153,56 @@ A natural proof decomposition is:
 6. Prove the terminal state returns the digest and use
    `GasSteps.toEventuallyEvaluates` to discharge `DirectProof`.
 
+### Fast iteration on optimized internals
+
+When changing the bytecode inside an optimized submission while keeping the
+required `bytecode` and `correct` interfaces stable, use the scalable certified
+artifact path:
+
+1. Derive the artifact from the submitted bytes with
+   `CertifiedArtifact.BytecodeCertificate` and
+   `CertifiedArtifact.fromBytecode`. This performs one structural
+   disassembly/certification pass and ties every cached row to the exact bytes.
+2. Prove each needed row binding beside the artifact, turn it into a compact
+   `DecoderCertificate`, and package the explicit entry as a `SelectedEntry`.
+   Downstream phase proofs should depend on these selected sites, not artifact
+   indices or the full row array.
+3. Evaluate short basic-block segments with `runSelected`, using the explicit
+   `runSelected_nil` and `runSelected_cons` equations. Compose successful
+   bounded segments with `runSelected_append` instead of normalizing one large
+   path expression.
+4. Lift the completed path with `runSelected_sound_exists`; retain the returned
+   cost theorem separately when later gas proofs need it.
+
+Useful checks while iterating are:
+
+```sh
+lake build Challenge.EvmProof.CertifiedArtifact.FromBytecode
+lake build Challenge.Ripemd160.ProofSupport.Bytecode
+lake build Challenge.Ripemd160.Submissions.FastRipemd160.Proof
+```
+
+Replace `FastRipemd160` with the candidate namespace. Run the full submission
+and gas-report checkers before handing the candidate off, but keep the focused
+module build as the inner proof-edit loop.
+
+The command
+`python3 scripts/generate-ripemd160-artifact-snapshots.py` regenerates only the
+bundled reference proof's curated legacy-compatibility sites. Candidate
+submissions do not share that snapshot and should not edit or regenerate it;
+derive and certify their sites directly from their own `bytecode`.
+
+The bundled reference's entry handoff uses one deliberately narrow
+noncomputable proof seam. `Execution.gasSteps_entry` extracts a `GasSteps`
+witness from the sealed existence theorem, while
+`Execution.gasSteps_entry_cost` recovers its exact cost without reducing the
+witness. `Main.gasSteps_initialize` and the private
+`PaddingTrace.gasSteps_padPrefix` compose that proof and therefore inherit the
+noncomputable annotation. Their state and `GasSteps` result types are
+unchanged. This concerns proof-witness extraction only: `runSelected`, the
+submitted bytecode, and scoring execution remain computable, and an optimized
+submission does not need to make its executable definitions noncomputable.
+
 The bundled proof under [`Reference/Proofs/Bytecode/`](Reference/Proofs/Bytecode/)
 is a worked example, but its program counters and memory layout are reference
 implementation details. An optimized candidate should reuse the generic

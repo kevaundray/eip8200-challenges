@@ -1,6 +1,4 @@
 import Challenge.EvmProof
-import Challenge.Ripemd160.ProofSupport.InitialState
-import Challenge.Ripemd160.Spec
 
 namespace Checks.CertifiedArtifact
 
@@ -62,6 +60,29 @@ def rows : Array CertifiedArtifact.Entry := #[
 
 def code : ByteArray := assemble (rows.toList.map (·.instruction))
 
+def testAddress : AccountAddress := AccountAddress.ofNat 0x8200
+def testPrecompileConfig : PrecompileConfig := { disabled := [] }
+
+/-- Minimal challenge-independent execution frame for stepper checks. -/
+def testState (program : ByteArray) : EVM.State :=
+  { (default : EVM.State) with
+    pc := 0
+    stack := []
+    halt := .Running
+    executionEnv := {
+      (default : ExecutionEnv) with
+      code := program
+      codeAddr := testAddress
+      fork := .Osaka
+      precompileConfig := testPrecompileConfig
+    }
+  }
+
+theorem testAddress_not_precompile :
+    Precompile.isPrecompileWithConfig testPrecompileConfig
+      .Osaka testAddress = false := by
+  decide
+
 theorem rows_valid : CertifiedArtifact.Table.Valid .Osaka code rows := by
   decide
 
@@ -72,7 +93,7 @@ def path : List (Fin artifact.rows.size) :=
   [⟨0, by decide⟩, ⟨1, by decide⟩, ⟨2, by decide⟩]
 
 def start : EVM.State :=
-  Challenge.Ripemd160.initialState code ByteArray.empty 0
+  testState code
 
 def finish : EVM.State :=
   { start with pc := 5, stack := [258] }
@@ -84,7 +105,7 @@ def context : CertifiedArtifact.ExecutionContext artifact start where
   code_eq := rfl
   fork_eq := rfl
   running := rfl
-  notPrecompile := Challenge.Ripemd160.deployAddress_not_precompile
+  notPrecompile := testAddress_not_precompile
 
 theorem tiny_sound : ∃ trace : GasSteps start finish, trace.cost = 8 := by
   obtain ⟨trace, hcost⟩ := artifact.run_sound path run_tiny context
@@ -222,7 +243,7 @@ theorem abstract_selected_sound
     code_eq := rfl
     fork_eq := rfl
     running := rfl
-    notPrecompile := Challenge.Ripemd160.deployAddress_not_precompile
+    notPrecompile := testAddress_not_precompile
   }
   exact abstractArtifact.runSelected_sound_exists [selected] result
     abstractContext
@@ -243,7 +264,7 @@ def haltingArtifact : CertifiedArtifact .Osaka haltingCode :=
   CertifiedArtifact.certify haltingRows haltingRows_valid
 
 def haltingStart : EVM.State :=
-  Challenge.Ripemd160.initialState haltingCode ByteArray.empty 0
+  testState haltingCode
 
 def halted : EVM.State :=
   { haltingStart with halt := .Exception .InvalidInstruction }

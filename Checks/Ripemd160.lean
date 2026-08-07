@@ -1,6 +1,11 @@
 import Challenge.Ripemd160
+import Challenge.Ripemd160.Reference.Proofs.Bytecode.Artifact
 set_option warningAsError true
 /-! RIPEMD-160 axiom-footprint checks. -/
+
+/-- info: 'Challenge.Ripemd160.Reference.Proofs.Bytecode.Artifact.referenceRows_valid' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.Ripemd160.Reference.Proofs.Bytecode.Artifact.referenceRows_valid
 
 namespace Challenge.Ripemd160.Reference.Proofs.Bytecode.Execution
 
