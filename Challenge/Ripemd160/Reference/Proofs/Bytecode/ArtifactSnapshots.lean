@@ -4,6 +4,7 @@ set_option warningAsError true
 
 /-! Generated, bytecode-certified snapshots used by legacy RIPEMD proof APIs.
 
+Source: `Challenge/Ripemd160/Reference/reference.hex`.
 Regenerate with `python3 scripts/generate-ripemd160-artifact-snapshots.py` and
 verify with `python3 scripts/generate-ripemd160-artifact-snapshots.py --check`.
 -/

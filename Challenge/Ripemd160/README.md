@@ -147,9 +147,15 @@ interfaces used by optimized submissions.
 
 On the same cold invalidated build used to evaluate this refactor,
 `Artifact.lean` improved from 124.78 seconds and 6.09 GB peak RSS to 28.12
-seconds and 4.24 GB.  A cached rebuild of `Execution.lean` takes approximately
-2.2 seconds and 1.92 GB peak RSS.  These are development measurements, not
-proof evidence; the focused builds and kernel certificate remain authoritative.
+seconds and 4.24 GB.  The old invalidated execution diagnostic was stopped
+after nearly five minutes rather than allowed to exhaust the machine;
+`Execution.lean` and `OutputTrace.lean` had each grown to approximately 13 GB
+RSS, so it does not provide an exact completed baseline.  With the certified
+artifact cached, `Execution.lean` completed in 2.20 seconds and 1.92 GB peak
+RSS.  A fresh dependent rebuild immediately after changing `Artifact.lean`
+completed in 19.50 seconds and 2.36 GB peak RSS.  These are development
+measurements, not proof evidence; the focused builds and kernel certificate
+remain authoritative.
 
 ### Final theorems
 
