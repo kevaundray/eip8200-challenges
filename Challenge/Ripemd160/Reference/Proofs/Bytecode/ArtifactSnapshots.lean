@@ -2,7 +2,11 @@ import Challenge.EvmProof.CertifiedArtifact
 
 set_option warningAsError true
 
-/-! Generated, bytecode-certified snapshots used by legacy RIPEMD proof APIs. -/
+/-! Generated, bytecode-certified snapshots used by legacy RIPEMD proof APIs.
+
+Regenerate with `python3 scripts/generate-ripemd160-artifact-snapshots.py` and
+verify with `python3 scripts/generate-ripemd160-artifact-snapshots.py --check`.
+-/
 
 namespace Challenge.Ripemd160.Reference.Proofs.Bytecode.ArtifactSnapshots
 
@@ -54,6 +58,7 @@ def indices : List (Fin 831) :=
 against the structurally derived table with one definitional equality. -/
 def entries : List Challenge.EvmProof.CertifiedArtifact.Entry :=
 [
+  -- BEGIN GENERATED ENTRIES
   ⟨0, .push 2 27⟩,
   ⟨3, op 0x56⟩,
   ⟨27, op 0x5b⟩,
@@ -239,6 +244,7 @@ def entries : List Challenge.EvmProof.CertifiedArtifact.Entry :=
   ⟨1575, .push 0 0⟩,
   ⟨1576, .push 2 480⟩,
   ⟨1579, op 0x56⟩,
+  -- END GENERATED ENTRIES
 ]
 
 @[simp] theorem indices_length : indices.length = 185 := by rfl

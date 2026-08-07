@@ -105,6 +105,52 @@ The umbrella imports are `Reference/Proofs/Bytecode.lean` for the direct EVM
 route, `Reference/Proofs.lean` for both the bytecode and Yul routes, and
 `Challenge.Ripemd160` for the complete challenge package.
 
+### Fast proof iteration
+
+The reference artifact now derives its complete `(pc, instruction)` row table
+structurally from `referenceBytecode`.  Execution proofs select only the rows
+they use and run those cached locations; they do not repeatedly normalize an
+assembled prefix to rediscover each program counter.  The resulting trace
+still carries its exact computed cost, exposed at the complete entry boundary
+by `Execution.gasSteps_entry_cost`.
+
+The small compatibility snapshot in
+[`ArtifactSnapshots.lean`](Reference/Proofs/Bytecode/ArtifactSnapshots.lean)
+is generated convenience data.  Regenerate or verify it from the frozen hex
+with:
+
+```sh
+python3 scripts/generate-ripemd160-artifact-snapshots.py
+python3 scripts/generate-ripemd160-artifact-snapshots.py --check
+```
+
+The script reads the curated `indices` in that file and rewrites only the
+marked `entries` region.  Its output is not trusted: `Artifact.snapshotRows_eq`
+checks all selected rows against the structural bytecode table by kernel
+reduction, so a stale PC, instruction, or immediate makes the Lean build fail.
+
+For proof-only changes, leave the bytes and snapshot alone and iterate with:
+
+```sh
+lake build Challenge.Ripemd160.Reference.Proofs.Bytecode.EntryTemplates
+lake build Challenge.Ripemd160.Reference.Proofs.Bytecode.Execution
+```
+
+For bytecode or internal control-flow changes, first update the frozen bytecode
+and its structural byte representation, review the curated indices, regenerate
+the compatibility snapshot, then build `Artifact` before the focused proof
+modules.  Changes to the index count must also update its explicit `Fin` bound
+and length theorem.  The public endpoints
+`ReferenceCorrect.reference_correctWithSchedule` and
+`ReferenceCorrect.reference_correct` are unchanged, as are the challenge
+interfaces used by optimized submissions.
+
+On the same cold invalidated build used to evaluate this refactor,
+`Artifact.lean` improved from 124.78 seconds and 6.09 GB peak RSS to 28.12
+seconds and 4.24 GB.  A cached rebuild of `Execution.lean` takes approximately
+2.2 seconds and 1.92 GB peak RSS.  These are development measurements, not
+proof evidence; the focused builds and kernel certificate remain authoritative.
+
 ### Final theorems
 
 The direct proof has no remaining hypotheses. Its two public endpoints are:
