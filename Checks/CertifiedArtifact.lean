@@ -71,6 +71,36 @@ theorem run_selected_tiny_by_equations :
   simp only [selectedPath, CertifiedArtifact.runSelected_cons]
   rfl
 
+def afterFirst : EVM.State :=
+  { start with pc := 3, stack := [258] }
+
+theorem run_selected_first :
+    artifact.runSelected [selectedPath[0]] start = some (afterFirst, 3) := by
+  rfl
+
+def selectedRestPath : List (CertifiedArtifact.SelectedEntry .Osaka code) :=
+  [selectedPath[1], selectedPath[2]]
+
+theorem run_selected_rest :
+    artifact.runSelected selectedRestPath afterFirst = some (finish, 5) := by
+  rfl
+
+/-- A longer result composes opaque segment facts rather than reducing the
+whole selected evaluator at once. -/
+theorem run_selected_composed :
+    artifact.runSelected ([selectedPath[0]] ++ selectedRestPath) start =
+      some (finish, 3 + 5) :=
+  artifact.runSelected_append [selectedPath[0]] selectedRestPath
+    run_selected_first rfl run_selected_rest
+
+example : artifact.runSelected ([] ++ selectedPath) start =
+    some (finish, 0 + 8) :=
+  artifact.runSelected_append [] selectedPath rfl rfl run_selected_tiny
+
+example : artifact.runSelected ([selectedPath[0]] ++ []) start =
+    some (afterFirst, 3 + 0) :=
+  artifact.runSelected_append [selectedPath[0]] [] run_selected_first rfl rfl
+
 theorem selected_tiny_sound : ∃ trace : GasSteps start finish, trace.cost = 8 := by
   obtain ⟨trace, hcost⟩ :=
     artifact.runSelected_sound selectedPath run_selected_tiny context
@@ -87,9 +117,6 @@ example : artifact.runSelected [] start = some (start, 0) := by
   rfl
 
 def firstPath : List (Fin artifact.rows.size) := [⟨0, by decide⟩]
-
-def afterFirst : EVM.State :=
-  { start with pc := 3, stack := [258] }
 
 example : artifact.run firstPath start = some (afterFirst, 3) := by
   rfl
@@ -203,6 +230,9 @@ def selectedHaltingPath :
 
 example : haltingArtifact.runSelected selectedHaltingPath haltingStart = none := by
   rfl
+
+example : halted.halt ≠ .Running := by
+  simp [halted]
 
 def selectedHaltOnlyPath :
     List (CertifiedArtifact.SelectedEntry .Osaka haltingCode) :=

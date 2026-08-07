@@ -247,6 +247,117 @@ theorem runSelected_cons (artifact : CertifiedArtifact fork code)
       else none := by
   cases rest <;> rfl
 
+private theorem runEntries_append {Site : Type} (entryOf : Site → Entry)
+    (left right : List Site) {start mid finish : State}
+    {leftCost rightCost : Nat}
+    (leftResult : runEntries entryOf left start = some (mid, leftCost))
+    (midRunning : mid.halt = .Running)
+    (rightResult : runEntries entryOf right mid =
+      some (finish, rightCost)) :
+    runEntries entryOf (left ++ right) start =
+      some (finish, leftCost + rightCost) := by
+  induction left generalizing start mid leftCost with
+  | nil =>
+      rw [runEntries] at leftResult
+      have pairEq := Option.some.inj leftResult
+      have midEq := congrArg Prod.fst pairEq
+      have costEq := congrArg Prod.snd pairEq
+      simp only at midEq costEq
+      subst mid
+      subst leftCost
+      simpa using rightResult
+  | cons site rest ih =>
+      by_cases pcEq : start.pc.toNat = (entryOf site).pc
+      · cases instrResult : Stepper.runInstr (entryOf site).instruction start with
+        | none =>
+            rw [runEntries, if_pos pcEq, instrResult] at leftResult
+            cases leftResult
+        | some next =>
+          cases rest with
+          | nil =>
+              rw [runEntries, if_pos pcEq, instrResult] at leftResult
+              simp only at leftResult
+              have pairEq := Option.some.inj leftResult
+              have midEq := congrArg Prod.fst pairEq
+              have costEq := congrArg Prod.snd pairEq
+              simp only at midEq costEq
+              subst mid
+              subst leftCost
+              cases right with
+              | nil =>
+                  rw [runEntries] at rightResult
+                  have rightPairEq := Option.some.inj rightResult
+                  have finishEq := congrArg Prod.fst rightPairEq
+                  have rightCostEq := congrArg Prod.snd rightPairEq
+                  simp only at finishEq rightCostEq
+                  subst finish
+                  subst rightCost
+                  simp [runEntries, pcEq, instrResult]
+              | cons rightHead rightTail =>
+                  change runEntries entryOf
+                    (site :: rightHead :: rightTail) start = _
+                  rw [runEntries, if_pos pcEq]
+                  simp only [instrResult]
+                  rw [midRunning, rightResult]
+          | cons restHead restTail =>
+              rw [runEntries, if_pos pcEq, instrResult] at leftResult
+              simp only at leftResult
+              cases nextRunning : next.halt with
+              | Running =>
+                cases restResult :
+                    runEntries entryOf (restHead :: restTail) next with
+                | none =>
+                    rw [nextRunning, restResult] at leftResult
+                    cases leftResult
+                | some restPair =>
+                  rcases restPair with ⟨restFinish, restCost⟩
+                  rw [nextRunning, restResult] at leftResult
+                  simp only at leftResult
+                  have pairEq := Option.some.inj leftResult
+                  have midEq := congrArg Prod.fst pairEq
+                  have costEq := congrArg Prod.snd pairEq
+                  simp only at midEq costEq
+                  subst mid
+                  subst leftCost
+                  have combined := ih restResult midRunning rightResult
+                  have combined' : runEntries entryOf
+                      (restHead :: (restTail ++ right)) next =
+                      some (finish, restCost + rightCost) := combined
+                  change runEntries entryOf
+                    (site :: restHead :: (restTail ++ right)) start = _
+                  rw [runEntries, if_pos pcEq]
+                  simp only [instrResult]
+                  rw [nextRunning, combined']
+                  simp [Nat.add_assoc]
+              | Success =>
+                  rw [nextRunning] at leftResult
+                  cases leftResult
+              | Returned =>
+                  rw [nextRunning] at leftResult
+                  cases leftResult
+              | Reverted =>
+                  rw [nextRunning] at leftResult
+                  cases leftResult
+              | Exception error =>
+                  rw [nextRunning] at leftResult
+                  cases leftResult
+      · rw [runEntries, if_neg pcEq] at leftResult
+        cases leftResult
+
+/-- Compose two successful selected-path evaluations without unfolding either
+concrete path.  The running premise is the exact condition needed because the
+left segment's final instruction becomes intermediate after appending. -/
+theorem runSelected_append (artifact : CertifiedArtifact fork code)
+    (left right : List (SelectedEntry fork code)) {start mid finish : State}
+    {leftCost rightCost : Nat}
+    (leftResult : artifact.runSelected left start = some (mid, leftCost))
+    (midRunning : mid.halt = .Running)
+    (rightResult : artifact.runSelected right mid = some (finish, rightCost)) :
+    artifact.runSelected (left ++ right) start =
+      some (finish, leftCost + rightCost) := by
+  exact runEntries_append (fun selected : SelectedEntry fork code =>
+    selected.entry) left right leftResult midRunning rightResult
+
 /-- Stable execution premises needed to lift a certified evaluator run into
 the relational EVM semantics. -/
 structure ExecutionContext (artifact : CertifiedArtifact fork code)
