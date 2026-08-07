@@ -1,4 +1,5 @@
 import Challenge.EvmProof.CertifiedArtifact
+import Challenge.Ripemd160.ProofSupport.InitialState
 import Challenge.Ripemd160.Spec
 
 namespace Checks.CertifiedArtifact
@@ -29,8 +30,18 @@ def start : EVM.State :=
 def finish : EVM.State :=
   { start with pc := 5, stack := [258] }
 
-example : artifact.run path start = some (finish, 8) := by
+theorem run_tiny : artifact.run path start = some (finish, 8) := by
   rfl
+
+def context : CertifiedArtifact.ExecutionContext artifact start where
+  code_eq := rfl
+  fork_eq := rfl
+  running := rfl
+  notPrecompile := Challenge.Ripemd160.deployAddress_not_precompile
+
+theorem tiny_sound : ∃ trace : GasSteps start finish, trace.cost = 8 := by
+  obtain ⟨trace, hcost⟩ := artifact.run_sound path run_tiny context
+  exact ⟨trace, hcost⟩
 
 example : artifact.run [] start = some (start, 0) := by
   rfl

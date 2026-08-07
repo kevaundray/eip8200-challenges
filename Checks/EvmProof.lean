@@ -1,4 +1,5 @@
 import Challenge.EvmProof
+import Challenge.EvmProof.CertifiedArtifact
 set_option warningAsError true
 /-!
 # Shared EVM proof checks
@@ -23,3 +24,7 @@ If a `sorry` (which appears as `sorryAx`), a `native_decide`
 /-- info: 'Challenge.EvmProof.Reaches.toEval' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Challenge.EvmProof.Reaches.toEval
+
+/-- info: 'Challenge.EvmProof.CertifiedArtifact.run_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.EvmProof.CertifiedArtifact.run_sound

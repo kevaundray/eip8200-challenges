@@ -184,6 +184,143 @@ def run (artifact : CertifiedArtifact fork code) :
                 | _ => none
       else none
 
+/-- Stable execution premises needed to lift a certified evaluator run into
+the relational EVM semantics. -/
+structure ExecutionContext (artifact : CertifiedArtifact fork code)
+    (start : State) : Prop where
+  code_eq : start.executionEnv.code = code
+  fork_eq : start.fork = fork
+  running : start.halt = .Running
+  notPrecompile : Precompile.isPrecompileWithConfig
+    start.executionEnv.precompileConfig start.executionEnv.fork
+      start.executionEnv.codeAddr = false
+
+private def program (artifact : CertifiedArtifact fork code) : ProgramArtifact where
+  code := code
+  instructions := instructions artifact.rows
+  assembly_eq := artifact.valid.assembly_eq
+
+private theorem row_at_index (artifact : CertifiedArtifact fork code)
+    (index : Fin artifact.rows.size) :
+    (program artifact).instructions[index.val]? =
+      some artifact.rows[index].instruction := by
+  simp [program, instructions, index.isLt]
+
+private theorem decodes_at_index (artifact : CertifiedArtifact fork code)
+    (index : Fin artifact.rows.size) (state : State)
+    (context : ExecutionContext artifact state)
+    (pc_eq : state.pc.toNat = artifact.rows[index].pc) :
+    Stepper.Decodes state artifact.rows[index].instruction := by
+  apply Stepper.decodes_of_artifact (program artifact) state index.val
+  · simpa [program] using context.code_eq
+  · rw [pc_eq, artifact.valid.pc_eq index]
+    rfl
+  · exact row_at_index artifact index
+  · simpa [context.fork_eq] using artifact.valid.wellFormed index
+
+private theorem next_context (artifact : CertifiedArtifact fork code)
+    {instruction : Instr} {state next : State}
+    (context : ExecutionContext artifact state)
+    (result : Stepper.runInstr instruction state = some next)
+    (running : next.halt = .Running) :
+    ExecutionContext artifact next := by
+  have env_eq := Stepper.runInstr_executionEnv result
+  refine {
+    code_eq := ?_
+    fork_eq := ?_
+    running := running
+    notPrecompile := ?_
+  }
+  · rw [env_eq]
+    exact context.code_eq
+  · change next.executionEnv.fork = fork
+    rw [env_eq]
+    exact context.fork_eq
+  · simpa [env_eq] using context.notPrecompile
+
+/-- A successful cached execution path denotes a relational trace with exactly
+the cost computed by `run`. -/
+def run_sound (artifact : CertifiedArtifact fork code)
+    (path : List (Fin artifact.rows.size)) {start finish : State} {cost : Nat}
+    (result : artifact.run path start = some (finish, cost))
+    (context : ExecutionContext artifact start) :
+    { trace : GasSteps start finish // trace.cost = cost } := by
+  induction path generalizing start finish cost with
+  | nil =>
+      have pair_eq := Option.some.inj result
+      have finish_eq := congrArg Prod.fst pair_eq
+      have cost_eq := congrArg Prod.snd pair_eq
+      simp only at finish_eq cost_eq
+      subst finish
+      subst cost
+      exact ⟨GasSteps.refl start, rfl⟩
+  | cons index rest ih =>
+      by_cases pc_eq : start.pc.toNat = artifact.rows[index].pc
+      · cases instr_result : Stepper.runInstr artifact.rows[index].instruction start with
+        | none =>
+            rw [run, if_pos pc_eq, instr_result] at result
+            simp only at result
+            cases result
+        | some next =>
+          cases rest with
+          | nil =>
+              rw [run, if_pos pc_eq, instr_result] at result
+              simp only at result
+              have pair_eq := Option.some.inj result
+              have finish_eq := congrArg Prod.fst pair_eq
+              have cost_eq := congrArg Prod.snd pair_eq
+              simp only at finish_eq cost_eq
+              subst finish
+              subst cost
+              let trace := Stepper.runInstr_sound
+                (decodes_at_index artifact index start context pc_eq)
+                instr_result context.running context.notPrecompile
+              exact ⟨trace, rfl⟩
+          | cons nextIndex tail =>
+            rw [run, if_pos pc_eq, instr_result] at result
+            simp only at result
+            cases next_running : next.halt with
+            | Running =>
+              cases rest_result : artifact.run (nextIndex :: tail) next with
+              | none =>
+                  rw [next_running, rest_result] at result
+                  simp only at result
+                  cases result
+              | some rest_pair =>
+                rcases rest_pair with ⟨rest_finish, rest_cost⟩
+                rw [next_running, rest_result] at result
+                simp only at result
+                have pair_eq := Option.some.inj result
+                have finish_eq := congrArg Prod.fst pair_eq
+                have cost_eq := congrArg Prod.snd pair_eq
+                simp only at finish_eq cost_eq
+                subst finish
+                subst cost
+                let head := Stepper.runInstr_sound
+                  (decodes_at_index artifact index start context pc_eq)
+                  instr_result context.running context.notPrecompile
+                obtain ⟨rest_trace, rest_cost_eq⟩ := ih rest_result
+                  (next_context artifact context instr_result next_running)
+                exact ⟨head.trans rest_trace, by simp [head, rest_cost_eq]⟩
+            | Success =>
+                rw [next_running] at result
+                simp only at result
+                cases result
+            | Returned =>
+                rw [next_running] at result
+                simp only at result
+                cases result
+            | Reverted =>
+                rw [next_running] at result
+                simp only at result
+                cases result
+            | Exception error =>
+                rw [next_running] at result
+                simp only at result
+                cases result
+      · rw [run, if_neg pc_eq] at result
+        cases result
+
 end CertifiedArtifact
 
 end Challenge.EvmProof
