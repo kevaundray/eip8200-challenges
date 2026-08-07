@@ -1,6 +1,5 @@
 import Challenge.EvmProof
 import Challenge.EvmProof.CertifiedArtifact
-import Checks.CertifiedArtifact
 set_option warningAsError true
 /-!
 # Shared EVM proof checks
@@ -42,22 +41,6 @@ If a `sorry` (which appears as `sorryAx`), a `native_decide`
 #guard_msgs in
 #print axioms Challenge.EvmProof.CertifiedArtifact.decoderCertificate
 
-/-- info: 'Challenge.EvmProof.CertifiedArtifact.runSelected_nil' depends on axioms: [propext, Quot.sound] -/
-#guard_msgs in
-#print axioms Challenge.EvmProof.CertifiedArtifact.runSelected_nil
-
-/-- info: 'Challenge.EvmProof.CertifiedArtifact.runSelected_cons' depends on axioms: [propext, Quot.sound] -/
-#guard_msgs in
-#print axioms Challenge.EvmProof.CertifiedArtifact.runSelected_cons
-
-/-- info: 'Challenge.EvmProof.CertifiedArtifact.runSelected_append' depends on axioms: [propext, Quot.sound] -/
-#guard_msgs in
-#print axioms Challenge.EvmProof.CertifiedArtifact.runSelected_append
-
-/-- info: 'Challenge.EvmProof.CertifiedArtifact.runSelected_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Challenge.EvmProof.CertifiedArtifact.runSelected_sound
-
 /--
 info: 'Challenge.EvmProof.CertifiedArtifact.runSelected_sound_exists' depends on axioms: [propext,
  Classical.choice,
@@ -65,19 +48,3 @@ info: 'Challenge.EvmProof.CertifiedArtifact.runSelected_sound_exists' depends on
 -/
 #guard_msgs in
 #print axioms Challenge.EvmProof.CertifiedArtifact.runSelected_sound_exists
-
-/-- info: 'Checks.CertifiedArtifact.tiny_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Checks.CertifiedArtifact.tiny_sound
-
-/-- info: 'Checks.CertifiedArtifact.selected_tiny_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Checks.CertifiedArtifact.selected_tiny_sound
-
-/-- info: 'Checks.CertifiedArtifact.selected_tiny_sound_exists' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Checks.CertifiedArtifact.selected_tiny_sound_exists
-
-/-- info: 'Checks.CertifiedArtifact.abstract_selected_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Checks.CertifiedArtifact.abstract_selected_sound

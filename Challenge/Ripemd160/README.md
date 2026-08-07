@@ -116,18 +116,10 @@ at the complete entry boundary by `Execution.gasSteps_entry_cost`.
 
 The small compatibility snapshot in
 [`ArtifactSnapshots.lean`](Reference/Proofs/Bytecode/ArtifactSnapshots.lean)
-is generated convenience data.  Regenerate or verify it from the frozen hex
-with:
-
-```sh
-python3 scripts/generate-ripemd160-artifact-snapshots.py
-python3 scripts/generate-ripemd160-artifact-snapshots.py --check
-```
-
-The script reads the curated `indices` in that file and rewrites only the
-marked `entries` region.  Its output is not trusted: `Artifact.snapshotRows_eq`
-checks all selected rows against the structural bytecode table by kernel
-reduction, so a stale PC, instruction, or immediate makes the Lean build fail.
+is a curated cache of legacy proof locations. Its contents are not trusted:
+`Artifact.snapshotRows_eq` checks every selected row against the structural
+bytecode table by kernel reduction, so a stale PC, instruction, or immediate
+makes the Lean build fail.
 
 For proof-only changes, leave the bytes and snapshot alone and iterate with:
 
@@ -137,10 +129,10 @@ lake build Challenge.Ripemd160.Reference.Proofs.Bytecode.Execution
 ```
 
 For bytecode or internal control-flow changes, first update the frozen bytecode
-and its structural byte representation, review the curated indices, regenerate
-the compatibility snapshot, then build `Artifact` before the focused proof
-modules.  Changes to the index count must also update its explicit `Fin` bound
-and length theorem.  The public endpoints
+and its structural byte representation, then review and update the curated
+snapshot indices and entries before building `Artifact` and the focused proof
+modules. Changes to the index count must also update its explicit `Fin` bound
+and length theorem. The public endpoints
 `ReferenceCorrect.reference_correctWithSchedule` and
 `ReferenceCorrect.reference_correct` are unchanged, as are the challenge
 interfaces used by optimized submissions.

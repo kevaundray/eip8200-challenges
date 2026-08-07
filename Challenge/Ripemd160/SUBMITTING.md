@@ -186,11 +186,9 @@ Replace `FastRipemd160` with the candidate namespace. Run the full submission
 and gas-report checkers before handing the candidate off, but keep the focused
 module build as the inner proof-edit loop.
 
-The command
-`python3 scripts/generate-ripemd160-artifact-snapshots.py` regenerates only the
-bundled reference proof's curated legacy-compatibility sites. Candidate
-submissions do not share that snapshot and should not edit or regenerate it;
-derive and certify their sites directly from their own `bytecode`.
+The bundled reference maintains a curated cache of legacy-compatibility sites.
+Candidate submissions do not share that snapshot and should derive and certify
+selected sites directly from their own `bytecode`.
 
 The bundled reference's entry handoff uses one deliberately narrow
 noncomputable proof seam. `Execution.gasSteps_entry` extracts a `GasSteps`
