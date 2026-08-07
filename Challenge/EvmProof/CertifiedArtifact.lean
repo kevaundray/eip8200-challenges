@@ -30,9 +30,29 @@ def instructions (rows : Array Entry) : List Instr :=
 def instructionPC (rows : Array Entry) (index : Nat) : Nat :=
   (assembleBytes ((instructions rows).take index)).length
 
-/-- All cumulative instruction offsets, in table order. -/
+private def instructionPCsFrom (pc : Nat) : List Entry → List Nat
+  | [] => []
+  | row :: rest =>
+      pc :: instructionPCsFrom (pc + row.instruction.bytes.length) rest
+
+/-- All cumulative instruction offsets, computed in one table traversal. -/
 def instructionPCs (rows : Array Entry) : List Nat :=
-  (List.range rows.size).map (instructionPC rows)
+  instructionPCsFrom 0 rows.toList
+
+private theorem instructionPCsFrom_getElem? (pc : Nat) (rows : List Entry)
+    (index : Nat) (hindex : index < rows.length) :
+    (instructionPCsFrom pc rows)[index]? = some
+      (pc + (assembleBytes ((rows.map (·.instruction)).take index)).length) := by
+  induction rows generalizing pc index with
+  | nil => simp at hindex
+  | cons row rest ih =>
+      cases index with
+      | zero => simp [instructionPCsFrom]
+      | succ index =>
+          have hrest : index < rest.length := by simpa using hindex
+          simp only [instructionPCsFrom, List.getElem?_cons_succ]
+          rw [ih (pc + row.instruction.bytes.length) index hrest]
+          simp [assembleBytes_cons, Nat.add_assoc]
 
 namespace Table
 
@@ -108,7 +128,11 @@ theorem pc_eq {fork : Fork} {code : ByteArray} {rows : Array Entry}
     (valid : Valid fork code rows) (index : Fin rows.size) :
     rows[index].pc = instructionPC rows index.val := by
   have h := congrArg (fun pcs : List Nat => pcs[index.val]?) valid.2.1
-  simpa [instructionPCs, index.isLt] using h
+  have hindex : index.val < rows.toList.length := by
+    simp [index.isLt]
+  rw [instructionPCs,
+    instructionPCsFrom_getElem? 0 rows.toList index.val hindex] at h
+  simpa [instructionPC, instructions, index.isLt] using h
 
 theorem wellFormed {fork : Fork} {code : ByteArray} {rows : Array Entry}
     (valid : Valid fork code rows) (index : Fin rows.size) :
