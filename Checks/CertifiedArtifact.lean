@@ -32,6 +32,56 @@ def finish : EVM.State :=
 example : artifact.run path start = some (finish, 8) := by
   rfl
 
+example : artifact.run [] start = some (start, 0) := by
+  rfl
+
+def firstPath : List (Fin artifact.rows.size) := [⟨0, by decide⟩]
+
+def afterFirst : EVM.State :=
+  { start with pc := 3, stack := [258] }
+
+example : artifact.run firstPath start = some (afterFirst, 3) := by
+  rfl
+
+def wrongPC : EVM.State :=
+  { start with pc := 1 }
+
+example : artifact.run firstPath wrongPC = none := by
+  rfl
+
+def haltingRows : Array CertifiedArtifact.Entry := #[
+  ⟨0, .op .INVALID⟩,
+  ⟨1, .push 0 0⟩
+]
+
+def haltingCode : ByteArray :=
+  assemble (haltingRows.toList.map (·.instruction))
+
+theorem haltingRows_valid :
+    CertifiedArtifact.Table.Valid .Osaka haltingCode haltingRows := by
+  decide
+
+def haltingArtifact : CertifiedArtifact .Osaka haltingCode :=
+  CertifiedArtifact.certify haltingRows haltingRows_valid
+
+def haltingStart : EVM.State :=
+  Challenge.Ripemd160.initialState haltingCode ByteArray.empty 0
+
+def halted : EVM.State :=
+  { haltingStart with halt := .Exception .InvalidInstruction }
+
+def haltingPath : List (Fin haltingArtifact.rows.size) :=
+  [⟨0, by decide⟩, ⟨1, by decide⟩]
+
+example : haltingArtifact.run haltingPath haltingStart = none := by
+  rfl
+
+def haltOnlyPath : List (Fin haltingArtifact.rows.size) :=
+  [⟨0, by decide⟩]
+
+example : haltingArtifact.run haltOnlyPath haltingStart = some (halted, 0) := by
+  rfl
+
 example : ¬ CertifiedArtifact.Table.Valid .Osaka ByteArray.empty rows := by
   decide
 
