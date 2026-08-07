@@ -64,6 +64,13 @@ theorem run_selected_tiny :
     artifact.runSelected selectedPath start = some (finish, 8) := by
   rfl
 
+/-- Client-style reduction uses only public selected-path equations, never the
+private shared evaluator. -/
+theorem run_selected_tiny_by_equations :
+    artifact.runSelected selectedPath start = some (finish, 8) := by
+  simp only [selectedPath, CertifiedArtifact.runSelected_cons]
+  rfl
+
 theorem selected_tiny_sound : ∃ trace : GasSteps start finish, trace.cost = 8 := by
   obtain ⟨trace, hcost⟩ :=
     artifact.runSelected_sound selectedPath run_selected_tiny context

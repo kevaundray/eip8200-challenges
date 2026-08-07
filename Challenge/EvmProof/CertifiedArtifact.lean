@@ -216,6 +216,37 @@ def runSelected (_artifact : CertifiedArtifact fork code)
     Option (State × Nat) :=
   runEntries (fun selected => selected.entry) path state
 
+/-- Public empty-path equation for bounded simplification without unfolding the
+private shared evaluator. -/
+@[simp] theorem runSelected_nil (artifact : CertifiedArtifact fork code)
+    (state : State) : artifact.runSelected [] state = some (state, 0) := by
+  rfl
+
+/-- Public one-step equation for bounded simplification.  Its recursive branch
+calls `runSelected` again, allowing clients to expose exactly as many literal
+sites as their simplifier traverses while `runEntries` remains private. -/
+@[simp] theorem runSelected_cons (artifact : CertifiedArtifact fork code)
+    (selected : SelectedEntry fork code)
+    (rest : List (SelectedEntry fork code)) (state : State) :
+    artifact.runSelected (selected :: rest) state =
+      if state.pc.toNat = selected.entry.pc then
+        match Stepper.runInstr selected.entry.instruction state with
+        | none => none
+        | some next =>
+            let cost := Stepper.instrCost selected.entry.instruction state
+            match rest with
+            | [] => some (next, cost)
+            | _ :: _ =>
+                match next.halt with
+                | .Running =>
+                    match artifact.runSelected rest next with
+                    | none => none
+                    | some (finish, restCost) =>
+                        some (finish, cost + restCost)
+                | _ => none
+      else none := by
+  cases rest <;> rfl
+
 /-- Stable execution premises needed to lift a certified evaluator run into
 the relational EVM semantics. -/
 structure ExecutionContext (artifact : CertifiedArtifact fork code)
