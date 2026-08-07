@@ -274,9 +274,10 @@ run_self_test() {
   write_challenge_readme Modexp
   write_challenge_readme Blake2f
   write_candidate 'Challenge/Sha256/Submissions/Existing'
-  mkdir -p scripts Challenge/Ripemd160
+  mkdir -p scripts Challenge/Ripemd160 Challenge/Blake2f
   printf '# trusted checker\n' > scripts/checker.sh
   printf 'import EvmSemantics.EVM.BigStep\n' > Challenge/Ripemd160/Spec.lean
+  printf 'import EvmSemantics.EVM.BigStep\n' > Challenge/Blake2f/Spec.lean
   base="$(commit_fixture base)"
 
   write_candidate 'Challenge/Ripemd160/Submissions/FastRipemd'
@@ -287,8 +288,8 @@ run_self_test() {
   git reset --hard -q "$base"
   write_candidate 'Challenge/Blake2f/Submissions/FutureChallenge'
   sed -i 's/base row/candidate row/' Challenge/Blake2f/README.md
-  head="$(commit_fixture future-challenge)"
-  expect_accept 'candidate in a future challenge' "$base" "$head"
+  head="$(commit_fixture blake2f-candidate)"
+  expect_accept 'BLAKE2f candidate plus generated report' "$base" "$head"
 
   git reset --hard -q "$base"
   printf '\n-- stronger proof\n' >> Challenge/Sha256/Submissions/Existing/Proof.lean
@@ -310,6 +311,12 @@ run_self_test() {
   printf '\ndef Correct := True\n' >> Challenge/Ripemd160/Spec.lean
   head="$(commit_fixture mixed-spec)"
   expect_reject 'candidate mixed with spec change' "$base" "$head"
+
+  git reset --hard -q "$base"
+  write_candidate 'Challenge/Blake2f/Submissions/MixedSpec'
+  printf '\ndef Correct := True\n' >> Challenge/Blake2f/Spec.lean
+  head="$(commit_fixture blake2f-mixed-spec)"
+  expect_reject 'BLAKE2f candidate mixed with spec change' "$base" "$head"
 
   git reset --hard -q "$base"
   write_candidate 'Challenge/Sha256/Submissions/TwoChallenges'
