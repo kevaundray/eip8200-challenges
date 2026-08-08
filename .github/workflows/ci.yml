@@ -11,9 +11,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Build and check the direct-EVM proof layer once. Every challenge imports
-  # this layer, so challenge jobs restore this exact cache instead of racing to
-  # compile and save three copies of it.
+  submission-policy-test:
+    name: Submission boundary policy self-test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Exercise acceptance and rejection controls
+        run: scripts/check-submission-boundary.sh --self-test
+
+  # Build external Lean dependencies and the direct-EVM proof layer once.
+  # Challenge jobs restore these complete global caches and own only their
+  # root-package outputs.
   shared-lean:
     name: Shared Lean proof infrastructure
     runs-on: warp-ubuntu-2404-x64-32x
@@ -29,16 +40,17 @@ jobs:
         id: cache-keys
         env:
           DEPENDENCY_HASH: ${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+          PACKAGE_TARGET_HASH: ${{ hashFiles('.github/lean-package-cache-targets') }}
           SHARED_HASH: ${{ hashFiles('lakefile.toml', 'Challenge/EvmProof.lean', 'Challenge/EvmProof/**/*.lean', 'Checks/EvmProof.lean') }}
         run: |
-          package_key="lake-packages-v3-${{ runner.os }}-${{ runner.arch }}-${DEPENDENCY_HASH}"
-          shared_key="project-shared-v2-${{ runner.os }}-${{ runner.arch }}-${DEPENDENCY_HASH}-${SHARED_HASH}"
+          package_key="lake-packages-v4-${{ runner.os }}-${{ runner.arch }}-${DEPENDENCY_HASH}-${PACKAGE_TARGET_HASH}"
+          shared_key="project-shared-v3-${{ runner.os }}-${{ runner.arch }}-${DEPENDENCY_HASH}-${PACKAGE_TARGET_HASH}-${SHARED_HASH}"
           echo "package-key=$package_key" >> "$GITHUB_OUTPUT"
           echo "shared-key=$shared_key" >> "$GITHUB_OUTPUT"
 
-      # Preserve complete package workspaces, including Git metadata. Caching
-      # only package build directories makes Lake discard restored artifacts as
-      # invalid checkouts.
+      # This cache is the sole owner of dependency-package sources and build
+      # outputs. Its target-set hash forces a new immutable cache whenever the
+      # globally warmed dependency closure changes.
       - name: Cache pinned packages
         id: package-cache
         uses: actions/cache@v5
@@ -46,19 +58,17 @@ jobs:
           path: .lake/packages
           key: ${{ steps.cache-keys.outputs.package-key }}
           restore-keys: |
+            lake-packages-v4-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+            lake-packages-v3-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
             lake-packages-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
 
       - name: Cache shared project build
         uses: actions/cache@v5
         with:
-          # Native module traces include native dependency artifacts. Preserve
-          # package IR alongside root build output so restoring one without
-          # the other cannot invalidate otherwise unchanged proofs.
-          path: |
-            .lake/build
-            .lake/packages/*/.lake/build/ir
+          path: .lake/build
           key: ${{ steps.cache-keys.outputs.shared-key }}
           restore-keys: |
+            project-shared-v3-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
             project-shared-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
             project-shared-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
 
@@ -72,6 +82,11 @@ jobs:
           test: "false"
           lint: "false"
           use-github-cache: "false"
+
+      - name: Build global package dependencies
+        run: |
+          mapfile -t targets < .github/lean-package-cache-targets
+          lake build "${targets[@]}"
 
       - name: Build shared EVM proof support
         run: lake build +Challenge.EvmProof:c.o
@@ -137,24 +152,25 @@ jobs:
       - name: Restore shared project build
         uses: actions/cache/restore@v5
         with:
-          path: |
-            .lake/build
-            .lake/packages/*/.lake/build/ir
+          path: .lake/build
           key: ${{ needs.shared-lean.outputs.shared-key }}
           fail-on-cache-miss: true
 
       - name: Cache ${{ matrix.name }} project build
         uses: actions/cache@v5
         with:
-          # These outputs form one Lake trace graph and must be restored as a
-          # unit; caching only the root outputs forces native dependencies cold.
-          path: |
-            .lake/build
-            .lake/packages/*/.lake/build/ir
-          key: project-${{ matrix.slug }}-v2-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-${{ hashFiles(format('Challenge/{0}.lean', matrix.directory), format('Challenge/{0}/**', matrix.directory), matrix.main, format('Checks/{0}.lean', matrix.directory)) }}
-          # The final prefix can bootstrap the split from a base-branch cache
-          # during migration; challenge-local caches always take precedence.
+          # Dependency-package artifacts come exclusively from the global
+          # package cache. A challenge cache owns only root-package outputs.
+          path: .lake/build
+          # Only compiled Lean inputs belong in this hash. Documentation and
+          # generated gas reports are checked separately and must not trigger
+          # a cold proof rebuild.
+          key: project-${{ matrix.slug }}-v4-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-${{ hashFiles(format('Challenge/{0}.lean', matrix.directory), format('Challenge/{0}/**/*.lean', matrix.directory), matrix.main, format('Checks/{0}.lean', matrix.directory)) }}
+          # Prefer root-only v4 caches. Older namespaces can bootstrap root
+          # outputs when their cache archive version is compatible.
           restore-keys: |
+            project-${{ matrix.slug }}-v4-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-
+            project-${{ matrix.slug }}-v3-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-
             project-${{ matrix.slug }}-v2-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-
             project-${{ matrix.slug }}-v1-${{ runner.os }}-${{ runner.arch }}-
             project-lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-

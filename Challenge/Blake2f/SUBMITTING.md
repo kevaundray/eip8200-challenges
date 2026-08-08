@@ -56,3 +56,13 @@ scripts/check-blake2f-submissions.sh
 scripts/report-blake2f-gas.sh
 scripts/check-blake2f-gas-report.sh
 ```
+
+## PR guidance
+
+Candidate PRs are mechanically confined to one candidate directory. The only
+permitted change outside it is the generated gas-report section in this
+challenge's [`README.md`](README.md). Changes to `Spec.lean`, the central
+checker, proof support, pinned dependencies, CI, or any other path alter the
+trust boundary and must be proposed as a separate infrastructure PR. The
+boundary policy runs from the trusted base branch, so changing the policy in a
+candidate PR cannot bypass it.
