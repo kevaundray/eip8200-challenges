@@ -22,5 +22,7 @@ challenge correctness theorems have their own axiom-footprint checks.
 #print axioms Challenge.Bls12381.ProofSupport.Fp12.refines_mul
 #print axioms Challenge.Bls12381.ProofSupport.G1Projective.affine_toAffine
 #print axioms Challenge.Bls12381.ProofSupport.G2Projective.affine_toAffine
-#print axioms Challenge.Bls12381.ProofSupport.ScalarMul.fold_eq
-#print axioms Challenge.Bls12381.ProofSupport.Msm.fold_append
+#print axioms Challenge.Bls12381.ProofSupport.ScalarMul.loopG1_step
+#print axioms Challenge.Bls12381.ProofSupport.ScalarMul.loopG2_step
+#print axioms Challenge.Bls12381.ProofSupport.Msm.foldG1_append
+#print axioms Challenge.Bls12381.ProofSupport.Msm.foldG2_append
