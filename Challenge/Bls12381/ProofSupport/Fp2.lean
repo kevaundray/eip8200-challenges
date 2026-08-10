@@ -52,7 +52,26 @@ def square (a : Repr) : Repr :=
     c1 := Fp.mul (Fp.add a.c0 a.c0) a.c1 }
 
 def neg (a : Repr) : Repr := { c0 := Fp.neg a.c0, c1 := Fp.neg a.c1 }
-def inv (a : Repr) : Repr := ofField (toField a)⁻¹
+
+/-- Component-level conjugation; unlike `ofField`, this is directly
+implementable using one base-field negation. -/
+def conj (a : Repr) : Repr := { c0 := a.c0, c1 := Fp.neg a.c1 }
+
+/-- Norm `a₀² + a₁²`, represented over the two-word base field. -/
+def norm (a : Repr) : Fp.Limbs :=
+  Fp.add (Fp.mul a.c0 a.c0) (Fp.mul a.c1 a.c1)
+
+/-- Actual Fp2 adjugate formula, parameterized by the base-field inversion
+algorithm.  This makes the only still-unproved primitive explicit rather than
+hiding it behind an affine semantic operation. -/
+def invWith (invert : Fp.Limbs → Fp.Limbs) (a : Repr) : Repr :=
+  let normInv := invert (norm a)
+  { c0 := Fp.mul a.c0 normInv
+    c1 := Fp.mul (Fp.neg a.c1) normInv }
+
+/-- Mathematical inverse representation retained as an explicitly named spec
+adapter; concrete code must refine `invWith` instead. -/
+def invSpecRepr (a : Repr) : Repr := ofField (toField a)⁻¹
 
 theorem mul_components (a b : Repr) :
     mul a b =
@@ -103,8 +122,30 @@ theorem refines_neg (a : Repr) : Refines (neg a) (-toField a) := by
       EvmSemantics.Crypto.Bls12381.Fp2) =
     _root_.Fp2.neg (toField a)
   simp [toField, _root_.Fp2.neg]
-theorem refines_inv (a : Repr) : Refines (inv a) (toField a)⁻¹ :=
-  refines_ofField _
+theorem refines_conj (a : Repr) :
+    Refines (conj a) (_root_.Fp2.conj (toField a)) := by
+  change
+    ({ c0 := Fp.toField a.c0, c1 := Fp.toField (Fp.neg a.c1) } :
+      EvmSemantics.Crypto.Bls12381.Fp2) = _root_.Fp2.conj (toField a)
+  simp [toField, _root_.Fp2.conj]
+
+@[simp] theorem toField_norm (a : Repr) :
+    Fp.toField (norm a) = _root_.Fp2.norm (toField a) := by
+  simp [norm, toField, _root_.Fp2.norm]
+
+theorem refines_invWith (invert : Fp.Limbs → Fp.Limbs) (a : Repr)
+    (hinvert : Fp.toField (invert (norm a)) =
+      (Fp.toField (norm a))⁻¹) :
+    Refines (invWith invert a) (_root_.Fp2.inv (toField a)) := by
+  change
+    ({ c0 := Fp.toField (Fp.mul a.c0 (invert (norm a)))
+       c1 := Fp.toField (Fp.mul (Fp.neg a.c1) (invert (norm a))) } :
+      EvmSemantics.Crypto.Bls12381.Fp2) = _root_.Fp2.inv (toField a)
+  simp [hinvert, toField_norm, toField, _root_.Fp2.inv,
+    _root_.Fp2.norm]
+
+theorem refines_invSpecRepr (a : Repr) :
+    Refines (invSpecRepr a) (toField a)⁻¹ := refines_ofField _
 
 @[simp] theorem toField_add (a b : Repr) :
     toField (add a b) = toField a + toField b := refines_add a b
@@ -116,8 +157,15 @@ theorem refines_inv (a : Repr) : Refines (inv a) (toField a)⁻¹ :=
     toField (square a) = _root_.Fp2.square (toField a) := refines_square a
 @[simp] theorem toField_neg (a : Repr) :
     toField (neg a) = -toField a := refines_neg a
-@[simp] theorem toField_inv (a : Repr) :
-    toField (inv a) = (toField a)⁻¹ := refines_inv a
+@[simp] theorem toField_conj (a : Repr) :
+    toField (conj a) = _root_.Fp2.conj (toField a) := refines_conj a
+@[simp] theorem toField_invWith (invert : Fp.Limbs → Fp.Limbs) (a : Repr)
+    (hinvert : Fp.toField (invert (norm a)) =
+      (Fp.toField (norm a))⁻¹) :
+    toField (invWith invert a) = _root_.Fp2.inv (toField a) :=
+  refines_invWith invert a hinvert
+@[simp] theorem toField_invSpecRepr (a : Repr) :
+    toField (invSpecRepr a) = (toField a)⁻¹ := refines_invSpecRepr a
 
 @[simp] theorem semantic_pow_two (a : EvmSemantics.Crypto.Bls12381.Fp2) :
     a ^ 2 = _root_.Fp2.square a := rfl
