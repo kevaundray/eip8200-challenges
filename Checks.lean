@@ -8,6 +8,7 @@ import Checks.Bls12381Fp6
 import Checks.Bls12381Fp12
 import Checks.Bls12381G1Projective
 import Checks.Bls12381G2Projective
+import Checks.Bls12381ScalarMul
 import Checks.Modexp
 import Checks.Ripemd160
 import Checks.Sha256
