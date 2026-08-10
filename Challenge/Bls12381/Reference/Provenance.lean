@@ -24,6 +24,15 @@ def compilerVersion : String := "0.8.35+commit.47b9dedd"
 def foundryVersion : String :=
   "forge 1.5.1-stable (b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2)"
 
+/-- Exact `forge-std` revision recorded by the upstream `foundry.lock`. -/
+def forgeStdCommit : String :=
+  "0844d7e1fc5e60d77b68e469bff60265f236c398"
+
+/-- Exact OpenZeppelin Contracts revision recorded by the upstream
+`foundry.lock`. -/
+def openzeppelinCommit : String :=
+  "fcbae5394ae8ad52d8e580a3477db99814b9d565"
+
 def compilerSettings : List (String × String) :=
   [ ("viaIR", "true")
   , ("optimizer.enabled", "true")
@@ -48,12 +57,19 @@ available evidence and must not be read as legal clearance. -/
 def licensingAudit : String :=
   "Per-file SPDX expression MIT; no root license text or copyright notice at the pinned commit."
 
+/-- Shared warning for the baselines whose invalid-input behavior does not
+match EIP-2537.  Keeping the text named lets checks pin both its wording and
+its inclusion in the provenance record. -/
+def rejectionSemanticsLimitation : String :=
+  "Several upstream baselines accept inputs that EIP-2537 requires to be rejected; see knownNoncompliance."
+
 def generalLimitations : List String :=
   [ "The files are deployed runtime bytecode, not creation bytecode."
   , "No Lean theorem connects any baseline artifact to a challenge specification."
   , "A successful rebuild establishes reproducibility only, not functional correctness."
   , "The upstream differential tests cover selected valid inputs and do not establish conformance."
   , "The upstream build emits compiler and lint warnings."
+  , rejectionSemanticsLimitation
   , licensingAudit ]
 
 def knownNoncompliance : List (String × String) :=
