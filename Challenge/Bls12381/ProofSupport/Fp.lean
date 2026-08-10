@@ -46,12 +46,34 @@ def normalize (n : Nat) : Limbs :=
   { hi := UInt256.ofNat (reduced / Challenge.EvmProof.Limbs.radix)
     lo := UInt256.ofNat reduced }
 
+/-- Split a known-bounded natural into the concrete high/low EVM words without
+performing field reduction.  Concrete carry, borrow, and reduction routines
+target this constructor. -/
+def pack (n : Nat) : Limbs :=
+  { hi := UInt256.ofNat (n / Challenge.EvmProof.Limbs.radix)
+    lo := UInt256.ofNat n }
+
 theorem p_lt_radix_sq : p < Challenge.EvmProof.Limbs.radix ^ 2 := by
   norm_num [p, absU, Challenge.EvmProof.Limbs.radix]
 
 theorem field_lt_radix_sq (a : Fp) :
     a.val < Challenge.EvmProof.Limbs.radix ^ 2 :=
   a.isLt.trans p_lt_radix_sq
+
+@[simp] theorem value_pack {n : Nat}
+    (hn : n < Challenge.EvmProof.Limbs.radix ^ 2) : value (pack n) = n := by
+  have hhi := Challenge.EvmProof.Limbs.splitTwo_high_lt hn
+  change n / Challenge.EvmProof.Limbs.radix <
+    Challenge.EvmProof.Limbs.radix at hhi
+  unfold value pack
+  rw [Challenge.EvmProof.Word.word_toNat_ofNat,
+    Challenge.EvmProof.Word.word_toNat_ofNat]
+  change n % Challenge.EvmProof.Limbs.radix +
+      Challenge.EvmProof.Limbs.radix *
+        (n / Challenge.EvmProof.Limbs.radix %
+          Challenge.EvmProof.Limbs.radix) = n
+  rw [Nat.mod_eq_of_lt hhi]
+  exact Nat.mod_add_div n Challenge.EvmProof.Limbs.radix
 
 @[simp] theorem value_ofField (a : Fp) : value (ofField a) = a.val := by
   have hhi := Challenge.EvmProof.Limbs.splitTwo_high_lt (field_lt_radix_sq a)
@@ -82,6 +104,26 @@ theorem field_lt_radix_sq (a : Fp) :
           Challenge.EvmProof.Limbs.radix) = n % p
   rw [Nat.mod_eq_of_lt hhi]
   exact Nat.mod_add_div (n % p) Challenge.EvmProof.Limbs.radix
+
+theorem canonical_pack {n : Nat} (hn : n < p) : Canonical (pack n) := by
+  constructor
+  · unfold pack
+    rw [Challenge.EvmProof.Word.word_toNat_ofNat]
+    have hdiv : n / Challenge.EvmProof.Limbs.radix < 2 ^ 128 := by
+      rw [Nat.div_lt_iff_lt_mul Challenge.EvmProof.Limbs.radix_pos]
+      have hp : p < Challenge.EvmProof.Limbs.radix * 2 ^ 128 := by
+        norm_num [p, absU, Challenge.EvmProof.Limbs.radix]
+      exact hn.trans hp
+    rw [Nat.mod_eq_of_lt (hdiv.trans (by norm_num))]
+    exact hdiv
+  · rw [value_pack (hn.trans p_lt_radix_sq)]
+    exact hn
+
+theorem canonical_normalize (n : Nat) : Canonical (normalize n) := by
+  have hp0 : 0 < p := by norm_num [p, absU]
+  have hn : n % p < p := Nat.mod_lt n hp0
+  unfold normalize
+  exact canonical_pack hn
 
 @[simp] theorem toField_normalize (n : Nat) :
     toField (normalize n) = Fin.ofNat p n := by
@@ -116,6 +158,63 @@ def add (a b : Limbs) : Limbs := normalize (value a + value b)
 def sub (a b : Limbs) : Limbs := normalize (p - value b % p + value a)
 def mul (a b : Limbs) : Limbs := normalize (value a * value b)
 def neg (a : Limbs) : Limbs := normalize (p - value a % p)
+
+/-- Mathematical exponentiation boundary.  This deliberately remains separate
+from the future limb-level square-and-multiply implementation. -/
+def PowSpec (a : Limbs) (exponent : Nat) : Fp :=
+  Fin.ofNat p (value a ^ exponent)
+
+/-- Canonical representation of `PowSpec`; not an implementation claim. -/
+def powSpecRepr (a : Limbs) (exponent : Nat) : Limbs :=
+  normalize (value a ^ exponent)
+
+@[simp] theorem toField_powSpecRepr (a : Limbs) (exponent : Nat) :
+    toField (powSpecRepr a exponent) = PowSpec a exponent := by
+  simp [powSpecRepr, PowSpec]
+
+/-- Carry-friendly addition for canonical operands.  The only reduction is
+one conditional subtraction, matching the concrete two-word EVM routine. -/
+def addCanonical (a b : Limbs) : Limbs :=
+  let total := value a + value b
+  if total < p then pack total else pack (total - p)
+
+/-- Borrow-friendly subtraction for canonical operands.  Underflow is repaired
+with one conditional addition of the modulus. -/
+def subCanonical (a b : Limbs) : Limbs :=
+  if value b ≤ value a then pack (value a - value b)
+  else pack (p + value a - value b)
+
+theorem value_addCanonical {a b : Limbs}
+    (ha : Canonical a) (hb : Canonical b) :
+    value (addCanonical a b) = (value a + value b) % p := by
+  have hp0 : 0 < p := by norm_num [p, absU]
+  have htotal : value a + value b < 2 * p := by
+    have ha' := ha.2
+    have hb' := hb.2
+    omega
+  simp only [addCanonical]
+  split_ifs with hlt
+  · rw [value_pack ((hlt.trans p_lt_radix_sq))]
+    exact (Nat.mod_eq_of_lt hlt).symm
+  · have hred : value a + value b - p < p := by omega
+    rw [value_pack (hred.trans p_lt_radix_sq)]
+    rw [Nat.mod_eq_sub_mod (by omega), Nat.mod_eq_of_lt hred]
+
+theorem value_subCanonical {a b : Limbs}
+    (ha : Canonical a) (_hb : Canonical b) :
+    value (subCanonical a b) = (p + value a - value b) % p := by
+  have hp0 : 0 < p := by norm_num [p, absU]
+  unfold subCanonical
+  split_ifs with hle
+  · have hdiff : value a - value b < p :=
+      (Nat.sub_le _ _).trans_lt ha.2
+    rw [value_pack (hdiff.trans p_lt_radix_sq)]
+    have heq : p + value a - value b = p + (value a - value b) := by omega
+    rw [heq, Nat.add_mod, Nat.mod_self, Nat.zero_add,
+      Nat.mod_eq_of_lt hdiff]
+    exact (Nat.mod_eq_of_lt hdiff).symm
+  · have hred : p + value a - value b < p := by omega
+    rw [value_pack (hred.trans p_lt_radix_sq), Nat.mod_eq_of_lt hred]
 
 theorem refines_add (a b : Limbs) : Refines (add a b) (toField a + toField b) := by
   apply Fin.ext

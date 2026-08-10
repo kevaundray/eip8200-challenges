@@ -2,6 +2,7 @@ import Checks.EvmProof
 import Checks.Blake2f
 import Checks.Bls12381Codec
 import Checks.Bls12381Conformance
+import Checks.Bls12381Fp
 import Checks.Modexp
 import Checks.Ripemd160
 import Checks.Sha256
