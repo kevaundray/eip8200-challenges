@@ -48,6 +48,9 @@ def sub (a b : Repr) : Repr :=
     c1 := Fp2.sub a.c1 b.c1
     c2 := Fp2.sub a.c2 b.c2 }
 
+def neg (a : Repr) : Repr :=
+  { c0 := Fp2.neg a.c0, c1 := Fp2.neg a.c1, c2 := Fp2.neg a.c2 }
+
 /-- Six-multiplication Karatsuba formula for the cubic extension. -/
 def mul (a b : Repr) : Repr :=
   let v0 := Fp2.mul a.c0 b.c0
@@ -74,7 +77,45 @@ def square (a : Repr) : Repr :=
 /-- Multiplication by the cubic generator `v`. -/
 def mulByV (a : Repr) : Repr :=
   { c0 := mulByXi a.c2, c1 := a.c0, c2 := a.c1 }
-def inv (a : Repr) : Repr := ofField (_root_.Fp6.inv (toField a))
+
+def mulByFp2 (a : Repr) (k : Fp2.Repr) : Repr :=
+  { c0 := Fp2.mul a.c0 k, c1 := Fp2.mul a.c1 k, c2 := Fp2.mul a.c2 k }
+
+/-- Sparse multiplication by `(b0 + b1·v)`. -/
+def mulBy01 (a : Repr) (b0 b1 : Fp2.Repr) : Repr :=
+  let aa := Fp2.mul a.c0 b0
+  let bb := Fp2.mul a.c1 b1
+  let t1 := Fp2.add b0 b1
+  { c0 := Fp2.add (mulByXi (Fp2.sub (Fp2.mul (Fp2.add a.c1 a.c2) b1) bb)) aa
+    c1 := Fp2.sub (Fp2.sub (Fp2.mul t1 (Fp2.add a.c0 a.c1)) aa) bb
+    c2 := Fp2.add (Fp2.sub (Fp2.mul (Fp2.add a.c0 a.c2) b0) aa) bb }
+
+/-- Adjugate coefficients used by Fp6 inversion. -/
+def invAdjugate (a : Repr) : Repr :=
+  let t0 := Fp2.square a.c0
+  let t1 := Fp2.square a.c1
+  let t2 := Fp2.square a.c2
+  let t3 := Fp2.mul a.c0 a.c1
+  let t4 := Fp2.mul a.c0 a.c2
+  let t5 := Fp2.mul a.c1 a.c2
+  { c0 := Fp2.sub t0 (mulByXi t5)
+    c1 := Fp2.sub (mulByXi t2) t3
+    c2 := Fp2.sub t1 t4 }
+
+def invNorm (a : Repr) : Fp2.Repr :=
+  let adj := invAdjugate a
+  Fp2.add (Fp2.mul a.c0 adj.c0)
+    (mulByXi (Fp2.add (Fp2.mul a.c2 adj.c1) (Fp2.mul a.c1 adj.c2)))
+
+/-- Actual Fp6 adjugate formula parameterized by an Fp2 inversion primitive. -/
+def invWith (invert : Fp2.Repr → Fp2.Repr) (a : Repr) : Repr :=
+  let adj := invAdjugate a
+  let normInv := invert (invNorm a)
+  { c0 := Fp2.mul adj.c0 normInv
+    c1 := Fp2.mul adj.c1 normInv
+    c2 := Fp2.mul adj.c2 normInv }
+
+def invSpecRepr (a : Repr) : Repr := ofField (_root_.Fp6.inv (toField a))
 
 theorem mul_components (a b : Repr) :
     mul a b =
@@ -104,6 +145,9 @@ theorem refines_add (a b : Repr) : Refines (add a b) (toField a + toField b) := 
 theorem refines_sub (a b : Repr) : Refines (sub a b) (toField a - toField b) := by
   change toField (sub a b) = _root_.Fp6.sub (toField a) (toField b)
   simp [sub, toField, _root_.Fp6.sub]
+theorem refines_neg (a : Repr) : Refines (neg a) (-toField a) := by
+  change toField (neg a) = _root_.Fp6.neg (toField a)
+  simp [neg, toField, _root_.Fp6.neg]
 theorem refines_mul (a b : Repr) : Refines (mul a b) (toField a * toField b) := by
   change toField (mul a b) = _root_.Fp6.mul (toField a) (toField b)
   simp [mul, toField, _root_.Fp6.mul]
@@ -111,14 +155,65 @@ theorem refines_square (a : Repr) :
     Refines (square a) (_root_.Fp6.square (toField a)) := by
   change toField (square a) = _root_.Fp6.square (toField a)
   simp [square, toField, _root_.Fp6.square]
-theorem refines_inv (a : Repr) :
-    Refines (inv a) (_root_.Fp6.inv (toField a)) :=
-  refines_ofField _
+theorem refines_mulBy01 (a : Repr) (b0 b1 : Fp2.Repr) :
+    Refines (mulBy01 a b0 b1)
+      (_root_.Fp6.mulBy01 (toField a) (Fp2.toField b0) (Fp2.toField b1)) := by
+  change toField (mulBy01 a b0 b1) =
+    _root_.Fp6.mulBy01 (toField a) (Fp2.toField b0) (Fp2.toField b1)
+  simp [mulBy01, toField, _root_.Fp6.mulBy01]
+
+@[simp] theorem toField_invAdjugate (a : Repr) :
+    toField (invAdjugate a) =
+      let t0 := (Fp2.toField a.c0) ^ 2
+      let t1 := (Fp2.toField a.c1) ^ 2
+      let t2 := (Fp2.toField a.c2) ^ 2
+      let t3 := Fp2.toField a.c0 * Fp2.toField a.c1
+      let t4 := Fp2.toField a.c0 * Fp2.toField a.c2
+      let t5 := Fp2.toField a.c1 * Fp2.toField a.c2
+      { c0 := t0 - SexticNonResidue.mulByXi t5
+        c1 := SexticNonResidue.mulByXi t2 - t3
+        c2 := t1 - t4 } := by
+  simp [invAdjugate, toField]
+
+@[simp] theorem toField_invNorm (a : Repr) :
+    Fp2.toField (invNorm a) =
+      let adj := toField (invAdjugate a)
+      Fp2.toField a.c0 * adj.c0 +
+        SexticNonResidue.mulByXi
+          (Fp2.toField a.c2 * adj.c1 + Fp2.toField a.c1 * adj.c2) := by
+  simp [invNorm, toField]
+
+theorem refines_invWith (invert : Fp2.Repr → Fp2.Repr) (a : Repr)
+    (hinvert : Fp2.toField (invert (invNorm a)) =
+      _root_.Fp2.inv (Fp2.toField (invNorm a))) :
+    Refines (invWith invert a) (_root_.Fp6.inv (toField a)) := by
+  let adj := invAdjugate a
+  let n := invNorm a
+  have hsemantic : _root_.Fp6.inv (toField a) =
+      { c0 := (toField adj).c0 * _root_.Fp2.inv (Fp2.toField n)
+        c1 := (toField adj).c1 * _root_.Fp2.inv (Fp2.toField n)
+        c2 := (toField adj).c2 * _root_.Fp2.inv (Fp2.toField n) } := by
+    simp [adj, n, invAdjugate, invNorm, toField, _root_.Fp6.inv]
+  change toField (invWith invert a) = _root_.Fp6.inv (toField a)
+  rw [hsemantic]
+  change
+    ({ c0 := Fp2.toField (Fp2.mul adj.c0 (invert n))
+       c1 := Fp2.toField (Fp2.mul adj.c1 (invert n))
+       c2 := Fp2.toField (Fp2.mul adj.c2 (invert n)) } :
+      EvmSemantics.Crypto.Bls12381.Fp6) = _
+  have hinvert' : Fp2.toField (invert n) =
+      _root_.Fp2.inv (Fp2.toField n) := by simpa [n] using hinvert
+  simp [hinvert', toField]
+
+theorem refines_invSpecRepr (a : Repr) :
+    Refines (invSpecRepr a) (_root_.Fp6.inv (toField a)) := refines_ofField _
 
 @[simp] theorem toField_add (a b : Repr) :
     toField (add a b) = toField a + toField b := refines_add a b
 @[simp] theorem toField_sub (a b : Repr) :
     toField (sub a b) = toField a - toField b := refines_sub a b
+@[simp] theorem toField_neg (a : Repr) :
+    toField (neg a) = -toField a := refines_neg a
 @[simp] theorem toField_mul (a b : Repr) :
     toField (mul a b) = toField a * toField b := refines_mul a b
 @[simp] theorem toField_square (a : Repr) :
@@ -130,8 +225,20 @@ theorem refines_inv (a : Repr) :
        c1 := Fp2.toField a.c0
        c2 := Fp2.toField a.c1 } : EvmSemantics.Crypto.Bls12381.Fp6) = _
   simp [_root_.Fp6.mulByV, toField]
-@[simp] theorem toField_inv (a : Repr) :
-    toField (inv a) = _root_.Fp6.inv (toField a) := refines_inv a
+@[simp] theorem toField_mulByFp2 (a : Repr) (k : Fp2.Repr) :
+    toField (mulByFp2 a k) = _root_.Fp6.mulByFp2 (toField a) (Fp2.toField k) := by
+  simp [mulByFp2, toField, _root_.Fp6.mulByFp2]
+@[simp] theorem toField_mulBy01 (a : Repr) (b0 b1 : Fp2.Repr) :
+    toField (mulBy01 a b0 b1) =
+      _root_.Fp6.mulBy01 (toField a) (Fp2.toField b0) (Fp2.toField b1) :=
+  refines_mulBy01 a b0 b1
+@[simp] theorem toField_invWith (invert : Fp2.Repr → Fp2.Repr) (a : Repr)
+    (hinvert : Fp2.toField (invert (invNorm a)) =
+      _root_.Fp2.inv (Fp2.toField (invNorm a))) :
+    toField (invWith invert a) = _root_.Fp6.inv (toField a) :=
+  refines_invWith invert a hinvert
+@[simp] theorem toField_invSpecRepr (a : Repr) :
+    toField (invSpecRepr a) = _root_.Fp6.inv (toField a) := refines_invSpecRepr a
 
 @[simp] theorem semantic_pow_two (a : EvmSemantics.Crypto.Bls12381.Fp6) :
     a ^ 2 = _root_.Fp6.square a := rfl
