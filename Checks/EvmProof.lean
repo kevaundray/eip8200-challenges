@@ -23,3 +23,11 @@ If a `sorry` (which appears as `sorryAx`), a `native_decide`
 /-- info: 'Challenge.EvmProof.Reaches.toEval' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Challenge.EvmProof.Reaches.toEval
+
+/-- info: 'Challenge.EvmProof.Limbs.join_splitTwo' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Challenge.EvmProof.Limbs.join_splitTwo
+
+/-- info: 'Challenge.EvmProof.MemoryRegion.disjoint_symm' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Challenge.EvmProof.MemoryRegion.disjoint_symm

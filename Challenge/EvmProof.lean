@@ -2,7 +2,9 @@ import Challenge.EvmProof.Bytecode
 import Challenge.EvmProof.Execution
 import Challenge.EvmProof.Gas
 import Challenge.EvmProof.GasFormula
+import Challenge.EvmProof.Limbs
 import Challenge.EvmProof.Memory
+import Challenge.EvmProof.MemoryRegion
 import Challenge.EvmProof.Ops
 import Challenge.EvmProof.Program
 import Challenge.EvmProof.Word

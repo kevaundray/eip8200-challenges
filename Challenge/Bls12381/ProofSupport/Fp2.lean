@@ -1,0 +1,125 @@
+import Challenge.Bls12381.ProofSupport.Fp
+
+set_option warningAsError true
+
+namespace Challenge.Bls12381.ProofSupport.Fp2
+
+open EvmSemantics.Crypto.Bls12381
+
+structure Repr where
+  c0 : Fp.Limbs
+  c1 : Fp.Limbs
+deriving DecidableEq
+
+def toField (a : Repr) : EvmSemantics.Crypto.Bls12381.Fp2 :=
+  { c0 := Fp.toField a.c0, c1 := Fp.toField a.c1 }
+
+def ofField (a : EvmSemantics.Crypto.Bls12381.Fp2) : Repr :=
+  { c0 := Fp.ofField a.c0, c1 := Fp.ofField a.c1 }
+
+def Refines (a : Repr) (value : EvmSemantics.Crypto.Bls12381.Fp2) : Prop :=
+  toField a = value
+
+@[simp] theorem toField_ofField (a : EvmSemantics.Crypto.Bls12381.Fp2) :
+    toField (ofField a) = a := by
+  cases a
+  simp [toField, ofField]
+
+theorem refines_ofField (a : EvmSemantics.Crypto.Bls12381.Fp2) :
+    Refines (ofField a) a := by
+  simp [Refines]
+
+/-- Componentwise addition over the two-word base-field representation. -/
+def add (a b : Repr) : Repr :=
+  { c0 := Fp.add a.c0 b.c0, c1 := Fp.add a.c1 b.c1 }
+
+/-- Componentwise subtraction over the two-word base-field representation. -/
+def sub (a b : Repr) : Repr :=
+  { c0 := Fp.sub a.c0 b.c0, c1 := Fp.sub a.c1 b.c1 }
+
+/-- Karatsuba multiplication using three base-field multiplications. -/
+def mul (a b : Repr) : Repr :=
+  let t0 := Fp.mul a.c0 b.c0
+  let t1 := Fp.mul a.c1 b.c1
+  let c0 := Fp.sub t0 t1
+  let s := Fp.mul (Fp.add a.c0 a.c1) (Fp.add b.c0 b.c1)
+  let c1 := Fp.sub (Fp.sub s t0) t1
+  { c0, c1 }
+
+/-- Specialised Fp2 squaring using two base-field multiplications. -/
+def square (a : Repr) : Repr :=
+  { c0 := Fp.mul (Fp.add a.c0 a.c1) (Fp.sub a.c0 a.c1)
+    c1 := Fp.mul (Fp.add a.c0 a.c0) a.c1 }
+
+def neg (a : Repr) : Repr := { c0 := Fp.neg a.c0, c1 := Fp.neg a.c1 }
+def inv (a : Repr) : Repr := ofField (toField a)⁻¹
+
+theorem mul_components (a b : Repr) :
+    mul a b =
+      let t0 := Fp.mul a.c0 b.c0
+      let t1 := Fp.mul a.c1 b.c1
+      { c0 := Fp.sub t0 t1
+        c1 := Fp.sub
+          (Fp.sub (Fp.mul (Fp.add a.c0 a.c1) (Fp.add b.c0 b.c1)) t0) t1 } := rfl
+
+theorem refines_add (a b : Repr) : Refines (add a b) (toField a + toField b) := by
+  change
+    ({ c0 := Fp.toField (Fp.add a.c0 b.c0)
+       c1 := Fp.toField (Fp.add a.c1 b.c1) } :
+      EvmSemantics.Crypto.Bls12381.Fp2) =
+    ({ c0 := Fp.toField a.c0 + Fp.toField b.c0
+       c1 := Fp.toField a.c1 + Fp.toField b.c1 } :
+      EvmSemantics.Crypto.Bls12381.Fp2)
+  rw [Fp.toField_add, Fp.toField_add]
+theorem refines_sub (a b : Repr) : Refines (sub a b) (toField a - toField b) := by
+  change
+    ({ c0 := Fp.toField (Fp.sub a.c0 b.c0)
+       c1 := Fp.toField (Fp.sub a.c1 b.c1) } :
+      EvmSemantics.Crypto.Bls12381.Fp2) =
+    ({ c0 := Fp.toField a.c0 - Fp.toField b.c0
+       c1 := Fp.toField a.c1 - Fp.toField b.c1 } :
+      EvmSemantics.Crypto.Bls12381.Fp2)
+  rw [Fp.toField_sub, Fp.toField_sub]
+theorem refines_mul (a b : Repr) : Refines (mul a b) (toField a * toField b) := by
+  change
+    ({ c0 := Fp.toField (Fp.sub (Fp.mul a.c0 b.c0) (Fp.mul a.c1 b.c1))
+       c1 := Fp.toField (Fp.sub
+        (Fp.sub (Fp.mul (Fp.add a.c0 a.c1) (Fp.add b.c0 b.c1))
+          (Fp.mul a.c0 b.c0)) (Fp.mul a.c1 b.c1)) } :
+      EvmSemantics.Crypto.Bls12381.Fp2) =
+    _root_.Fp2.mul (toField a) (toField b)
+  simp [toField, _root_.Fp2.mul]
+theorem refines_square (a : Repr) :
+    Refines (square a) (_root_.Fp2.square (toField a)) := by
+  change
+    ({ c0 := Fp.toField (Fp.mul (Fp.add a.c0 a.c1) (Fp.sub a.c0 a.c1))
+       c1 := Fp.toField (Fp.mul (Fp.add a.c0 a.c0) a.c1) } :
+      EvmSemantics.Crypto.Bls12381.Fp2) =
+    _root_.Fp2.square (toField a)
+  simp [toField, _root_.Fp2.square]
+theorem refines_neg (a : Repr) : Refines (neg a) (-toField a) := by
+  change
+    ({ c0 := Fp.toField (Fp.neg a.c0), c1 := Fp.toField (Fp.neg a.c1) } :
+      EvmSemantics.Crypto.Bls12381.Fp2) =
+    _root_.Fp2.neg (toField a)
+  simp [toField, _root_.Fp2.neg]
+theorem refines_inv (a : Repr) : Refines (inv a) (toField a)⁻¹ :=
+  refines_ofField _
+
+@[simp] theorem toField_add (a b : Repr) :
+    toField (add a b) = toField a + toField b := refines_add a b
+@[simp] theorem toField_sub (a b : Repr) :
+    toField (sub a b) = toField a - toField b := refines_sub a b
+@[simp] theorem toField_mul (a b : Repr) :
+    toField (mul a b) = toField a * toField b := refines_mul a b
+@[simp] theorem toField_square (a : Repr) :
+    toField (square a) = _root_.Fp2.square (toField a) := refines_square a
+@[simp] theorem toField_neg (a : Repr) :
+    toField (neg a) = -toField a := refines_neg a
+@[simp] theorem toField_inv (a : Repr) :
+    toField (inv a) = (toField a)⁻¹ := refines_inv a
+
+@[simp] theorem semantic_pow_two (a : EvmSemantics.Crypto.Bls12381.Fp2) :
+    a ^ 2 = _root_.Fp2.square a := rfl
+
+end Challenge.Bls12381.ProofSupport.Fp2

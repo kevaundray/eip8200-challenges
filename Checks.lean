@@ -1,5 +1,6 @@
 import Checks.EvmProof
 import Checks.Blake2f
+import Checks.Bls12381Conformance
 import Checks.Modexp
 import Checks.Ripemd160
 import Checks.Sha256
