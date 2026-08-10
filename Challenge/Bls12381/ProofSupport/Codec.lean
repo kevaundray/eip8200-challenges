@@ -182,6 +182,11 @@ theorem decodeFp_eq_none_of_short {input : ByteArray} {offset : Nat}
   rw [if_pos (by
     simpa [EvmSemantics.Crypto.Bls12381Codec.fpBytes] using hshort)]
 
+/-- Any successful base-field decode is canonical by construction: the result
+is a member of `Fin p`, rather than an unreduced natural. -/
+theorem decodeFp_some_isCanonical {input : ByteArray} {offset : Nat} {a : Fp}
+    (_hdecode : decodeFp input offset = some a) : a.val < p := a.isLt
+
 theorem decodeFp_first (a b : Fp) :
     decodeFp (encodeFp a ++ encodeFp b) 0 = some a := by
   simpa using decodeFp_framed ByteArray.empty (encodeFp b) a
@@ -204,6 +209,15 @@ theorem decodeFp2_encodeFp2 (a : Fp2) :
         EvmSemantics.Crypto.Bls12381Codec.encodeFp a.c1) 64 = some a.c1 := by
     simpa [fpBytes] using decodeFp_second a.c0 a.c1
   rw [h0, h1]
+
+theorem decodeFp2_eq_none_of_short {input : ByteArray} {offset : Nat}
+    (hshort : input.size < offset + fp2Bytes) : decodeFp2 input offset = none := by
+  have hsecond : input.size < (offset + fpBytes) + fpBytes := by
+    simpa [fp2Bytes, fpBytes, Nat.add_assoc] using hshort
+  have hnone : EvmSemantics.Crypto.Bls12381Codec.decodeFp input
+      (offset + EvmSemantics.Crypto.Bls12381Codec.fpBytes) = none := by
+    exact decodeFp_eq_none_of_short hsecond
+  simp [decodeFp2, EvmSemantics.Crypto.Bls12381Codec.decodeFp2, hnone]
 
 theorem decodeFp2_first (a b : Fp2) :
     decodeFp2 (encodeFp2 a ++ encodeFp2 b) 0 = some a := by
@@ -376,5 +390,23 @@ theorem decodeG2_encodeG2 (point : G2Point) (hpoint : ValidG2 point) :
         simp [hx0, hx1, hy0, hy1]
       simp [hpoint]
       exact hxy
+
+theorem decodeG1_eq_none_of_short {input : ByteArray} {offset : Nat}
+    (hshort : input.size < offset + g1Bytes) : decodeG1 input offset = none := by
+  have hsecond : input.size < (offset + fpBytes) + fpBytes := by
+    simpa [g1Bytes, fpBytes, Nat.add_assoc] using hshort
+  have hnone : EvmSemantics.Crypto.Bls12381Codec.decodeFp input
+      (offset + EvmSemantics.Crypto.Bls12381Codec.fpBytes) = none := by
+    exact decodeFp_eq_none_of_short hsecond
+  simp [decodeG1, EvmSemantics.Crypto.Bls12381G1Add.decodePoint, hnone]
+
+theorem decodeG2_eq_none_of_short {input : ByteArray} {offset : Nat}
+    (hshort : input.size < offset + g2Bytes) : decodeG2 input offset = none := by
+  have hsecond : input.size < (offset + fp2Bytes) + fp2Bytes := by
+    simpa [g2Bytes, fp2Bytes, Nat.add_assoc] using hshort
+  have hnone : EvmSemantics.Crypto.Bls12381Codec.decodeFp2 input
+      (offset + EvmSemantics.Crypto.Bls12381Codec.fp2Bytes) = none := by
+    exact decodeFp2_eq_none_of_short hsecond
+  simp [decodeG2, EvmSemantics.Crypto.Bls12381G2Add.decodePoint, hnone]
 
 end Challenge.Bls12381.ProofSupport.Codec

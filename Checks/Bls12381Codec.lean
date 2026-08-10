@@ -35,8 +35,25 @@ example (input : ByteArray) (offset : Nat)
     Codec.decodeFp input offset = none :=
   Codec.decodeFp_eq_none_of_short hshort
 
+example (input : ByteArray) (offset : Nat)
+    (hshort : input.size < offset + Codec.fp2Bytes) :
+    Codec.decodeFp2 input offset = none :=
+  Codec.decodeFp2_eq_none_of_short hshort
+
+example (input : ByteArray) (offset : Nat)
+    (hshort : input.size < offset + Codec.g1Bytes) :
+    Codec.decodeG1 input offset = none :=
+  Codec.decodeG1_eq_none_of_short hshort
+
+example (input : ByteArray) (offset : Nat)
+    (hshort : input.size < offset + Codec.g2Bytes) :
+    Codec.decodeG2 input offset = none :=
+  Codec.decodeG2_eq_none_of_short hshort
+
 #print axioms Codec.decodeFp2_encodeFp2
 #print axioms Codec.decodeG1_encodeG1
 #print axioms Codec.decodeG2_encodeG2
+#print axioms Codec.decodeG1_eq_none_of_short
+#print axioms Codec.decodeG2_eq_none_of_short
 
 end Checks.Bls12381Codec
