@@ -20,6 +20,8 @@ def mul (a b : Carrier) : Carrier :=
   { c0 := LawfulFp6.add v0 (LawfulFp6.mulByV v1)
     c1 := LawfulFp6.sub (LawfulFp6.sub t v0) v1 }
 
+def zero : Carrier := { c0 := LawfulFp6.zero, c1 := LawfulFp6.zero }
+
 def one : Carrier := { c0 := LawfulFp6.one, c1 := LawfulFp6.zero }
 
 /-- Quadratic norm `c0² - v·c1²` used by the lawful component inverse. -/

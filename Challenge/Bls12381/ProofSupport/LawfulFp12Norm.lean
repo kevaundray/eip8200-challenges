@@ -11,8 +11,6 @@ namespace Challenge.Bls12381.ProofSupport.LawfulFp12
 open EvmSemantics.Crypto.Bls12381
 open EvmSemantics.EVM
 
-def zero : Carrier := { c0 := LawfulFp6.zero, c1 := LawfulFp6.zero }
-
 theorem two_pow_half_ne_one :
     (2 : LawfulFp2.Base) ^ ((p - 1) / 2) ≠ 1 := by
   have horder : Precompile.modPow 2 ((p - 1) / 2) p ≠ 1 := by
