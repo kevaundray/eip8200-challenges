@@ -33,6 +33,40 @@ theorem readBytes_add (memory : Nat → UInt8) (start left right : Nat) :
   congr 1
   omega
 
+/-- A Yul `MSTORE` outside a read window leaves that window unchanged. -/
+theorem readBytes_storeWord_disjoint (memory : Nat → UInt8)
+    (readStart readSize writeStart : Nat) (value : YulSemantics.EVM.U256)
+    (hdisjoint : readStart + readSize ≤ writeStart ∨
+      writeStart + 32 ≤ readStart) :
+    YulSemantics.EVM.readBytes
+        (YulSemantics.EVM.storeWord memory writeStart value)
+        readStart readSize =
+      YulSemantics.EVM.readBytes memory readStart readSize := by
+  unfold YulSemantics.EVM.readBytes
+  apply List.map_congr_left
+  intro i hi
+  have hi' : i < readSize := by simpa using hi
+  simp only [YulSemantics.EVM.storeWord]
+  rw [if_neg]
+  omega
+
+/-- A Yul `MSTORE8` outside a read window leaves that window unchanged. -/
+theorem readBytes_storeByte_disjoint (memory : Nat → UInt8)
+    (readStart readSize writeStart : Nat) (value : YulSemantics.EVM.U256)
+    (hdisjoint : readStart + readSize ≤ writeStart ∨
+      writeStart < readStart) :
+    YulSemantics.EVM.readBytes
+        (YulSemantics.EVM.storeByte memory writeStart value)
+        readStart readSize =
+      YulSemantics.EVM.readBytes memory readStart readSize := by
+  unfold YulSemantics.EVM.readBytes
+  apply List.map_congr_left
+  intro i hi
+  have hi' : i < readSize := by simpa using hi
+  simp only [YulSemantics.EVM.storeByte]
+  rw [if_neg]
+  omega
+
 /-- Parsing a fitting subwindow of functional memory is the same big-endian
 byte fold as reading that subwindow directly. -/
 theorem bytesToNatPadded_readWindow (memory : Nat → UInt8)

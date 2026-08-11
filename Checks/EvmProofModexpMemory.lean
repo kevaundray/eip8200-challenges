@@ -20,6 +20,36 @@ example (memory : Nat → UInt8) (start left right : Nat) :
 #guard_msgs in
 #print axioms readBytes_add
 
+example (memory : Nat → UInt8) (readStart readSize writeStart : Nat)
+    (value : YulSemantics.EVM.U256)
+    (hdisjoint : readStart + readSize ≤ writeStart ∨
+      writeStart + 32 ≤ readStart) :
+    YulSemantics.EVM.readBytes
+        (YulSemantics.EVM.storeWord memory writeStart value)
+        readStart readSize =
+      YulSemantics.EVM.readBytes memory readStart readSize :=
+  readBytes_storeWord_disjoint memory readStart readSize writeStart value
+    hdisjoint
+
+example (memory : Nat → UInt8) (readStart readSize writeStart : Nat)
+    (value : YulSemantics.EVM.U256)
+    (hdisjoint : readStart + readSize ≤ writeStart ∨
+      writeStart < readStart) :
+    YulSemantics.EVM.readBytes
+        (YulSemantics.EVM.storeByte memory writeStart value)
+        readStart readSize =
+      YulSemantics.EVM.readBytes memory readStart readSize :=
+  readBytes_storeByte_disjoint memory readStart readSize writeStart value
+    hdisjoint
+
+/-- info: 'Challenge.EvmProof.ModexpMemory.readBytes_storeWord_disjoint' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms readBytes_storeWord_disjoint
+
+/-- info: 'Challenge.EvmProof.ModexpMemory.readBytes_storeByte_disjoint' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms readBytes_storeByte_disjoint
+
 example (memory : Nat → UInt8) (start size offset width : Nat)
     (hfit : offset + width ≤ size) :
     EvmSemantics.EVM.Precompile.bytesToNatPadded
