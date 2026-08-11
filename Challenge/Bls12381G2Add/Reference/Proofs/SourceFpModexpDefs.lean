@@ -20,6 +20,10 @@ open YulSemantics YulSemantics.EVM
 
 abbrev fpMulInputState :=
   Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpMulInputState
+abbrev fpMulPreModulusState :=
+  Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpMulPreModulusState
+abbrev convFullMul :=
+  Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.convFullMul
 abbrev fpMulReducedValue :=
   Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpMulReducedValue
 abbrev fpMulOutputBytes :=
@@ -57,6 +61,9 @@ abbrev fpInvOutputLimbs :=
   Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpInvOutputLimbs
 abbrev fpInvInputLimbs :=
   Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpInvInputLimbs
+
+export Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
+  (fpMulInput_runModexp_raw)
 
 def fpMulFuns : FunEnv Challenge.EvmProof.modexpExec.toDialect :=
   [hoist Challenge.EvmProof.modexpExec.toDialect
