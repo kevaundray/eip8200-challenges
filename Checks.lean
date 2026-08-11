@@ -10,6 +10,7 @@ import Checks.Bls12381G1Projective
 import Checks.Bls12381G2Projective
 import Checks.Bls12381ScalarMul
 import Checks.Bls12381Msm
+import Checks.Bls12381PrimeField
 import Checks.Modexp
 import Checks.Ripemd160
 import Checks.Sha256
