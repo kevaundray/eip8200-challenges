@@ -288,6 +288,15 @@ example (result : Challenge.EvmProof.Limbs.WideProduct) :
   rfl
 
 example (result : Challenge.EvmProof.Limbs.WideProduct) :
+    Fp.montgomeryFinalCorrect result =
+      if (UInt256.lor (UInt256.gt result.hi Fp.modulusHi)
+        (UInt256.land (UInt256.eq result.hi Fp.modulusHi)
+          (UInt256.isZero (UInt256.lt result.lo Fp.modulusLo)))).toNat ≠ 0
+      then Fp.montgomeryFinalSubModulus result
+      else result :=
+  rfl
+
+example (result : Challenge.EvmProof.Limbs.WideProduct) :
     (Fp.montgomeryFinalCorrect result).value =
       if p ≤ result.value then result.value - p else result.value :=
   Fp.montgomeryFinalCorrect_value result
