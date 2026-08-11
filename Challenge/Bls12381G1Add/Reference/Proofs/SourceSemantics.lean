@@ -56,6 +56,19 @@ def fpAddValue (ahi alo bhi blo : U256) : U256 × U256 :=
      sLo - BitVec.ofNat 256
        45442060874369865957053122457065728162598490762543039060009208264153100167851)
 
+/-- Exact two-word result of the frozen source's canonical field subtraction. -/
+def fpSubValue (ahi alo bhi blo : U256) : U256 × U256 :=
+  let dLo := alo - blo
+  let dHi := ahi - bhi - b2w (BitVec.ult alo blo)
+  if b2w (BitVec.ult
+      (BitVec.ofNat 256 34565483545414906068789196026815425751) dHi) = 0 then
+    (dHi, dLo)
+  else
+    let newLo := dLo + BitVec.ofNat 256
+      45442060874369865957053122457065728162598490762543039060009208264153100167851
+    (dHi + BitVec.ofNat 256 34565483545414906068789196026815425751 +
+      b2w (BitVec.ult newLo dLo), newLo)
+
 theorem conv_fpGeModulusValue (hi lo : U256) :
     YulEvmCompiler.conv (fpGeModulusValue hi lo) =
     Challenge.Bls12381.ProofSupport.Fp.addNeedsCorrection
@@ -295,6 +308,36 @@ theorem eval_fpAdd (ahi alo bhi blo : U256) (yst : EvmState) :
     change ¬fpGeModulusValue
       (ahi + bhi + b2w (BitVec.ult (alo + blo) alo)) (alo + blo) = 0 at hnamed
     unfold fpAddValue
+    rw [if_neg hnamed]
+    rfl
+
+/-- The sixth frozen helper executes the approved source-faithful field-sub
+schedule and returns its high word before its low word. -/
+theorem eval_fpSub (ahi alo bhi blo : U256) (yst : EvmState) :
+    Interp.evalExpr modexpExec 64
+      [hoist modexpExec.toDialect referenceCompiledBlock]
+      [("ahi", ahi), ("alo", alo), ("bhi", bhi), ("blo", blo)] yst
+      (.call "\x005" [.var "ahi", .var "alo", .var "bhi", .var "blo"]) =
+    .ok (.vals [(fpSubValue ahi alo bhi blo).1,
+      (fpSubValue ahi alo bhi blo).2] yst) := by
+  simp [Interp.evalExpr, Interp.evalArgs, Interp.execStmt, Interp.execStmts,
+    lookupFun, hoist, referenceCompiledBlock, frozenReferenceBlock,
+    modexpExec, modexpBuiltinFn, stepOp, bin,
+    Dialect.zero, VEnv.get, VEnv.setMany, VEnv.set,
+    bindZeros, restore]
+  split
+  case isTrue hsource =>
+    have hnamed := hsource
+    change b2w (BitVec.ult
+      (BitVec.ofNat 256 34565483545414906068789196026815425751)
+      (ahi - bhi - b2w (BitVec.ult alo blo))) = 0 at hnamed
+    simp [fpSubValue, hnamed]
+  case isFalse hsource =>
+    have hnamed := hsource
+    change ¬b2w (BitVec.ult
+      (BitVec.ofNat 256 34565483545414906068789196026815425751)
+      (ahi - bhi - b2w (BitVec.ult alo blo))) = 0 at hnamed
+    unfold fpSubValue
     rw [if_neg hnamed]
     rfl
 

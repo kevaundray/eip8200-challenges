@@ -144,6 +144,26 @@ example (ahi alo bhi blo : U256) :
 #guard_msgs in
 #print axioms Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpAddValue
 
+example (ahi alo bhi blo : U256) (yst : EvmState) :
+    Interp.evalExpr Challenge.EvmProof.modexpExec 64
+      [hoist Challenge.EvmProof.modexpExec.toDialect
+        Challenge.Bls12381G1Add.Reference.Proofs.Compilation.referenceCompiledBlock]
+      [("ahi", ahi), ("alo", alo), ("bhi", bhi), ("blo", blo)] yst
+      (.call "\x005" [.var "ahi", .var "alo", .var "bhi", .var "blo"]) =
+    .ok (.vals
+      [(Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpSubValue
+        ahi alo bhi blo).1,
+       (Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpSubValue
+        ahi alo bhi blo).2] yst) :=
+  Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpSub
+    ahi alo bhi blo yst
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpSub' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpSub
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpGeModulus' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpGeModulus
