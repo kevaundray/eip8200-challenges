@@ -31,6 +31,15 @@ example (sqrtRatio : Field → Field → Bool × Field)
     ProjectiveOnCurve (sswuProjective sqrtRatio u) :=
   sswuProjective_onCurve sqrtRatio hsqrt u
 
+example (sqrtRatio : Field → Field → Bool × Field) (u : Field) :
+    (sswuProjective sqrtRatio u).y =
+      sourceSignAdjusted u (sswuSourceY0 sqrtRatio u) :=
+  sswuProjective_y_eq_source sqrtRatio u
+
+example :
+    (sswuProjective (fun _ _ => (true, 1)) 0).y = (-1 : Field) := by
+  decide
+
 /-- info: 'Challenge.Bls12381.ProofSupport.MapToG1.isoA_val' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms isoA_val
@@ -62,5 +71,17 @@ example (sqrtRatio : Field → Field → Bool × Field)
  Quot.sound] -/
 #guard_msgs in
 #print axioms sswuProjective_onCurve
+
+/-- info: 'Challenge.Bls12381.ProofSupport.MapToG1.sswuProjective_onCurve_of_valid' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms sswuProjective_onCurve_of_valid
+
+/-- info: 'Challenge.Bls12381.ProofSupport.MapToG1.sswuProjective_y_eq_source' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms sswuProjective_y_eq_source
 
 end Challenge.Bls12381.ProofSupport.MapToG1

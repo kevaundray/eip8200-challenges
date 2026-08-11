@@ -75,11 +75,13 @@ def ProjectiveOnCurve (point : SswuResult) : Prop :=
   point.y ^ 2 * point.xD ^ 3 =
     point.xN ^ 3 + isoA * point.xN * point.xD ^ 2 + isoB * point.xD ^ 3
 
-private def signAdjusted (u y : Field) : Field :=
+/-- Exact source sign selection at the lawful decoded-field boundary. -/
+def sourceSignAdjusted (u y : Field) : Field :=
   if u.val % 2 = y.val % 2 then y else -y
 
-private theorem signAdjusted_sq (u y : Field) : signAdjusted u y ^ 2 = y ^ 2 := by
-  unfold signAdjusted
+private theorem sourceSignAdjusted_sq (u y : Field) :
+    sourceSignAdjusted u y ^ 2 = y ^ 2 := by
+  unfold sourceSignAdjusted
   split <;> ring
 
 private theorem denominatorFactor_ne_zero (tv2 : Field) :
@@ -117,10 +119,32 @@ def sswuProjective
   let yCandidate := tv1 * u * ratio.2
   let xN := if ratio.1 then tv3 else xNCandidate
   let y0 := if ratio.1 then ratio.2 else yCandidate
-  let y := signAdjusted u y0
+  let y := sourceSignAdjusted u y0
   { xN, xD := tv4, y
     denominatorExceptional := exceptional
     sqrtWasQr := ratio.1 }
+
+/-- The unsigned `y` candidate immediately before the source sign CMOV.  This
+audit helper mirrors the schedule without entering the executable call graph. -/
+def sswuSourceY0
+    (sqrtRatio : Field → Field → Bool × Field) (u : Field) : Field :=
+  let tv1 := isoZ * u ^ 2
+  let tv2 := tv1 ^ 2 + tv1
+  let tv3 := isoB * (tv2 + 1)
+  let tv4 := isoA * if tv2 = 0 then isoZ else -tv2
+  let numerator := (tv3 ^ 2 + isoA * tv4 ^ 2) * tv3 +
+    isoB * (tv4 ^ 2 * tv4)
+  let denominator := tv4 ^ 2 * tv4
+  let ratio := sqrtRatio numerator denominator
+  if ratio.1 then ratio.2 else tv1 * u * ratio.2
+
+/-- Observable source refinement for the final sign-selection branch.  Unlike
+the on-curve theorem, this equality detects omitting or reversing the CMOV. -/
+theorem sswuProjective_y_eq_source
+    (sqrtRatio : Field → Field → Bool × Field) (u : Field) :
+    (sswuProjective sqrtRatio u).y =
+      sourceSignAdjusted u (sswuSourceY0 sqrtRatio u) := by
+  rfl
 
 private theorem qr_projective (xN xD y : Field)
     (hy : y ^ 2 * (xD ^ 2 * xD) =
@@ -167,12 +191,28 @@ private theorem exceptional_ratio_isSquare :
   refine ⟨exceptionalRoot, ?_⟩
   decide
 
+/-- Numerator passed by the source SSWU schedule to `Fp.sqrtRatio`. -/
+def sswuNumerator (u : Field) : Field :=
+  let tv1 := isoZ * u ^ 2
+  let tv2 := tv1 ^ 2 + tv1
+  let tv3 := isoB * (tv2 + 1)
+  let tv4 := isoA * if tv2 = 0 then isoZ else -tv2
+  (tv3 ^ 2 + isoA * tv4 ^ 2) * tv3 + isoB * (tv4 ^ 2 * tv4)
+
+/-- Nonzero denominator passed by the source SSWU schedule to `Fp.sqrtRatio`. -/
+def sswuDenominator (u : Field) : Field :=
+  let tv1 := isoZ * u ^ 2
+  let tv2 := tv1 ^ 2 + tv1
+  let tv4 := isoA * if tv2 = 0 then isoZ else -tv2
+  tv4 ^ 2 * tv4
+
 /-- The exact projective SSWU schedule lands on the pinned isogenous curve
-whenever its square-root-ratio dependency satisfies the source contract. -/
-theorem sswuProjective_onCurve
+when the concrete numerator/denominator result satisfies the source contract. -/
+theorem sswuProjective_onCurve_of_valid
     (sqrtRatio : Field → Field → Bool × Field)
-    (hsqrt : ∀ u v, v ≠ 0 → SqrtRatioValid u v (sqrtRatio u v))
-    (u : Field) :
+    (u : Field)
+    (hvalidAt : SqrtRatioValid (sswuNumerator u) (sswuDenominator u)
+      (sqrtRatio (sswuNumerator u) (sswuDenominator u))) :
     ProjectiveOnCurve (sswuProjective sqrtRatio u) := by
   let tv1 := isoZ * u ^ 2
   let tv2 := tv1 ^ 2 + tv1
@@ -181,11 +221,12 @@ theorem sswuProjective_onCurve
   let numerator := (tv3 ^ 2 + isoA * tv4 ^ 2) * tv3 +
     isoB * (tv4 ^ 2 * tv4)
   let denominator := tv4 ^ 2 * tv4
+  have hvalid : SqrtRatioValid numerator denominator
+      (sqrtRatio numerator denominator) := by
+    simpa [sswuNumerator, sswuDenominator, tv1, tv2, tv3, tv4,
+      numerator, denominator] using hvalidAt
   generalize hratio : sqrtRatio numerator denominator = ratio
   rcases ratio with ⟨isQr, root⟩
-  have hdenominator : denominator ≠ 0 := by
-    simpa [tv1, tv2, tv4, denominator] using sswuDenominator_ne_zero u
-  have hvalid := hsqrt numerator denominator hdenominator
   rw [hratio] at hvalid
   change (if isQr then root ^ 2 * denominator = numerator
     else root ^ 2 * denominator = isoZ * numerator ∧
@@ -198,11 +239,12 @@ theorem sswuProjective_onCurve
   dsimp only
   rw [hratio']
   dsimp only
-  change signAdjusted u (if isQr then root else tv1 * u * root) ^ 2 * tv4 ^ 3 =
+  change sourceSignAdjusted u
+      (if isQr then root else tv1 * u * root) ^ 2 * tv4 ^ 3 =
     (if isQr then tv3 else tv1 * tv3) ^ 3 +
       isoA * (if isQr then tv3 else tv1 * tv3) * tv4 ^ 2 +
         isoB * tv4 ^ 3
-  rw [signAdjusted_sq]
+  rw [sourceSignAdjusted_sq]
   cases isQr with
   | true =>
       simp only [if_true] at hvalid ⊢
@@ -216,5 +258,16 @@ theorem sswuProjective_onCurve
         exact False.elim (hvalid.2 hexceptional)
       · exact nonqr_projective u tv1 tv2 tv3 tv4 root rfl rfl rfl
           (by simp [tv4, htv2]) hvalid.1
+
+/-- The exact projective SSWU schedule lands on the pinned isogenous curve
+whenever its square-root-ratio dependency satisfies the source contract. -/
+theorem sswuProjective_onCurve
+    (sqrtRatio : Field → Field → Bool × Field)
+    (hsqrt : ∀ u v, v ≠ 0 → SqrtRatioValid u v (sqrtRatio u v))
+    (u : Field) :
+    ProjectiveOnCurve (sswuProjective sqrtRatio u) := by
+  apply sswuProjective_onCurve_of_valid sqrtRatio u
+  apply hsqrt
+  simpa [sswuDenominator] using sswuDenominator_ne_zero u
 
 end Challenge.Bls12381.ProofSupport.MapToG1
