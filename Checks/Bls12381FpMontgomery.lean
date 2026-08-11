@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryReduceValue
+import Challenge.Bls12381.ProofSupport.FpMontgomeryFirst
 
 set_option warningAsError true
 
@@ -107,6 +107,23 @@ example (state : Fp.MontgomeryState)
         (Fp.montgomeryReduceStep state).value =
       Fp.montgomeryReductionNumerator state :=
   Fp.montgomeryReduceStep_scaled_of_top_lt state htop
+
+example {y : Fp.Limbs} (hy : Fp.Canonical y) :
+    y.hi.toNat ≤ Fp.modulusHi.toNat :=
+  Fp.canonical_hi_le_modulusHi hy
+
+example (x0 : UInt256) {y : Fp.Limbs} (hy : Fp.Canonical y) :
+    Fp.montgomeryReductionTopNat
+        (Fp.montgomeryAccumulateZero x0 y.lo y.hi) <
+      Challenge.EvmProof.Limbs.radix :=
+  Fp.montgomeryFirstTop_lt x0 hy
+
+example (x0 : UInt256) {y : Fp.Limbs} (hy : Fp.Canonical y) :
+    Challenge.EvmProof.Limbs.radix *
+        (Fp.montgomeryFirstReduce x0 y).value =
+      Fp.montgomeryReductionNumerator
+        (Fp.montgomeryAccumulateZero x0 y.lo y.hi) :=
+  Fp.montgomeryFirstReduce_scaled x0 hy
 
 example (state : Fp.MontgomeryState) :
     (Fp.montgomeryReductionMultiplier state).toNat =
@@ -269,5 +286,21 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReduceStep_scaled_of_top_lt'
 -/
 #guard_msgs in
 #print axioms Fp.montgomeryReduceStep_scaled_of_top_lt
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_hi_le_modulusHi' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.canonical_hi_le_modulusHi
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryFirstTop_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.montgomeryFirstTop_lt
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryFirstReduce_scaled' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryFirstReduce_scaled
 
 end Checks.Bls12381FpMontgomery
