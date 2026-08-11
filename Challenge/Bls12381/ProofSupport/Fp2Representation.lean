@@ -25,6 +25,14 @@ theorem canonical_mkRepr {c0 c1 : Fp.Limbs}
     Canonical (mkRepr c0 c1) :=
   ⟨hc0, hc1⟩
 
+@[simp] theorem toField_mkRepr (c0 c1 : Fp.Limbs) :
+    toField (mkRepr c0 c1) = { c0 := Fp.toField c0, c1 := Fp.toField c1 } := rfl
+
+@[simp] theorem toLawful_mkRepr (c0 c1 : Fp.Limbs) :
+    toLawful (mkRepr c0 c1) =
+      ⟨PrimeField.finEquiv (Fp.toField c0),
+        PrimeField.finEquiv (Fp.toField c1)⟩ := rfl
+
 theorem canonical_iff (a : Repr) :
     Canonical a ↔ Fp.Canonical a.c0 ∧ Fp.Canonical a.c1 := by
   constructor
