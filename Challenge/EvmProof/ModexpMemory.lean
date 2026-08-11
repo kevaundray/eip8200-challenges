@@ -19,6 +19,20 @@ def readWindow (memory : Nat → UInt8) (start size : Nat) : ByteArray :=
   change (YulSemantics.EVM.readBytes memory start size).length = size
   simp [YulSemantics.EVM.readBytes]
 
+/-- A functional-memory read splits at the same address as the corresponding
+byte list. -/
+theorem readBytes_add (memory : Nat → UInt8) (start left right : Nat) :
+    YulSemantics.EVM.readBytes memory start (left + right) =
+      YulSemantics.EVM.readBytes memory start left ++
+        YulSemantics.EVM.readBytes memory (start + left) right := by
+  unfold YulSemantics.EVM.readBytes
+  rw [List.range_add, List.map_append, List.map_map]
+  congr 2
+  funext i
+  simp only [Function.comp_apply]
+  congr 1
+  omega
+
 /-- Parsing a fitting subwindow of functional memory is the same big-endian
 byte fold as reading that subwindow directly. -/
 theorem bytesToNatPadded_readWindow (memory : Nat → UInt8)

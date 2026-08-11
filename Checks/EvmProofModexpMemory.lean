@@ -10,6 +10,16 @@ example (memory : Nat → UInt8) (start size : Nat) :
     (readWindow memory start size).size = size :=
   readWindow_size memory start size
 
+example (memory : Nat → UInt8) (start left right : Nat) :
+    YulSemantics.EVM.readBytes memory start (left + right) =
+      YulSemantics.EVM.readBytes memory start left ++
+        YulSemantics.EVM.readBytes memory (start + left) right :=
+  readBytes_add memory start left right
+
+/-- info: 'Challenge.EvmProof.ModexpMemory.readBytes_add' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms readBytes_add
+
 example (memory : Nat → UInt8) (start size offset width : Nat)
     (hfit : offset + width ≤ size) :
     EvmSemantics.EVM.Precompile.bytesToNatPadded
