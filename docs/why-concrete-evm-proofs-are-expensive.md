@@ -67,6 +67,80 @@ enormous.
 This often appears as excessive time or memory in weak-head normalization
 (`whnf`) or unification rather than in the mathematical tactic itself.
 
+#### Case study: the G1ADD `fpSub` memory spike
+
+The G1ADD source proof produced a particularly clear example. Its field
+subtraction helper operates on a 381-bit value stored as two 256-bit words.
+At the source level those words are Yul `BitVec 256` values. The shared BLS
+proof layer represents the same words with `UInt256` fields inside
+`Fp.Limbs`. The helper performs three stages:
+
+1. subtract the low words and propagate the borrow into the high word;
+2. test whether the wrapped high word indicates an underflow;
+3. conditionally add the BLS modulus back, including the low-word carry.
+
+The source evaluator for this helper was not expensive. After its control
+flow was named explicitly, the exact evaluation theorem compiled in about
+4.2 seconds. The first attempted refinement theorem was very different: it
+asked Lean to prove the complete source result equal to the shared
+`Fp.subSource` result in one step. That one declaration reached approximately
+19.8 GB resident memory after 50 seconds without producing an error or proof
+state, and was terminated.
+
+The spike was not caused by difficult subtraction mathematics. The combined
+theorem made elaboration and definitional equality normalize all of the
+following at once:
+
+- the nested `if` selecting the repair branch;
+- the source low-word subtraction and borrow test;
+- the high-word underflow predicate;
+- the conditional modulus addition and its carry;
+- conversions from every `BitVec 256` operation to `UInt256`;
+- the shared `Fp.subRaw`, `Fp.subRepair`, and final `Fp.subSource`
+  definitions;
+- two copies of large 381-bit modulus constants embedded in different
+  representations.
+
+Dependent branch terms made this worse. Before the branch condition was
+given a small named interface, the interpreter result contained the branch
+inside a dependent `do` expression. Unification therefore traversed and
+normalized both the source execution term and the target limb schedule while
+trying to discover that their intermediate values matched. A short-looking
+conversion proof consequently materialized a large cross-product of source
+syntax, interpreter state, word conversions, and target arithmetic.
+
+The successful architecture splits the helper into explicit values:
+
+```text
+fpSubRawValue
+    -> fpSubNeedsRepairValue
+    -> fpSubRepairValue
+    -> fpSubValue
+```
+
+The execution theorem is compiled separately from the representation
+refinement. Conversion is then proved one stage at a time in small modules:
+
+- convert the raw high/low subtraction to `Fp.subRaw`;
+- convert only the underflow test;
+- convert only the modulus-repair result to `Fp.subRepair`;
+- split on the already named test and compose the opaque stage theorems.
+
+This arrangement matters even though the final proposition is logically the
+same. Once a stage has been compiled to an `.olean`, downstream elaboration
+uses its theorem as an opaque boundary instead of reconstructing the source
+interpreter and multi-limb arithmetic underneath it. Broad simplification is
+also avoided: the proof rewrites the exact branch condition and the exact
+conversion lemmas rather than asking `simp` to search through both programs.
+
+The practical lesson is that a memory spike should be attributed to the
+smallest *elaboration boundary*, not automatically to the algorithm. Here,
+source execution was cheap and field subtraction was already proved. The
+expensive object was the attempted all-at-once equality between two large,
+reducible representations of that computation. Naming intermediates,
+compiling them independently, and composing their theorems changes kernel
+work from one enormous normalization problem into several bounded checks.
+
 ### 2. Symbolic EVM states are large
 
 An EVM state includes much more than a stack:
