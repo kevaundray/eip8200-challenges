@@ -397,6 +397,23 @@ theorem shiftRight_toNat (value : EvmSemantics.UInt256) {shift : Nat}
   rw [word_eq_ofNat_toNat value, hright, word_toNat_ofNat,
     Nat.mod_eq_of_lt hshifted, hvalue]
 
+/-- An in-range EVM left shift is multiplication by a power of two modulo one
+word.  This is the representation boundary needed by source schedules which
+splice a carry bit into the next word. -/
+theorem shiftLeft_toNat (value : EvmSemantics.UInt256) {shift : Nat}
+    (hshift : shift < 256) :
+    (EvmSemantics.UInt256.shiftLeft value
+      (EvmSemantics.UInt256.ofNat shift)).toNat =
+      (value.toNat * 2 ^ shift) % 2 ^ 256 := by
+  have hshift256 : shift < 2 ^ 256 := Nat.lt_trans hshift (by norm_num)
+  have hshiftWord : (EvmSemantics.UInt256.ofNat shift).toNat = shift := by
+    rw [word_toNat_ofNat, Nat.mod_eq_of_lt hshift256]
+  unfold EvmSemantics.UInt256.shiftLeft
+  rw [if_neg (by omega), hshiftWord, word_toNat_ofNat,
+    Nat.shiftLeft_eq]
+  simp only [EvmSemantics.UInt256.size]
+  rw [Nat.mod_mod]
+
 theorem shiftLeft_ofNat {value shift : Nat}
     (hvalue : value < 2 ^ 256) (hshift : shift < 256)
     (hresult : value * 2 ^ shift < 2 ^ 256) :

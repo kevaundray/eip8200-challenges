@@ -37,6 +37,10 @@ example (a b : UInt256) :
     Limbs.WideProduct.value (Limbs.fullMul256 a b) = a.toNat * b.toNat :=
   Limbs.fullMul256_value a b
 
+example (a : Limbs.WideProduct) (hdouble : 2 * a.value < Limbs.radix ^ 2) :
+    (Limbs.doubleWide256 a).value = 2 * a.value :=
+  Limbs.doubleWide256_value a hdouble
+
 example (a b : Limbs.WideProduct) :
     (Limbs.subWide256 a b).value =
       if b.value ≤ a.value then a.value - b.value
@@ -156,5 +160,13 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.conditionalSubWide256_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Limbs.conditionalSubWide256_value
+
+/-- info: 'Challenge.EvmProof.Word.shiftLeft_toNat' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Word.shiftLeft_toNat
+
+/-- info: 'Challenge.EvmProof.Limbs.doubleWide256_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.doubleWide256_value
 
 end Checks.EvmProofWideMul

@@ -154,6 +154,17 @@ def fullMul256 (a b : UInt256) : WideProduct :=
   let borrow := UInt256.lt mm lo
   { hi := mm - lo - borrow, lo := lo }
 
+/-- Double a two-word value using the exact EVM `SHL`/`SHR`/`OR` schedule:
+shift the low word, splice its top bit into the shifted high word, and discard
+any carry beyond the two-word boundary. -/
+def doubleWide256 (input : WideProduct) : WideProduct :=
+  let one := UInt256.ofNat 1
+  let carryShift := UInt256.ofNat 255
+  { hi := UInt256.lor
+      (UInt256.shiftLeft input.hi one)
+      (UInt256.shiftRight input.lo carryShift)
+    lo := UInt256.shiftLeft input.lo one }
+
 /-- Exact two-word EVM subtraction schedule: subtract the low words, propagate
 the `LT` borrow, then perform the two wrapped high-word `SUB`s. -/
 def subWide256 (a b : WideProduct) : WideProduct :=
@@ -610,11 +621,80 @@ theorem fullMul256_value (a b : UInt256) :
     rw [hhigh]
     simpa [joinAt, mulSplit, splitAt] using
       join_mulSplit (base := radix) radix_pos a.toNat b.toNat
+
   · simp only [if_neg hborrow, Nat.not_lt_zero, ↓reduceIte, Nat.sub_zero]
     rw [if_neg hborrow] at hhigh
     rw [hhigh]
     simpa [joinAt, mulSplit, splitAt] using
       join_mulSplit (base := radix) radix_pos a.toNat b.toNat
+
+/-- The source-style shift/splice schedule reconstructs exact doubling when
+the mathematical result fits in two EVM words. -/
+theorem doubleWide256_value (input : WideProduct)
+    (hdouble : 2 * input.value < radix ^ 2) :
+    (doubleWide256 input).value = 2 * input.value := by
+  have hlo := input.lo.val.isLt
+  have hhi := input.hi.val.isLt
+  change input.lo.toNat < radix at hlo
+  change input.hi.toNat < radix at hhi
+  have hlow : (UInt256.shiftLeft input.lo (UInt256.ofNat 1)).toNat =
+      (2 * input.lo.toNat) % radix := by
+    rw [Challenge.EvmProof.Word.shiftLeft_toNat input.lo (by omega)]
+    change (input.lo.toNat * 2) % radix = _
+    rw [Nat.mul_comm]
+  have hcarry : (UInt256.shiftRight input.lo (UInt256.ofNat 255)).toNat =
+      input.lo.toNat / 2 ^ 255 := by
+    rw [Challenge.EvmProof.Word.shiftRight_toNat input.lo (by omega)]
+    exact Nat.shiftRight_eq_div_pow input.lo.toNat 255
+  have hcarryLt : input.lo.toNat / 2 ^ 255 < 2 := by
+    rw [Nat.div_lt_iff_lt_mul (by positivity)]
+    change input.lo.toNat < radix
+    exact hlo
+  have hhighBound : 2 * input.hi.toNat + input.lo.toNat / 2 ^ 255 <
+      radix := by
+    unfold WideProduct.value at hdouble
+    have hsplit := Nat.mod_add_div input.lo.toNat (2 ^ 255)
+    have hmodLt := Nat.mod_lt input.lo.toNat (by positivity : 0 < 2 ^ 255)
+    have hradix : radix = 2 * 2 ^ 255 := by
+      norm_num [radix]
+    rw [hradix] at hdouble ⊢
+    have hdecomp :
+        2 * (input.lo.toNat + (2 * 2 ^ 255) * input.hi.toNat) =
+          2 * (input.lo.toNat % 2 ^ 255) +
+            (2 * 2 ^ 255) *
+              (2 * input.hi.toNat + input.lo.toNat / 2 ^ 255) := by
+      omega
+    by_contra hnot
+    have htop : 2 * 2 ^ 255 ≤
+        2 * input.hi.toNat + input.lo.toNat / 2 ^ 255 := by omega
+    have hscaled := Nat.mul_le_mul_left (2 * 2 ^ 255) htop
+    rw [hdecomp] at hdouble
+    omega
+  have hhighShift :
+      (UInt256.shiftLeft input.hi (UInt256.ofNat 1)).toNat =
+        2 * input.hi.toNat := by
+    rw [Challenge.EvmProof.Word.shiftLeft_toNat input.hi (by omega)]
+    change (input.hi.toNat * 2) % radix = _
+    rw [Nat.mul_comm, Nat.mod_eq_of_lt (by omega)]
+  have hor :
+      (UInt256.lor
+        (UInt256.shiftLeft input.hi (UInt256.ofNat 1))
+        (UInt256.shiftRight input.lo (UInt256.ofNat 255))).toNat =
+          2 * input.hi.toNat + input.lo.toNat / 2 ^ 255 := by
+    rw [Challenge.EvmProof.Word.word_toNat_lor, hhighShift, hcarry]
+    simpa [Nat.shiftLeft_eq, Nat.mul_comm] using
+      (Nat.shiftLeft_add_eq_or_of_lt (i := 1)
+        (b := input.lo.toNat / 2 ^ 255) hcarryLt input.hi.toNat).symm
+  unfold doubleWide256 WideProduct.value
+  dsimp only
+  rw [hlow, hor]
+  have hsplit := Nat.mod_add_div (2 * input.lo.toNat) radix
+  have hdiv : (2 * input.lo.toNat) / radix =
+      input.lo.toNat / 2 ^ 255 := by
+    change (2 * input.lo.toNat) / (2 * 2 ^ 255) = _
+    rw [Nat.mul_div_mul_left _ _ (by omega : 0 < 2)]
+  rw [hdiv] at hsplit
+  nlinarith
 
 /-- The source-style low product reconstructs multiplication modulo two EVM
 words. -/
