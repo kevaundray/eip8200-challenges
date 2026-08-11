@@ -1,10 +1,21 @@
 import Challenge.EvmProof.ModexpFixed
+import Challenge.EvmProof.Bytes
 
 set_option warningAsError true
 
 namespace Challenge.EvmProof.ModexpFixed
 
 open EvmSemantics.EVM
+
+example (bytes : ByteArray) (offset head tail : Nat) :
+    Precompile.bytesToNatPadded bytes offset (head + tail) / 256 ^ tail =
+      Precompile.bytesToNatPadded bytes offset head :=
+  Challenge.EvmProof.Bytes.bytesToNatPadded_prefix_eq_div
+    bytes offset head tail
+
+/-- info: 'Challenge.EvmProof.Bytes.bytesToNatPadded_prefix_eq_div' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.EvmProof.Bytes.bytesToNatPadded_prefix_eq_div
 
 example {input : ByteArray} {base exponent modulus expHead : Nat}
     (hbaseSize : Precompile.bytesToNatPadded input 0 32 = 48)

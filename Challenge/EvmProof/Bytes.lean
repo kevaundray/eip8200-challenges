@@ -204,6 +204,33 @@ theorem bytesToNatPadded_lt_pow (bytes : ByteArray) (offset width : Nat) :
         width := by simpa using hlen
   simpa [hlen'] using h
 
+/-- Dividing a fixed-width big-endian window by the place value of its tail
+recovers the requested prefix. -/
+theorem bytesToNatPadded_prefix_eq_div (bytes : ByteArray)
+    (offset head tail : Nat) :
+    EvmSemantics.EVM.Precompile.bytesToNatPadded bytes offset (head + tail) /
+        256 ^ tail =
+      EvmSemantics.EVM.Precompile.bytesToNatPadded bytes offset head := by
+  rw [bytesToNatPadded_add]
+  have htail := bytesToNatPadded_lt_pow bytes (offset + head) tail
+  calc
+    (EvmSemantics.EVM.Precompile.bytesToNatPadded bytes offset head *
+          256 ^ tail +
+        EvmSemantics.EVM.Precompile.bytesToNatPadded bytes (offset + head) tail) /
+        256 ^ tail =
+      (EvmSemantics.EVM.Precompile.bytesToNatPadded bytes (offset + head) tail +
+          256 ^ tail *
+            EvmSemantics.EVM.Precompile.bytesToNatPadded bytes offset head) /
+        256 ^ tail := by
+      congr 1
+      rw [Nat.add_comm, Nat.mul_comm]
+    _ = EvmSemantics.EVM.Precompile.bytesToNatPadded bytes (offset + head) tail /
+          256 ^ tail +
+        EvmSemantics.EVM.Precompile.bytesToNatPadded bytes offset head :=
+      Nat.add_mul_div_left _ _ (Nat.pow_pos (by omega))
+    _ = EvmSemantics.EVM.Precompile.bytesToNatPadded bytes offset head := by
+      rw [Nat.div_eq_of_lt htail, Nat.zero_add]
+
 theorem readWord_toNat (bytes : ByteArray) (offset : Nat) :
     (EvmSemantics.MachineState.readWord bytes offset).toNat =
       EvmSemantics.EVM.Precompile.bytesToNatPadded bytes offset 32 := by
