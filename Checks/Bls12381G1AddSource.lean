@@ -104,6 +104,46 @@ example (ahi alo bhi blo : U256) :
 #guard_msgs in
 #print axioms Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpEqValue
 
+example (ahi alo bhi blo : U256) (yst : EvmState) :
+    Interp.evalExpr Challenge.EvmProof.modexpExec 64
+      [hoist Challenge.EvmProof.modexpExec.toDialect
+        Challenge.Bls12381G1Add.Reference.Proofs.Compilation.referenceCompiledBlock]
+      [("ahi", ahi), ("alo", alo), ("bhi", bhi), ("blo", blo)] yst
+      (.call "\x004" [.var "ahi", .var "alo", .var "bhi", .var "blo"]) =
+    .ok (.vals
+      [(Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpAddValue
+        ahi alo bhi blo).1,
+       (Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpAddValue
+        ahi alo bhi blo).2] yst) :=
+  Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpAdd
+    ahi alo bhi blo yst
+
+example (ahi alo bhi blo : U256) :
+    ({ hi := YulEvmCompiler.conv
+          (Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpAddValue
+            ahi alo bhi blo).1,
+       lo := YulEvmCompiler.conv
+          (Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpAddValue
+            ahi alo bhi blo).2 } :
+      Challenge.Bls12381.ProofSupport.Fp.Limbs) =
+    Challenge.Bls12381.ProofSupport.Fp.addSource
+      { hi := YulEvmCompiler.conv ahi, lo := YulEvmCompiler.conv alo }
+      { hi := YulEvmCompiler.conv bhi, lo := YulEvmCompiler.conv blo } :=
+  Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpAddValue
+    ahi alo bhi blo
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpAdd' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpAdd
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpAddValue' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpAddValue
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpGeModulus' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpGeModulus

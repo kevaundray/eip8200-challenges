@@ -43,6 +43,19 @@ def fpZeroValue (hi lo : U256) : U256 :=
 def fpEqValue (ahi alo bhi blo : U256) : U256 :=
   b2w (ahi = bhi) &&& b2w (alo = blo)
 
+/-- Exact two-word result of the frozen source's canonical field addition. -/
+def fpAddValue (ahi alo bhi blo : U256) : U256 × U256 :=
+  let sLo := alo + blo
+  let sHi := ahi + bhi + b2w (BitVec.ult sLo alo)
+  if fpGeModulusValue sHi sLo = 0 then (sHi, sLo)
+  else
+    (sHi - (BitVec.ofNat 256 34565483545414906068789196026815425751 +
+      b2w (BitVec.ult sLo
+        (BitVec.ofNat 256
+          45442060874369865957053122457065728162598490762543039060009208264153100167851))),
+     sLo - BitVec.ofNat 256
+       45442060874369865957053122457065728162598490762543039060009208264153100167851)
+
 theorem conv_fpGeModulusValue (hi lo : U256) :
     YulEvmCompiler.conv (fpGeModulusValue hi lo) =
     Challenge.Bls12381.ProofSupport.Fp.addNeedsCorrection
@@ -86,6 +99,63 @@ theorem conv_fpEqValue (ahi alo bhi blo : U256) :
   unfold fpEqValue
   rw [YulEvmCompiler.conv_and, YulEvmCompiler.conv_eq,
     YulEvmCompiler.conv_eq]
+
+theorem conv_fpAddValue (ahi alo bhi blo : U256) :
+    ({ hi := YulEvmCompiler.conv (fpAddValue ahi alo bhi blo).1,
+       lo := YulEvmCompiler.conv (fpAddValue ahi alo bhi blo).2 } :
+      Challenge.Bls12381.ProofSupport.Fp.Limbs) =
+    Challenge.Bls12381.ProofSupport.Fp.addSource
+      { hi := YulEvmCompiler.conv ahi, lo := YulEvmCompiler.conv alo }
+      { hi := YulEvmCompiler.conv bhi, lo := YulEvmCompiler.conv blo } := by
+  let sLo := alo + blo
+  let sHi := ahi + bhi + b2w (BitVec.ult sLo alo)
+  let a : Challenge.Bls12381.ProofSupport.Fp.Limbs :=
+    { hi := YulEvmCompiler.conv ahi, lo := YulEvmCompiler.conv alo }
+  let b : Challenge.Bls12381.ProofSupport.Fp.Limbs :=
+    { hi := YulEvmCompiler.conv bhi, lo := YulEvmCompiler.conv blo }
+  have hsum : Challenge.Bls12381.ProofSupport.Fp.addRaw a b =
+      { hi := YulEvmCompiler.conv sHi, lo := YulEvmCompiler.conv sLo } := by
+    simp [a, b, sHi, sLo, Challenge.Bls12381.ProofSupport.Fp.addRaw,
+      YulEvmCompiler.conv_add, YulEvmCompiler.conv_lt]
+  have hge : YulEvmCompiler.conv (fpGeModulusValue sHi sLo) =
+      Challenge.Bls12381.ProofSupport.Fp.addNeedsCorrection
+        (Challenge.Bls12381.ProofSupport.Fp.addRaw a b) := by
+    rw [conv_fpGeModulusValue, hsum]
+  have hhi : YulEvmCompiler.conv (BitVec.ofNat 256
+      34565483545414906068789196026815425751) =
+      Challenge.Bls12381.ProofSupport.Fp.modulusHi := by
+    rw [YulEvmCompiler.conv_eq_ofNat]
+    rfl
+  have hlo : YulEvmCompiler.conv (BitVec.ofNat 256
+      45442060874369865957053122457065728162598490762543039060009208264153100167851) =
+      Challenge.Bls12381.ProofSupport.Fp.modulusLo := by
+    rw [YulEvmCompiler.conv_eq_ofNat]
+    rfl
+  by_cases hc : fpGeModulusValue sHi sLo = 0
+  · have hkeep : ¬(Challenge.Bls12381.ProofSupport.Fp.addNeedsCorrection
+        (Challenge.Bls12381.ProofSupport.Fp.addRaw a b)).toNat ≠ 0 := by
+      simp only [not_ne_iff]
+      rw [← hge, hc]
+      rfl
+    unfold fpAddValue Challenge.Bls12381.ProofSupport.Fp.addSource
+    rw [if_pos hc, if_neg hkeep, hsum]
+  · have hcorrect :
+        (Challenge.Bls12381.ProofSupport.Fp.addNeedsCorrection
+          (Challenge.Bls12381.ProofSupport.Fp.addRaw a b)).toNat ≠ 0 := by
+      intro hzero
+      have hnat := congrArg UInt256.toNat hge
+      rw [hzero] at hnat
+      apply hc
+      apply BitVec.toNat_injective
+      simpa using hnat
+    unfold fpAddValue Challenge.Bls12381.ProofSupport.Fp.addSource
+      Challenge.Bls12381.ProofSupport.Fp.addCorrect
+    rw [if_neg hc, if_pos hcorrect, hsum]
+    repeat rw [YulEvmCompiler.conv_sub]
+    repeat rw [YulEvmCompiler.conv_add]
+    repeat rw [YulEvmCompiler.conv_lt]
+    rw [hhi, hlo]
+    rfl
 
 private def isFunctionDefinition {Op : Type} : Stmt Op → Bool
   | .funDef .. => true
@@ -199,6 +269,34 @@ theorem eval_fpEq (ahi alo bhi blo : U256) (yst : EvmState) :
     .ok (.vals [fpEqValue ahi alo bhi blo] yst) := by
   rw [Interp.evalExpr]
   rfl
+
+/-- The fifth frozen helper executes the approved source-faithful field-add
+schedule and returns its high word before its low word. -/
+theorem eval_fpAdd (ahi alo bhi blo : U256) (yst : EvmState) :
+    Interp.evalExpr modexpExec 64
+      [hoist modexpExec.toDialect referenceCompiledBlock]
+      [("ahi", ahi), ("alo", alo), ("bhi", bhi), ("blo", blo)] yst
+      (.call "\x004" [.var "ahi", .var "alo", .var "bhi", .var "blo"]) =
+    .ok (.vals [(fpAddValue ahi alo bhi blo).1,
+      (fpAddValue ahi alo bhi blo).2] yst) := by
+  simp [Interp.evalExpr, Interp.evalArgs, Interp.execStmt, Interp.execStmts,
+    lookupFun, hoist, referenceCompiledBlock, frozenReferenceBlock,
+    modexpExec, modexpBuiltinFn, stepOp, bin, un,
+    Dialect.zero, VEnv.get, VEnv.setMany, VEnv.set,
+    bindZeros, restore]
+  split
+  case isTrue hsource =>
+    have hnamed := hsource
+    change fpGeModulusValue
+      (ahi + bhi + b2w (BitVec.ult (alo + blo) alo)) (alo + blo) = 0 at hnamed
+    simp [fpAddValue, hnamed]
+  case isFalse hsource =>
+    have hnamed := hsource
+    change ¬fpGeModulusValue
+      (ahi + bhi + b2w (BitVec.ult (alo + blo) alo)) (alo + blo) = 0 at hnamed
+    unfold fpAddValue
+    rw [if_neg hnamed]
+    rfl
 
 private theorem calldataSizeWord_ne {yst : EvmState}
     (hfit : yst.env.calldata.length < 2 ^ 256)
