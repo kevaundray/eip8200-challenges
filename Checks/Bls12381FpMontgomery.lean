@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryReduceBound
+import Challenge.Bls12381.ProofSupport.FpMontgomeryReduceValue
 
 set_option warningAsError true
 
@@ -75,6 +75,23 @@ example (state : Fp.MontgomeryState)
         (Challenge.EvmProof.Limbs.radix * Challenge.EvmProof.Limbs.radix)) :
     Fp.montgomeryReductionTopNat state < Challenge.EvmProof.Limbs.radix :=
   Fp.montgomeryReductionTopNat_lt state hbound
+
+example (state : Fp.MontgomeryState)
+    (hbound : Fp.montgomeryReductionNumerator state <
+      Challenge.EvmProof.Limbs.radix *
+        (Challenge.EvmProof.Limbs.radix * Challenge.EvmProof.Limbs.radix)) :
+    (Fp.montgomeryReduceStep state).value =
+      Fp.montgomeryReductionQuotient state :=
+  Fp.montgomeryReduceStep_value state hbound
+
+example (state : Fp.MontgomeryState)
+    (hbound : Fp.montgomeryReductionNumerator state <
+      Challenge.EvmProof.Limbs.radix *
+        (Challenge.EvmProof.Limbs.radix * Challenge.EvmProof.Limbs.radix)) :
+    Challenge.EvmProof.Limbs.radix *
+        (Fp.montgomeryReduceStep state).value =
+      Fp.montgomeryReductionNumerator state :=
+  Fp.montgomeryReduceStep_scaled state hbound
 
 example (state : Fp.MontgomeryState) :
     (Fp.montgomeryReductionMultiplier state).toNat =
@@ -209,5 +226,21 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReductionTopNat_lt' depends 
 -/
 #guard_msgs in
 #print axioms Fp.montgomeryReductionTopNat_lt
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReduceStep_value' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryReduceStep_value
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReduceStep_scaled' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryReduceStep_scaled
 
 end Checks.Bls12381FpMontgomery
