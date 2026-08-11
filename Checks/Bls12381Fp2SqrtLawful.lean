@@ -11,10 +11,6 @@ example {a : LawfulFp2.Carrier} :
       IsSquare a :=
   Fp2.lawfulSqrtRun_exists_iff
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.lawfulSqrt_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Fp2.lawfulSqrt_eq
-
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp2.lawfulInvTwo_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp2.lawfulInvTwo_eq

@@ -2,6 +2,7 @@ import Challenge.Bls12381.ProofSupport.Fp2Predicates
 import Challenge.Bls12381.ProofSupport.Fp2Source
 import Challenge.Bls12381.ProofSupport.Fp2SqrtConstants
 import Challenge.Bls12381.ProofSupport.Fp2SqrtProgram
+import Challenge.Bls12381.ProofSupport.FpSqrt
 
 set_option warningAsError true
 

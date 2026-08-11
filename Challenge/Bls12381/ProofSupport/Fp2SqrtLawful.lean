@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.Fp2SqrtRefinement
+import Challenge.Bls12381.ProofSupport.Fp2SqrtLawfulOps
 
 set_option warningAsError true
 
