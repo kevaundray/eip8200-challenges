@@ -27,6 +27,20 @@ example {E : ExecDialect} [DecidableEq E.toDialect.Value]
         st2) :=
   Interp.evalExpr_call_normal hargs hlookup hlen hbody
 
+example {E : ExecDialect} [DecidableEq E.toDialect.Value]
+    {n funs V st head tail V1 st1 Vend st2}
+    (hhead : Interp.execStmt E n funs V st head =
+      .ok (V1, st1, .normal))
+    (htail : Interp.execStmts E n funs V1 st1 tail =
+      .ok (Vend, st2, .normal)) :
+    Interp.execStmts E (n + 1) funs V st (head :: tail) =
+      .ok (Vend, st2, .normal) :=
+  Interp.execStmts_cons_normal hhead htail
+
+/-- info: 'YulSemantics.Interp.execStmts_cons_normal' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms YulSemantics.Interp.execStmts_cons_normal
+
 /-- info: 'YulSemantics.Interp.evalExpr_call_normal' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms YulSemantics.Interp.evalExpr_call_normal

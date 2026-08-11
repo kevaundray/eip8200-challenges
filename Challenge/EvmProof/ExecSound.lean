@@ -33,6 +33,17 @@ theorem evalExpr_call_normal
         st2) := by
   simp [evalExpr, hargs, hlookup, hlen, hbody]
 
+/-- Execute a nonempty statement sequence from separately checked head and
+tail stages.  Concrete source proofs use this to keep each statement opaque. -/
+theorem execStmts_cons_normal
+    {n funs V st head tail V1 st1 Vend st2}
+    (hhead : execStmt E n funs V st head = .ok (V1, st1, .normal))
+    (htail : execStmts E n funs V1 st1 tail =
+      .ok (Vend, st2, .normal)) :
+    execStmts E (n + 1) funs V st (head :: tail) =
+      .ok (Vend, st2, .normal) := by
+  simp [execStmts, hhead, htail]
+
 theorem sound_all_of
     (hE : ∀ op args st result, E.builtinFn op args st = some result →
       E.toDialect.Builtin op args st result) : ∀ n : Nat,
