@@ -5,6 +5,16 @@ set_option warningAsError true
 namespace Checks.Bls12381FpBarrettReduce
 
 open Challenge.Bls12381.ProofSupport
+open EvmSemantics
+
+example (remainder : Challenge.EvmProof.Limbs.WideProduct) :
+    (Fp.barrettSubModulus remainder).hi =
+      remainder.hi - Fp.modulusHi - UInt256.gt Fp.modulusLo remainder.lo := rfl
+
+example (remainder : Challenge.EvmProof.Limbs.WideProduct) :
+    Fp.barrettSubModulus remainder =
+      Challenge.EvmProof.Limbs.subWide256 remainder Fp.modulusWords :=
+  Fp.barrettSubModulus_eq_subWide256 remainder
 
 example (remainder : Challenge.EvmProof.Limbs.WideProduct) :
     (Fp.barrettCorrectOnce remainder).value =
@@ -32,5 +42,9 @@ example (product : Fp.SchoolbookProduct)
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_barrettReduce' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp.value_barrettReduce
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.barrettSubModulus_eq_subWide256' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Fp.barrettSubModulus_eq_subWide256
 
 end Checks.Bls12381FpBarrettReduce

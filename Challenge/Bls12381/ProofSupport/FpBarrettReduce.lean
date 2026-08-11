@@ -11,11 +11,31 @@ fixed modulus when the current two-word remainder is at least `p`.
 
 namespace Challenge.Bls12381.ProofSupport.Fp
 
+/-- Exact corrective subtraction block from `Fp.sol`.  Unlike the initial
+remainder subtraction, this source block spells its low-word borrow as
+`GT p0 rem0`. -/
+def barrettSubModulus
+    (remainder : Challenge.EvmProof.Limbs.WideProduct) :
+    Challenge.EvmProof.Limbs.WideProduct :=
+  let low := remainder.lo - modulusLo
+  let borrow := EvmSemantics.UInt256.gt modulusLo remainder.lo
+  { hi := remainder.hi - modulusHi - borrow, lo := low }
+
+/-- The source's `GT p0 rem0` borrow is extensionally the same unsigned bit as
+`LT rem0 p0`, so the source-specific block inherits the generic two-word
+subtraction value theorem. -/
+theorem barrettSubModulus_eq_subWide256
+    (remainder : Challenge.EvmProof.Limbs.WideProduct) :
+    barrettSubModulus remainder =
+      Challenge.EvmProof.Limbs.subWide256 remainder modulusWords := rfl
+
 /-- One exact source correction: compute the high-first EVM comparison word
 and, when nonzero, execute the low-word subtraction with propagated borrow. -/
 def barrettCorrectOnce (remainder : Challenge.EvmProof.Limbs.WideProduct) :
     Challenge.EvmProof.Limbs.WideProduct :=
-  Challenge.EvmProof.Limbs.conditionalSubWide256 remainder modulusWords
+  if (Challenge.EvmProof.Limbs.wideGeWord remainder modulusWords).toNat ≠ 0 then
+    barrettSubModulus remainder
+  else remainder
 
 /-- The two identical correction blocks emitted by `Fp.sol`. -/
 def barrettReduce (product : SchoolbookProduct) :
@@ -31,8 +51,17 @@ theorem value_barrettCorrectOnce
         remainder.value - EvmSemantics.Crypto.Bls12381.p
       else remainder.value := by
   unfold barrettCorrectOnce
-  rw [Challenge.EvmProof.Limbs.conditionalSubWide256_value,
-    modulusWords_value]
+  have hcondition :
+      (Challenge.EvmProof.Limbs.wideGeWord remainder modulusWords).toNat ≠ 0 ↔
+        EvmSemantics.Crypto.Bls12381.p ≤ remainder.value := by
+    rw [Challenge.EvmProof.Limbs.wideGeWord_nonzero_iff,
+      modulusWords_value]
+  by_cases hge : EvmSemantics.Crypto.Bls12381.p ≤ remainder.value
+  · rw [if_pos (hcondition.mpr hge), if_pos hge,
+      barrettSubModulus_eq_subWide256,
+      Challenge.EvmProof.Limbs.subWide256_value, modulusWords_value,
+      if_pos hge]
+  · rw [if_neg (mt hcondition.mp hge), if_neg hge]
 
 /-- Two conditional subtractions compute reduction modulo `p` for every
 input below `3p`. -/

@@ -5,6 +5,17 @@ set_option warningAsError true
 namespace Checks.Bls12381FpBarrettSubtract
 
 open Challenge.Bls12381.ProofSupport
+open EvmSemantics
+
+example (product : Fp.SchoolbookProduct) :
+    Fp.barrettRemainder product =
+      Challenge.EvmProof.Limbs.subWide256
+        (Fp.productLowWords product) (Fp.barrettMultipleLow product) := rfl
+
+example (product : Fp.SchoolbookProduct) :
+    (Fp.barrettRemainder product).hi =
+      product.r1 - (Fp.barrettMultipleLow product).hi -
+        UInt256.lt product.r0 (Fp.barrettMultipleLow product).lo := rfl
 
 example (product : Fp.SchoolbookProduct) :
     (Fp.barrettMultipleLow product).value =
