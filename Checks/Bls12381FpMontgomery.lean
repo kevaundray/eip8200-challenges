@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryLowWord
+import Challenge.Bls12381.ProofSupport.FpMontgomeryCarry
 
 set_option warningAsError true
 
@@ -94,6 +94,12 @@ example (state : Fp.MontgomeryState) :
     (Fp.montgomeryReductionLowSum state).word = UInt256.ofNat 0 :=
   Fp.montgomeryReductionLowSum_word_eq_zero state
 
+example (state : Fp.MontgomeryState) :
+    (Fp.montgomeryReductionCarry state).toNat =
+      (Fp.montgomeryReductionLowProduct state).hi.toNat +
+        (Fp.montgomeryReductionLowSum state).carry.toNat :=
+  Fp.montgomeryReductionCarry_value state
+
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryN0Inv_spec' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms Fp.montgomeryN0Inv_spec
@@ -149,5 +155,13 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReductionLowSum_word_eq_zero
 -/
 #guard_msgs in
 #print axioms Fp.montgomeryReductionLowSum_word_eq_zero
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReductionCarry_value' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryReductionCarry_value
 
 end Checks.Bls12381FpMontgomery
