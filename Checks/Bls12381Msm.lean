@@ -6,13 +6,13 @@ namespace Checks.Bls12381Msm
 
 open Challenge.Bls12381.ProofSupport
 
-example (acc : G1Projective.Point)
-    (left right : List (G1Projective.Point × Nat)) :
+example (acc : G1Affine.Point)
+    (left right : List (G1Affine.Point × Nat)) :
     Msm.foldG1 acc (left ++ right) = Msm.foldG1 (Msm.foldG1 acc left) right :=
   Msm.foldG1_append acc left right
 
-example (acc : G2Projective.Point)
-    (left right : List (G2Projective.Point × Nat)) :
+example (acc : G2Affine.Point)
+    (left right : List (G2Affine.Point × Nat)) :
     Msm.foldG2 acc (left ++ right) = Msm.foldG2 (Msm.foldG2 acc left) right :=
   Msm.foldG2_append acc left right
 
