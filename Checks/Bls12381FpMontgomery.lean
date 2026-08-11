@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryCarry
+import Challenge.Bls12381.ProofSupport.FpMontgomeryReduceStep
 
 set_option warningAsError true
 
@@ -99,6 +99,21 @@ example (state : Fp.MontgomeryState) :
       (Fp.montgomeryReductionLowProduct state).hi.toNat +
         (Fp.montgomeryReductionLowSum state).carry.toNat :=
   Fp.montgomeryReductionCarry_value state
+
+/-! The reduction step preserves every source `ADD`/`LT` operand order. -/
+
+example (state : Fp.MontgomeryState) :
+    Fp.montgomeryReduceStep state =
+      let highProduct := Challenge.EvmProof.Limbs.fullMul256
+        (Fp.montgomeryReductionMultiplier state) Fp.modulusHi
+      let highSum := Challenge.EvmProof.Limbs.addTwo256 state.t1 highProduct.lo
+      let shiftedSum := Challenge.EvmProof.Limbs.addTwo256 highSum.word
+        (Fp.montgomeryReductionCarry state)
+      { t0 := shiftedSum.word
+        t1 := state.t2 +
+          (highProduct.hi + (highSum.carry + shiftedSum.carry))
+        t2 := UInt256.ofNat 0 : Fp.MontgomeryState } :=
+  rfl
 
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryN0Inv_spec' depends on axioms: [propext] -/
 #guard_msgs in
