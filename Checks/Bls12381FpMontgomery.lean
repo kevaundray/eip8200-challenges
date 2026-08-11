@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryNextBound
+import Challenge.Bls12381.ProofSupport.FpMontgomeryNextValue
 
 set_option warningAsError true
 
@@ -157,6 +157,26 @@ example (state : Fp.MontgomeryState) (x1 : UInt256) {y : Fp.Limbs}
     (Fp.montgomeryAccumulateNext state x1 y).t2.toNat =
       Fp.montgomeryNextTopNat state x1 y :=
   Fp.montgomeryAccumulateNext_t2_value state x1 hy
+
+example (state : Fp.MontgomeryState) (x1 : UInt256) (y : Fp.Limbs) :
+    (Fp.montgomeryNextLowSum state x1 y).word.toNat +
+        Challenge.EvmProof.Limbs.radix *
+          (Fp.montgomeryNextCarry state x1 y).toNat =
+      state.t0.toNat + x1.toNat * y.lo.toNat :=
+  Fp.montgomeryNextLow_reconstruct state x1 y
+
+example (state : Fp.MontgomeryState) (x1 : UInt256) {y : Fp.Limbs}
+    (hy : Fp.Canonical y) :
+    (Fp.montgomeryAccumulateNext state x1 y).value =
+      state.t0.toNat + Challenge.EvmProof.Limbs.radix * state.t1.toNat +
+        x1.toNat * Fp.value y :=
+  Fp.montgomeryAccumulateNext_value state x1 hy
+
+example (state : Fp.MontgomeryState) (x1 : UInt256) {y : Fp.Limbs}
+    (hy : Fp.Canonical y) (ht2 : state.t2 = UInt256.ofNat 0) :
+    (Fp.montgomeryAccumulateNext state x1 y).value =
+      state.value + x1.toNat * Fp.value y :=
+  Fp.montgomeryAccumulateNext_value_of_t2_zero state x1 hy ht2
 
 example (state : Fp.MontgomeryState) :
     (Fp.montgomeryReductionMultiplier state).toNat =
@@ -355,5 +375,29 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryAccumulateNext_t2_value' dep
 -/
 #guard_msgs in
 #print axioms Fp.montgomeryAccumulateNext_t2_value
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryNextLow_reconstruct' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryNextLow_reconstruct
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryAccumulateNext_value' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryAccumulateNext_value
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryAccumulateNext_value_of_t2_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryAccumulateNext_value_of_t2_zero
 
 end Checks.Bls12381FpMontgomery
