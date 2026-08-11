@@ -9,7 +9,8 @@ namespace Challenge.Bls12381.ProofSupport.Fp2
 
 open PrimeField
 
-def lawfulSqrt (x : LawfulFp2.Base) : LawfulFp2.Base :=
+irreducible_def lawfulSqrt (lemma := lawfulSqrt_eq)
+    (x : LawfulFp2.Base) : LawfulFp2.Base :=
   x ^ ((EvmSemantics.Crypto.Bls12381.p + 1) / 4)
 
 def lawfulInvTwo : LawfulFp2.Base :=
@@ -116,8 +117,7 @@ theorem sqrtSourceOps_refines :
       rw [Fp.lawful_squareCanonical ha, hab]⟩
   · rintro a b ⟨ha, hab⟩
     exact ⟨Fp.canonical_sqrtCanonical ha, by
-      rw [Fp.lawful_sqrtCanonical_pow ha, hab]
-      rfl⟩
+      rw [Fp.lawful_sqrtCanonical_pow ha, hab, lawfulSqrt_eq]⟩
   · rintro a b ⟨ha, hab⟩
     exact ⟨Fp.canonical_invCanonical ha, by
       change PrimeField.finEquiv (Fp.toField (Fp.invCanonical a)) = _

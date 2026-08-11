@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.Fp2SqrtDefs
+import Challenge.Bls12381.ProofSupport.Fp2SqrtLawful
 import Challenge.Bls12381.ProofSupport.Fp2SourceLawful
 
 set_option warningAsError true
@@ -42,5 +43,36 @@ theorem sqrtSource_success {a : Repr} (_ha : Canonical a)
       rw [eq_zero_of_isZeroSource_true hzero]
       exact sqrSource_zero)
     (fun _ _ => eq_of_eqSource_true) hsuccess
+
+theorem sqrtSource_exists_iff {a : Repr} (ha : Canonical a) :
+    (sqrtSource a).exists_ = true ↔ IsSquare (toLawful a) := by
+  rw [(sqrtSource_refines_lawful ha).1]
+  exact lawfulSqrtRun_exists_iff
+
+/-- Canonical decoded `(-1, 0)`, the pure-imaginary square-root regression. -/
+def negativeOne : Repr :=
+  mkRepr (Fp.negSource (Fp.normalize 1)) (Fp.normalize 0)
+
+theorem canonical_negativeOne : Canonical negativeOne :=
+  canonical_mkRepr
+    ⟨Fp.canonical_negSource (Fp.canonical_normalize 1)⟩
+    ⟨Fp.canonical_normalize 0⟩
+
+theorem toLawful_negativeOne :
+    toLawful negativeOne = (⟨-1, 0⟩ : LawfulFp2.Carrier) := by
+  rw [negativeOne, toLawful_mkRepr]
+  apply QuadraticAlgebra.ext
+  · rw [Fp.toLawful_negSource (Fp.canonical_normalize 1)]
+    change -(1 : LawfulFp2.Base) = -1
+    rfl
+  · simp
+
+theorem sqrtSource_negativeOne_success :
+    (sqrtSource negativeOne).exists_ = true := by
+  apply (sqrtSource_exists_iff canonical_negativeOne).2
+  rw [toLawful_negativeOne]
+  refine ⟨(⟨0, 1⟩ : LawfulFp2.Carrier), ?_⟩
+  apply QuadraticAlgebra.ext <;>
+    simp
 
 end Challenge.Bls12381.ProofSupport.Fp2
