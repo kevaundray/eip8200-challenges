@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomerySecond
+import Challenge.Bls12381.ProofSupport.FpMontgomeryFinal
 
 set_option warningAsError true
 
@@ -198,6 +198,31 @@ example (x : Fp.Limbs) {y : Fp.Limbs} (hy : Fp.Canonical y) :
         (Fp.montgomerySecondReduce x y).value =
       Fp.montgomeryReductionNumerator (Fp.montgomerySecondAccumulate x y) :=
   Fp.montgomerySecondReduce_scaled x hy
+
+example (result : Challenge.EvmProof.Limbs.WideProduct) :
+    Fp.montgomeryFinalSubModulus result =
+      let newZ0 := result.lo - Fp.modulusLo
+      { hi := result.hi - Fp.modulusHi - UInt256.gt Fp.modulusLo result.lo
+        lo := newZ0 : Challenge.EvmProof.Limbs.WideProduct } :=
+  rfl
+
+example (result : Challenge.EvmProof.Limbs.WideProduct) :
+    Fp.montgomeryFinalCorrect result =
+      if (Challenge.EvmProof.Limbs.wideGeWord result
+        Fp.montgomeryModulusWords).toNat ≠ 0
+      then Fp.montgomeryFinalSubModulus result
+      else result :=
+  rfl
+
+example (result : Challenge.EvmProof.Limbs.WideProduct) :
+    (Fp.montgomeryFinalCorrect result).value =
+      if p ≤ result.value then result.value - p else result.value :=
+  Fp.montgomeryFinalCorrect_value result
+
+example (x y : Fp.Limbs) :
+    Fp.montMul2Words x y =
+      Fp.montgomeryFinalCorrect (Fp.montgomeryResultWords x y) :=
+  rfl
 
 example (state : Fp.MontgomeryState) :
     (Fp.montgomeryReductionMultiplier state).toNat =
@@ -440,5 +465,21 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomerySecondReduce_scaled' depends
 -/
 #guard_msgs in
 #print axioms Fp.montgomerySecondReduce_scaled
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryModulusWords_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.montgomeryModulusWords_value
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryFinalSubModulus_eq_subWide256' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Fp.montgomeryFinalSubModulus_eq_subWide256
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryFinalCorrect_value' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryFinalCorrect_value
 
 end Checks.Bls12381FpMontgomery
