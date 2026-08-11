@@ -8,6 +8,7 @@ import Challenge.Bls12381.ProofSupport.G2Projective
 import Challenge.Bls12381.ProofSupport.ScalarMul
 import Challenge.Bls12381.ProofSupport.Msm
 import Challenge.Bls12381.ProofSupport.PrimeField
+import Challenge.Bls12381.ProofSupport.PrimeCertificate
 import Challenge.Bls12381.ProofSupport.Subgroup
 
 set_option warningAsError true
