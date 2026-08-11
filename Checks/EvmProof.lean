@@ -1,7 +1,12 @@
 import Challenge.EvmProof
 import Checks.EvmProofByteWindow
+import Checks.EvmProofCallMemory
+import Checks.EvmProofModexpCallGas
 import Checks.EvmProofModexpCalls
+import Checks.EvmProofProfiledCorrectness
 import Checks.EvmProofProfiledCalls
+import Checks.EvmProofProfiledLower
+import Checks.EvmProofProfiledSteps
 import Checks.EvmProofWideMul
 set_option warningAsError true
 /-!
