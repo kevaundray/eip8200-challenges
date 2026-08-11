@@ -90,6 +90,121 @@ theorem toLawful_mulFpSource {a : Repr} {s : Fp.Limbs}
       Fp.toField_mulCanonical ha.c0.proof hs,
       Fp.toField_mulCanonical ha.c1.proof hs, map_mul, mul_comm]
 
+def evalLawful (a : Fp.Limbs) : LawfulFp2.Base :=
+  PrimeField.finEquiv (Fp.toField a)
+
+def evalField (a : Fp.Limbs) : Fin EvmSemantics.Crypto.Bls12381.p := Fp.toField a
+
+def fieldSourceSemantics : SourceProgram.Semantics
+    (Fin EvmSemantics.Crypto.Bls12381.p) where
+  add := fun a b => a + b
+  sub := fun a b => a - b
+  mul := fun a b => a * b
+  square := fun a => a ^ 2
+  inv := Inv.inv
+  neg := Neg.neg
+
+def lawfulSourceSemantics : SourceProgram.Semantics LawfulFp2.Base where
+  add := fun a b => a + b
+  sub := fun a b => a - b
+  mul := fun a b => a * b
+  square := fun a => a ^ 2
+  inv := Inv.inv
+  neg := Neg.neg
+
+theorem lawful_directSourceOps_add (output : SourceRef) {a b : Fp.Limbs}
+    (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    Fp.Canonical (Id.run (directSourceOps.add output a b)) ∧
+      evalLawful (Id.run (directSourceOps.add output a b)) =
+        evalLawful a + evalLawful b := by
+  constructor
+  · exact canonical_directSourceOps_add output ha hb
+  · rw [directSourceOps_add, sourceAdd_eq]
+    exact Fp.toLawful_addSource ha hb
+
+theorem lawful_directSourceOps_sub (output : SourceRef) {a b : Fp.Limbs}
+    (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    Fp.Canonical (Id.run (directSourceOps.sub output a b)) ∧
+      evalLawful (Id.run (directSourceOps.sub output a b)) =
+        evalLawful a - evalLawful b := by
+  constructor
+  · exact canonical_directSourceOps_sub output ha hb
+  · rw [directSourceOps_sub, sourceSub_eq]
+    exact Fp.toLawful_subSource ha hb
+
+theorem lawful_directSourceOps_mul (output : SourceRef) {a b : Fp.Limbs}
+    (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    Fp.Canonical (Id.run (directSourceOps.mul output a b)) ∧
+      evalLawful (Id.run (directSourceOps.mul output a b)) =
+        evalLawful a * evalLawful b := by
+  constructor
+  · exact canonical_directSourceOps_mul output ha hb
+  · unfold evalLawful
+    rw [directSourceOps_mul, sourceMul_eq,
+      Fp.toField_mulCanonical ha hb, map_mul]
+
+theorem lawful_directSourceOps_square (output : SourceRef) {a : Fp.Limbs}
+    (ha : Fp.Canonical a) :
+    Fp.Canonical (Id.run (directSourceOps.square output a)) ∧
+      evalLawful (Id.run (directSourceOps.square output a)) =
+        (evalLawful a) ^ 2 := by
+  constructor
+  · exact canonical_directSourceOps_square output ha
+  · unfold evalLawful
+    rw [directSourceOps_square, sourceSquare_eq,
+      Fp.toField_squareCanonical ha, map_pow]
+
+theorem lawful_directSourceOps_inv (output : SourceRef) {a : Fp.Limbs}
+    (ha : Fp.Canonical a) :
+    Fp.Canonical (Id.run (directSourceOps.inv output a)) ∧
+      evalLawful (Id.run (directSourceOps.inv output a)) =
+        (evalLawful a)⁻¹ := by
+  constructor
+  · exact canonical_directSourceOps_inv output ha
+  · rw [directSourceOps_inv, sourceInv_eq]
+    exact Fp.toLawful_invCanonical ha
+
+theorem lawful_directSourceOps_neg (output : SourceRef) {a : Fp.Limbs}
+    (ha : Fp.Canonical a) :
+    Fp.Canonical (Id.run (directSourceOps.neg output a)) ∧
+      evalLawful (Id.run (directSourceOps.neg output a)) =
+        -(evalLawful a) := by
+  constructor
+  · exact canonical_directSourceOps_neg output ha
+  · rw [directSourceOps_neg, sourceNeg_eq]
+    exact Fp.toLawful_negSource ha
+
+theorem field_directSourceOps_add (output : SourceRef) {a b : Fp.Limbs}
+    (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    Fp.Canonical (Id.run (directSourceOps.add output a b)) ∧
+      evalField (Id.run (directSourceOps.add output a b)) =
+        evalField a + evalField b := by
+  constructor
+  · exact canonical_directSourceOps_add output ha hb
+  · rw [directSourceOps_add, sourceAdd_eq]
+    exact Fp.toField_addSource ha hb
+
+theorem field_directSourceOps_sub (output : SourceRef) {a b : Fp.Limbs}
+    (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    Fp.Canonical (Id.run (directSourceOps.sub output a b)) ∧
+      evalField (Id.run (directSourceOps.sub output a b)) =
+        evalField a - evalField b := by
+  constructor
+  · exact canonical_directSourceOps_sub output ha hb
+  · rw [directSourceOps_sub, sourceSub_eq]
+    exact Fp.toField_subSource ha hb
+
+theorem field_directSourceOps_mul (output : SourceRef) {a b : Fp.Limbs}
+    (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    Fp.Canonical (Id.run (directSourceOps.mul output a b)) ∧
+      evalField (Id.run (directSourceOps.mul output a b)) =
+        evalField a * evalField b := by
+  constructor
+  · exact canonical_directSourceOps_mul output ha hb
+  · unfold evalField
+    rw [directSourceOps_mul, sourceMul_eq]
+    exact Fp.toField_mulCanonical ha hb
+
 theorem toField_mulC0Source {a b : Repr} (ha : Canonical a)
     (hb : Canonical b) :
     Fp.toField (mulRealSource (mulV0Source a b) (mulV1Source a b)) =
@@ -143,10 +258,38 @@ theorem toField_mulC1Source {a b : Repr} (ha : Canonical a)
 theorem toField_mulSource {a b : Repr} (ha : Canonical a)
     (hb : Canonical b) :
     toField (mulSource a b) = toField a * toField b := by
-  rw [mulSource_eq, toField_mkRepr,
-    toField_mulC0Source ha hb, toField_mulC1Source ha hb]
+  have hresult := SourceProgram.runMulWith_refines directSourceOps
+    Fp.Canonical evalField fieldSourceSemantics
+    field_directSourceOps_add field_directSourceOps_sub
+    field_directSourceOps_mul a.c0 a.c1 b.c0 b.c1
+    (by simpa only [directSourceOps_input] using ha.c0.proof)
+    (by simpa only [directSourceOps_input] using ha.c1.proof)
+    (by simpa only [directSourceOps_input] using hb.c0.proof)
+    (by simpa only [directSourceOps_input] using hb.c1.proof)
+  have hc0 := hresult.2.2.1
+  have hc1 := hresult.2.2.2
+  simp only [fieldSourceSemantics, directSourceOps_input] at hc0 hc1
+  change evalField (Id.run (runMulSourceWith directSourceOps a b)).1 = _ at hc0
+  change evalField (Id.run (runMulSourceWith directSourceOps a b)).2 = _ at hc1
+  unfold mulSource
+  rw [toField_mkRepr]
   change _ = _root_.Fp2.mul (toField a) (toField b)
-  simp only [_root_.Fp2.mul, toField]
+  unfold _root_.Fp2.mul
+  rw [_root_.Fp2.mk.injEq]
+  constructor
+  · rw [directSourceOps_value]
+    change evalField (Id.run (runMulSourceWith directSourceOps a b)).1 = _
+    rw [hc0]
+    rfl
+  · rw [directSourceOps_value]
+    change evalField (Id.run (runMulSourceWith directSourceOps a b)).2 = _
+    rw [show (toField a).c0 = evalField a.c0 by rfl,
+      show (toField a).c1 = evalField a.c1 by rfl,
+      show (toField b).c0 = evalField b.c0 by rfl,
+      show (toField b).c1 = evalField b.c1 by rfl]
+    rw [hc1]
+    simp only [sub_eq_add_neg, neg_add_rev, add_assoc]
+    ac_rfl
 
 theorem toField_sqrRealSource {a : Repr} (ha : Canonical a) :
     Fp.toField (sqrRealSource a) =
@@ -184,13 +327,43 @@ theorem toField_sqrSource {a : Repr} (ha : Canonical a) :
 theorem toLawful_mulSource {a b : Repr} (ha : Canonical a)
     (hb : Canonical b) :
     toLawful (mulSource a b) = toLawful a * toLawful b := by
-  rw [mulSource_eq, toLawful_mkRepr]
+  have hresult := SourceProgram.runMulWith_refines directSourceOps
+    Fp.Canonical evalLawful lawfulSourceSemantics
+    lawful_directSourceOps_add lawful_directSourceOps_sub
+    lawful_directSourceOps_mul a.c0 a.c1 b.c0 b.c1
+    (by simpa only [directSourceOps_input] using ha.c0.proof)
+    (by simpa only [directSourceOps_input] using ha.c1.proof)
+    (by simpa only [directSourceOps_input] using hb.c0.proof)
+    (by simpa only [directSourceOps_input] using hb.c1.proof)
+  have hc0 := hresult.2.2.1
+  have hc1 := hresult.2.2.2
+  simp only [lawfulSourceSemantics, directSourceOps_input] at hc0 hc1
+  change evalLawful (Id.run (runMulSourceWith directSourceOps a b)).1 = _ at hc0
+  change evalLawful (Id.run (runMulSourceWith directSourceOps a b)).2 = _ at hc1
+  unfold mulSource
+  rw [toLawful_mkRepr]
   apply QuadraticAlgebra.ext
-  · simp [toLawful, LawfulFp2.ofWire, toField,
-      toField_mulC0Source ha hb, map_sub, map_mul]
-    ring
-  · simp [toLawful, LawfulFp2.ofWire, toField,
-      toField_mulC1Source ha hb, map_add, map_mul]
+  · rw [directSourceOps_value]
+    simp only [QuadraticAlgebra.re_mul, neg_mul, one_mul]
+    rw [show (toLawful a).re = evalLawful a.c0 by rfl,
+      show (toLawful b).re = evalLawful b.c0 by rfl,
+      show (toLawful a).im = evalLawful a.c1 by rfl,
+      show (toLawful b).im = evalLawful b.c1 by rfl]
+    rw [show PrimeField.finEquiv
+        (Fp.toField (Id.run (runMulSourceWith directSourceOps a b)).1) =
+      evalLawful (Id.run (runMulSourceWith directSourceOps a b)).1 by rfl]
+    simpa only [sub_eq_add_neg] using hc0
+  · rw [directSourceOps_value]
+    simp only [QuadraticAlgebra.im_mul, zero_mul, add_zero]
+    rw [show (toLawful a).re = evalLawful a.c0 by rfl,
+      show (toLawful b).re = evalLawful b.c0 by rfl,
+      show (toLawful a).im = evalLawful a.c1 by rfl,
+      show (toLawful b).im = evalLawful b.c1 by rfl]
+    rw [directSourceOps_value]
+    rw [show PrimeField.finEquiv
+        (Fp.toField (Id.run (runMulSourceWith directSourceOps a b)).2) =
+      evalLawful (Id.run (runMulSourceWith directSourceOps a b)).2 by rfl]
+    rw [hc1]
     ring
 
 theorem toLawful_sqrSource {a : Repr} (ha : Canonical a) :
@@ -254,12 +427,46 @@ theorem toLawful_invC1Source {a : Repr} (ha : Canonical a) :
 No equality to the pinned opaque `FF.modInv` is assumed or required. -/
 theorem toLawful_invSource {a : Repr} (ha : Canonical a) :
     toLawful (invSource a) = (toLawful a)⁻¹ := by
-  rw [invSource_eq, toLawful_mkRepr]
+  have hresult := SourceProgram.runInvWith_refines directSourceOps
+    Fp.Canonical evalLawful lawfulSourceSemantics
+    lawful_directSourceOps_add lawful_directSourceOps_mul
+    lawful_directSourceOps_square lawful_directSourceOps_inv
+    lawful_directSourceOps_neg a.c0 a.c1
+    (by simpa only [directSourceOps_input] using ha.c0.proof)
+    (by simpa only [directSourceOps_input] using ha.c1.proof)
+  have hc0 := hresult.2.2.1
+  have hc1 := hresult.2.2.2
+  simp only [lawfulSourceSemantics, directSourceOps_input] at hc0 hc1
+  change evalLawful (Id.run (runInvSourceWith directSourceOps a)).1 = _ at hc0
+  change evalLawful (Id.run (runInvSourceWith directSourceOps a)).2 = _ at hc1
+  unfold invSource
+  rw [toLawful_mkRepr]
   apply QuadraticAlgebra.ext
-  · simp [toLawful_invC0Source ha, QuadraticAlgebra.inv_def,
-      QuadraticAlgebra.norm_def, mul_comm]
-  · simp [toLawful_invC1Source ha, QuadraticAlgebra.inv_def,
-      QuadraticAlgebra.norm_def, mul_comm]
+  · rw [directSourceOps_value]
+    rw [QuadraticAlgebra.re_inv, QuadraticAlgebra.norm_def]
+    simp only [zero_mul, add_zero, neg_mul, one_mul, sub_neg_eq_add]
+    rw [show (toLawful a).re = evalLawful a.c0 by rfl,
+      show (toLawful a).im = evalLawful a.c1 by rfl]
+    rw [show PrimeField.finEquiv
+        (Fp.toField (Id.run (runInvSourceWith directSourceOps a)).1) =
+      evalLawful (Id.run (runInvSourceWith directSourceOps a)).1 by rfl]
+    rw [hc0]
+    simp only [pow_two]
+    rw [add_comm (evalLawful a.c0 * evalLawful a.c0)
+      (evalLawful a.c1 * evalLawful a.c1)]
+    rw [mul_comm]
+  · rw [directSourceOps_value]
+    rw [QuadraticAlgebra.im_inv, QuadraticAlgebra.norm_def]
+    simp only [zero_mul, add_zero, neg_mul, one_mul, sub_neg_eq_add]
+    rw [show (toLawful a).re = evalLawful a.c0 by rfl,
+      show (toLawful a).im = evalLawful a.c1 by rfl]
+    rw [directSourceOps_value]
+    rw [show PrimeField.finEquiv
+        (Fp.toField (Id.run (runInvSourceWith directSourceOps a)).2) =
+      evalLawful (Id.run (runInvSourceWith directSourceOps a)).2 by rfl]
+    rw [hc1]
+    simp only [pow_two]
+    ring
 
 theorem toLawful_invSource_zero {a : Repr} (ha : Canonical a)
     (hzero : toLawful a = 0) : toLawful (invSource a) = 0 := by

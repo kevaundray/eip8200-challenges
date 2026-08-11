@@ -1,157 +1,149 @@
-import Challenge.Bls12381.ProofSupport.Fp2SourceDefs
+import Challenge.Bls12381.ProofSupport.Fp2SourcePrimitives
+import Challenge.Bls12381.ProofSupport.Fp2SourceProgram
 
 set_option warningAsError true
 
-/-! # Auditable source-order Fp2 operation schedules -/
+/-! # Direct and auditable interpretations of the Fp2 source programs -/
 
 namespace Challenge.Bls12381.ProofSupport.Fp2
 
-inductive SourceRef where
-  | a0 | a1 | b0 | b1
-  | v0 | v1 | aSum | bSum | cross | vSum | c0 | c1
-  | a0Square | a1Square | norm | normInv | negA1
-deriving DecidableEq
+abbrev SourceRef := SourceProgram.Ref
+abbrev SourceEvent := SourceProgram.Event
+abbrev SourceOps (M : Type → Type) [Monad M] (Cell : Type) :=
+  SourceProgram.Ops Fp.Limbs M Cell
+abbrev AuditCell := SourceProgram.AuditCell Fp.Limbs
+abbrev AuditM := SourceProgram.AuditM
 
-inductive SourceEvent where
-  | add (left right output : SourceRef)
-  | sub (left right output : SourceRef)
-  | mul (left right output : SourceRef)
-  | square (input output : SourceRef)
-  | inv (input output : SourceRef)
-  | neg (input output : SourceRef)
-deriving DecidableEq
+def runMulSourceWith {M : Type → Type} [Monad M] {Cell : Type}
+    (ops : SourceOps M Cell) (a b : Repr) : M (Cell × Cell) :=
+  SourceProgram.runMulWith ops a.c0 a.c1 b.c0 b.c1
 
-structure Traced (α : Type) where
-  value : α
-  events : List SourceEvent
+def runInvSourceWith {M : Type → Type} [Monad M] {Cell : Type}
+    (ops : SourceOps M Cell) (a : Repr) : M (Cell × Cell) :=
+  SourceProgram.runInvWith ops a.c0 a.c1
 
-def tracedAdd (left right output : SourceRef) (a b : Fp.Limbs) :
-    Traced Fp.Limbs :=
-  ⟨Fp.addSource a b, [.add left right output]⟩
+def directSourceOps : SourceOps Id Fp.Limbs where
+  input := fun _ a => a
+  value := id
+  add := fun _ a b => sourceAdd a b
+  sub := fun _ a b => sourceSub a b
+  mul := fun _ a b => sourceMul a b
+  square := fun _ a => sourceSquare a
+  inv := fun _ a => sourceInv a
+  neg := fun _ a => sourceNeg a
 
-def tracedSub (left right output : SourceRef) (a b : Fp.Limbs) :
-    Traced Fp.Limbs :=
-  ⟨Fp.subSource a b, [.sub left right output]⟩
+theorem directSourceOps_input (ref : SourceRef) (a : Fp.Limbs) :
+    directSourceOps.input ref a = a := rfl
 
-def tracedMul (left right output : SourceRef) (a b : Fp.Limbs) :
-    Traced Fp.Limbs :=
-  ⟨Fp.mulCanonical a b, [.mul left right output]⟩
+theorem directSourceOps_value (a : Fp.Limbs) :
+    directSourceOps.value a = a := rfl
 
-def tracedSquare (input output : SourceRef) (a : Fp.Limbs) :
-    Traced Fp.Limbs :=
-  ⟨Fp.squareCanonical a, [.square input output]⟩
+theorem directSourceOps_add (output : SourceRef) (a b : Fp.Limbs) :
+    Id.run (directSourceOps.add output a b) = sourceAdd a b := rfl
 
-def tracedInv (input output : SourceRef) (a : Fp.Limbs) :
-    Traced Fp.Limbs :=
-  ⟨Fp.invCanonical a, [.inv input output]⟩
+theorem directSourceOps_sub (output : SourceRef) (a b : Fp.Limbs) :
+    Id.run (directSourceOps.sub output a b) = sourceSub a b := rfl
 
-def tracedNeg (input output : SourceRef) (a : Fp.Limbs) :
-    Traced Fp.Limbs :=
-  ⟨Fp.negSource a, [.neg input output]⟩
+theorem directSourceOps_mul (output : SourceRef) (a b : Fp.Limbs) :
+    Id.run (directSourceOps.mul output a b) = sourceMul a b := rfl
 
-structure MulSourceTrace where
-  v0 : Fp.Limbs
-  v1 : Fp.Limbs
-  aSum : Fp.Limbs
-  bSum : Fp.Limbs
-  cross : Fp.Limbs
-  vSum : Fp.Limbs
-  c1 : Fp.Limbs
+theorem directSourceOps_square (output : SourceRef) (a : Fp.Limbs) :
+    Id.run (directSourceOps.square output a) = sourceSquare a := rfl
+
+theorem directSourceOps_inv (output : SourceRef) (a : Fp.Limbs) :
+    Id.run (directSourceOps.inv output a) = sourceInv a := rfl
+
+theorem directSourceOps_neg (output : SourceRef) (a : Fp.Limbs) :
+    Id.run (directSourceOps.neg output a) = sourceNeg a := rfl
+
+theorem canonical_directSourceOps_add (output : SourceRef) {a b : Fp.Limbs}
+    (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    Fp.Canonical (Id.run (directSourceOps.add output a b)) := by
+  rw [directSourceOps_add]
+  exact canonical_sourceAdd ha hb
+
+theorem canonical_directSourceOps_sub (output : SourceRef) {a b : Fp.Limbs}
+    (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    Fp.Canonical (Id.run (directSourceOps.sub output a b)) := by
+  rw [directSourceOps_sub]
+  exact canonical_sourceSub ha hb
+
+theorem canonical_directSourceOps_mul (output : SourceRef) {a b : Fp.Limbs}
+    (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    Fp.Canonical (Id.run (directSourceOps.mul output a b)) := by
+  rw [directSourceOps_mul]
+  exact canonical_sourceMul ha hb
+
+theorem canonical_directSourceOps_square (output : SourceRef) {a : Fp.Limbs}
+    (ha : Fp.Canonical a) :
+    Fp.Canonical (Id.run (directSourceOps.square output a)) := by
+  rw [directSourceOps_square]
+  exact canonical_sourceSquare ha
+
+theorem canonical_directSourceOps_inv (output : SourceRef) {a : Fp.Limbs}
+    (ha : Fp.Canonical a) :
+    Fp.Canonical (Id.run (directSourceOps.inv output a)) := by
+  rw [directSourceOps_inv]
+  exact canonical_sourceInv ha
+
+theorem canonical_directSourceOps_neg (output : SourceRef) {a : Fp.Limbs}
+    (ha : Fp.Canonical a) :
+    Fp.Canonical (Id.run (directSourceOps.neg output a)) := by
+  rw [directSourceOps_neg]
+  exact canonical_sourceNeg ha
+
+/-- Runtime multiplication. The direct interpreter has `Cell = Fp.Limbs`
+and carries no audit state. -/
+def mulSource (a b : Repr) : Repr :=
+  let result := Id.run (runMulSourceWith directSourceOps a b)
+  mkRepr (directSourceOps.value result.1) (directSourceOps.value result.2)
+
+/-- Runtime inversion through the same program and direct interpreter. -/
+def invSource (a : Repr) : Repr :=
+  let result := Id.run (runInvSourceWith directSourceOps a)
+  mkRepr (directSourceOps.value result.1) (directSourceOps.value result.2)
+
+def auditSourceOps : SourceOps AuditM AuditCell :=
+  SourceProgram.auditOpsOf directSourceOps
+
+structure AuditedSourceRun where
   result : Repr
   events : List SourceEvent
 
-def mulSourceDag : List SourceEvent :=
-  [.mul .a0 .b0 .v0,
-   .mul .a1 .b1 .v1,
-   .add .a0 .a1 .aSum,
-   .add .b0 .b1 .bSum,
-   .mul .aSum .bSum .cross,
-   .add .v0 .v1 .vSum,
-   .sub .cross .vSum .c1,
-   .sub .v0 .v1 .c0]
+def mulSourceDag : List SourceEvent := SourceProgram.mulDag
 
-/-- Authoritative source-order Fp2 multiplication evaluator. Each value is
-produced by the same traced primitive that emits its symbolic DAG event. -/
-def runMulSource (a b : Repr) : MulSourceTrace :=
-  let v0 := tracedMul .a0 .b0 .v0 a.c0 b.c0
-  let v1 := tracedMul .a1 .b1 .v1 a.c1 b.c1
-  let aSum := tracedAdd .a0 .a1 .aSum a.c0 a.c1
-  let bSum := tracedAdd .b0 .b1 .bSum b.c0 b.c1
-  let cross := tracedMul .aSum .bSum .cross aSum.value bSum.value
-  let vSum := tracedAdd .v0 .v1 .vSum v0.value v1.value
-  let c1 := tracedSub .cross .vSum .c1 cross.value vSum.value
-  let c0 := tracedSub .v0 .v1 .c0 v0.value v1.value
-  { v0 := v0.value, v1 := v1.value
-    aSum := aSum.value, bSum := bSum.value
-    cross := cross.value, vSum := vSum.value, c1 := c1.value
-    result := mkRepr c0.value c1.value
-    events := v0.events ++ v1.events ++ aSum.events ++ bSum.events ++
-      cross.events ++ vSum.events ++ c1.events ++ c0.events }
+/-- Audit interpretation of the same multiplication program. -/
+def runMulSource (a b : Repr) : AuditedSourceRun :=
+  let run := Id.run ((runMulSourceWith auditSourceOps a b).run [])
+  { result := mkRepr (directSourceOps.value run.1.1.value)
+      (directSourceOps.value run.1.2.value)
+    events := run.2 }
 
 theorem runMulSource_events (a b : Repr) :
-    (runMulSource a b).events = mulSourceDag := rfl
+    (runMulSource a b).events = mulSourceDag := by
+  exact SourceProgram.runMulWith_audit_events directSourceOps
+    a.c0 a.c1 b.c0 b.c1
 
-def mulSource (a b : Repr) : Repr :=
-  (runMulSource a b).result
+def invSourceDag : List SourceEvent := SourceProgram.invDag
 
-theorem mulSource_eq (a b : Repr) :
-    mulSource a b =
-      let v0 := mulV0Source a b
-      let v1 := mulV1Source a b
-      let c1 := mulImaginarySource a b v0 v1
-      mkRepr (mulRealSource v0 v1) c1 := by
-  change (runMulSource a b).result = _
-  simp only [runMulSource, tracedMul, tracedAdd, tracedSub,
-    mulV0Source, mulV1Source, mulImaginarySource, mulRealSource]
-
-structure InvSourceTrace where
-  norm : Fp.Limbs
-  normInv : Fp.Limbs
-  c0 : Fp.Limbs
-  c1 : Fp.Limbs
-  result : Repr
-  events : List SourceEvent
-
-def invSourceDag : List SourceEvent :=
-  [.square .a0 .a0Square,
-   .square .a1 .a1Square,
-   .add .a0Square .a1Square .norm,
-   .inv .norm .normInv,
-   .mul .a0 .normInv .c0,
-   .neg .a1 .negA1,
-   .mul .negA1 .normInv .c1]
-
-/-- Authoritative source-order Fp2 inversion evaluator. Both output products
-consume the single `.normInv` result recorded by the DAG. -/
-def runInvSource (a : Repr) : InvSourceTrace :=
-  let a0Square := tracedSquare .a0 .a0Square a.c0
-  let a1Square := tracedSquare .a1 .a1Square a.c1
-  let norm := tracedAdd .a0Square .a1Square .norm
-    a0Square.value a1Square.value
-  let normInv := tracedInv .norm .normInv norm.value
-  let c0 := tracedMul .a0 .normInv .c0 a.c0 normInv.value
-  let negA1 := tracedNeg .a1 .negA1 a.c1
-  let c1 := tracedMul .negA1 .normInv .c1 negA1.value normInv.value
-  { norm := norm.value, normInv := normInv.value
-    c0 := c0.value, c1 := c1.value
-    result := mkRepr c0.value c1.value
-    events := a0Square.events ++ a1Square.events ++ norm.events ++
-      normInv.events ++ c0.events ++ negA1.events ++ c1.events }
+/-- Audit interpretation of the same inversion program. -/
+def runInvSource (a : Repr) : AuditedSourceRun :=
+  let run := Id.run ((runInvSourceWith auditSourceOps a).run [])
+  { result := mkRepr (directSourceOps.value run.1.1.value)
+      (directSourceOps.value run.1.2.value)
+    events := run.2 }
 
 theorem runInvSource_events (a : Repr) :
-    (runInvSource a).events = invSourceDag := rfl
+    (runInvSource a).events = invSourceDag := by
+  exact SourceProgram.runInvWith_audit_events directSourceOps a.c0 a.c1
 
-def invSource (a : Repr) : Repr :=
-  (runInvSource a).result
+theorem runMulSource_value (a b : Repr) :
+    (runMulSource a b).result = mulSource a b := by
+  exact SourceProgram.runMulWith_audit_result directSourceOps mkRepr
+    a.c0 a.c1 b.c0 b.c1
 
-theorem invSource_eq (a : Repr) :
-    invSource a =
-      let norm := invNormSource a
-      let normInv := Fp.invCanonical norm
-      mkRepr (invRealSource a.c0 normInv)
-        (invImaginarySource a.c1 normInv) := by
-  change (runInvSource a).result = _
-  simp only [runInvSource, tracedSquare, tracedAdd, tracedInv, tracedMul,
-    tracedNeg, invNormSource, invRealSource, invImaginarySource]
+theorem runInvSource_value (a : Repr) :
+    (runInvSource a).result = invSource a := by
+  exact SourceProgram.runInvWith_audit_result directSourceOps mkRepr a.c0 a.c1
 
 end Challenge.Bls12381.ProofSupport.Fp2

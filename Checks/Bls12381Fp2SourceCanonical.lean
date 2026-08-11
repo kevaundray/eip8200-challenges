@@ -36,17 +36,9 @@ example {a : Fp2.Repr} {s : Fp.Limbs}
 #guard_msgs in
 #print axioms Fp2.canonical_mkRepr
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.mulSource_eq' depends on axioms: [propext] -/
-#guard_msgs in
-#print axioms Fp2.mulSource_eq
-
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp2.sqrSource_eq' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms Fp2.sqrSource_eq
-
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.invSource_eq' depends on axioms: [propext] -/
-#guard_msgs in
-#print axioms Fp2.invSource_eq
 
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_addSource' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

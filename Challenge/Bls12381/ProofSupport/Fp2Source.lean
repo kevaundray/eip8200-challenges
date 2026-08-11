@@ -63,15 +63,21 @@ theorem canonical_mulC1Source {a b : Repr} (ha : Canonical a)
 
 theorem canonical_mulSource {a b : Repr} (ha : Canonical a)
     (hb : Canonical b) : Canonical (mulSource a b) := by
-  have hresult : Canonical
-      (let v0 := mulV0Source a b
-       let v1 := mulV1Source a b
-       let c1 := mulImaginarySource a b v0 v1
-       mkRepr (mulRealSource v0 v1) c1) := by
-    dsimp only
-    exact canonical_mkRepr (canonical_mulC0Source ha hb)
-      (canonical_mulC1Source ha hb)
-  exact (congrArg Canonical (mulSource_eq a b)).symm.mp hresult
+  have hresult := SourceProgram.runMulWith_good directSourceOps Fp.Canonical
+    canonical_directSourceOps_add canonical_directSourceOps_sub
+    canonical_directSourceOps_mul a.c0 a.c1 b.c0 b.c1
+    (by simpa only [directSourceOps_input] using ha.c0.proof)
+    (by simpa only [directSourceOps_input] using ha.c1.proof)
+    (by simpa only [directSourceOps_input] using hb.c0.proof)
+    (by simpa only [directSourceOps_input] using hb.c1.proof)
+  unfold mulSource
+  apply canonical_mkRepr
+  · exact ⟨by
+      rw [directSourceOps_value]
+      exact hresult.1⟩
+  · exact ⟨by
+      rw [directSourceOps_value]
+      exact hresult.2⟩
 
 theorem canonical_sqrRealSource {a : Repr} (ha : Canonical a) :
     ComponentCanonical (sqrRealSource a) :=
@@ -132,15 +138,20 @@ theorem canonical_invC1Source {a : Repr} (ha : Canonical a) :
 
 theorem canonical_invSource {a : Repr} (ha : Canonical a) :
     Canonical (invSource a) := by
-  have hresult : Canonical
-      (let norm := invNormSource a
-       let normInv := Fp.invCanonical norm
-       mkRepr (invRealSource a.c0 normInv)
-         (invImaginarySource a.c1 normInv)) := by
-    dsimp only
-    exact canonical_mkRepr (canonical_invC0Source ha)
-      (canonical_invC1Source ha)
-  exact (congrArg Canonical (invSource_eq a)).symm.mp hresult
+  have hresult := SourceProgram.runInvWith_good directSourceOps Fp.Canonical
+    canonical_directSourceOps_add canonical_directSourceOps_mul
+    canonical_directSourceOps_square canonical_directSourceOps_inv
+    canonical_directSourceOps_neg a.c0 a.c1
+    (by simpa only [directSourceOps_input] using ha.c0.proof)
+    (by simpa only [directSourceOps_input] using ha.c1.proof)
+  unfold invSource
+  apply canonical_mkRepr
+  · exact ⟨by
+      rw [directSourceOps_value]
+      exact hresult.1⟩
+  · exact ⟨by
+      rw [directSourceOps_value]
+      exact hresult.2⟩
 
 theorem canonical_mulFpSource {a : Repr} {s : Fp.Limbs}
     (ha : Canonical a) (hs : Fp.Canonical s) :

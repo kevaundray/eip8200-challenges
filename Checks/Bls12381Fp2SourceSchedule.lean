@@ -27,12 +27,8 @@ example (a : Fp2.Repr) :
         c1 := Fp.negSource a.c1 } := rfl
 
 example (a b : Fp2.Repr) :
-    Fp2.mulSource a b =
-      let v0 := Fp2.mulV0Source a b
-      let v1 := Fp2.mulV1Source a b
-      let c1 := Fp2.mulImaginarySource a b v0 v1
-      Fp2.mkRepr (Fp2.mulRealSource v0 v1) c1 :=
-  Fp2.mulSource_eq a b
+    (Fp2.runMulSource a b).result = Fp2.mulSource a b :=
+  Fp2.runMulSource_value a b
 
 example : Fp2.mulSourceDag =
     [.mul .a0 .b0 .v0,
@@ -62,12 +58,8 @@ example (a : Fp2.Repr) :
   Fp2.sqrSource_eq a
 
 example (a : Fp2.Repr) :
-    Fp2.invSource a =
-      let norm := Fp2.invNormSource a
-      let normInv := Fp.invCanonical norm
-      Fp2.mkRepr (Fp2.invRealSource a.c0 normInv)
-        (Fp2.invImaginarySource a.c1 normInv) :=
-  Fp2.invSource_eq a
+    (Fp2.runInvSource a).result = Fp2.invSource a :=
+  Fp2.runInvSource_value a
 
 example : Fp2.invSourceDag =
     [.square .a0 .a0Square,
@@ -94,5 +86,45 @@ example (a : Fp2.Repr) (s : Fp.Limbs) :
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp2.runInvSource_events' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms Fp2.runInvSource_events
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.runMulSource_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp2.runMulSource_value
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.runInvSource_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp2.runInvSource_value
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.SourceProgram.runMulWith_good' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Fp2.SourceProgram.runMulWith_good
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.SourceProgram.runInvWith_good' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Fp2.SourceProgram.runInvWith_good
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.SourceProgram.runMulWith_refines' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Fp2.SourceProgram.runMulWith_refines
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.SourceProgram.runInvWith_refines' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Fp2.SourceProgram.runInvWith_refines
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.SourceProgram.runMulWith_audit_events' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Fp2.SourceProgram.runMulWith_audit_events
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.SourceProgram.runInvWith_audit_events' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Fp2.SourceProgram.runInvWith_audit_events
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.SourceProgram.runMulWith_audit_result' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Fp2.SourceProgram.runMulWith_audit_result
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.SourceProgram.runInvWith_audit_result' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Fp2.SourceProgram.runInvWith_audit_result
 
 end Checks.Bls12381Fp2SourceSchedule
