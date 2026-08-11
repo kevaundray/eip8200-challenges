@@ -1,5 +1,6 @@
-import Challenge.Bls12381.ProofSupport.CodecG1
+import Challenge.Bls12381.ProofSupport.MapToG1Executable
 import Challenge.Bls12381.ProofSupport.MapToG1IsogenyLawful
+import Challenge.Bls12381.ProofSupport.MapToG1Sswu
 import Challenge.Bls12381.ProofSupport.ScalarMul
 
 set_option warningAsError true
@@ -7,16 +8,6 @@ set_option warningAsError true
 /-! # Shared lawful MAP_FP_TO_G1 operation -/
 
 namespace Challenge.Bls12381.ProofSupport.MapToG1
-
-/-- Source SSWU followed by the pole-aware lawful 11-isogeny. -/
-def mapBeforeCofactor (u : Field) : G1Affine.Point :=
-  let mapped := sswuProjective sqrtRatioSource u
-  iso11 mapped.xN mapped.xD mapped.y
-
-/-- First-milestone proof-friendly map: source SSWU, lawful 11-isogeny, then
-naive binary multiplication by the exact RFC effective cofactor. -/
-def map (u : Field) : G1Affine.Point :=
-  ScalarMul.g1 hEff (mapBeforeCofactor u)
 
 theorem mapBeforeCofactor_onCurve (u : Field) :
     G1Affine.OnCurve (mapBeforeCofactor u) := by
@@ -35,15 +26,6 @@ theorem map_toWire_valid (u : Field) :
   | infinity => trivial
   | affine x y =>
       exact G1Affine.onCurve_toWire (by simpa [hpoint] using hcurve)
-
-/-- Exact shared EIP-2537 decoded-value adapter. The outer size check is
-deliberate: the field codec is framed and therefore also accepts a valid
-64-byte window inside a larger byte array, whereas the precompile input must
-be exactly one 64-byte field element. -/
-def run (input : ByteArray) : Option ByteArray := do
-  if input.size ≠ Codec.fpBytes then none
-  let u ← Codec.decodeFp input 0
-  pure (Codec.encodeG1 (G1Affine.toWire (map (PrimeField.finEquiv u))))
 
 theorem run_eq_some_iff (input output : ByteArray) :
     run input = some output ↔

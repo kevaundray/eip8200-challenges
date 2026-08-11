@@ -56,6 +56,7 @@ import Checks.Bls12381MapToG1Support
 import Checks.Bls12381MapToG1SqrtRatio
 import Checks.Bls12381MapToG1IsogenyIdentity
 import Checks.Bls12381MapToG1Isogeny
+import Checks.Bls12381MapToG1Executable
 import Checks.Bls12381MapToG1Map
 import Checks.Bls12381Subgroup
 import Checks.Bls12381SubgroupSemantics
