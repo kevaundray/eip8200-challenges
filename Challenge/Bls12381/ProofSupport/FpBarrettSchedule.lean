@@ -32,19 +32,75 @@ def barrettPartials (product : SchoolbookProduct) : BarrettPartials :=
     p11 := Challenge.EvmProof.Limbs.fullMul256 product.r2 barrettMu1
     p12 := Challenge.EvmProof.Limbs.fullMul256 product.r2 barrettMu2 }
 
+/-- Append one term to a Barrett diagonal exactly as `Fp.sol` does: the
+overflow test compares the wrapped result with the newly added term. -/
+def barrettAddTerm (sum : Challenge.EvmProof.Limbs.WordSum) (term : UInt256) :
+    Challenge.EvmProof.Limbs.WordSum :=
+  let result := sum.word + term
+  let overflow := UInt256.lt result term
+  { word := result, carry := sum.carry + overflow }
+
+/-- The source-specific accumulator still reconstructs ordinary addition. -/
+theorem barrettAddTerm_value (sum : Challenge.EvmProof.Limbs.WordSum)
+    (term : UInt256)
+    (hcarry : sum.carry.toNat + 1 < Challenge.EvmProof.Limbs.radix) :
+    (barrettAddTerm sum term).value = sum.value + term.toNat := by
+  unfold barrettAddTerm Challenge.EvmProof.Limbs.WordSum.value
+  dsimp only
+  simp only [Challenge.EvmProof.Word.word_toNat_add,
+    Challenge.EvmProof.Word.word_toNat_lt]
+  rw [show 2 ^ 256 = Challenge.EvmProof.Limbs.radix by rfl]
+  have hsumWord := sum.word.val.isLt
+  have hterm := term.val.isLt
+  change sum.word.toNat < Challenge.EvmProof.Limbs.radix at hsumWord
+  change term.toNat < Challenge.EvmProof.Limbs.radix at hterm
+  have hword : sum.word.toNat + term.toNat <
+      2 * Challenge.EvmProof.Limbs.radix := by omega
+  rw [Challenge.EvmProof.Limbs.mod_eq_cond_sub hword]
+  by_cases hoverflow : sum.word.toNat + term.toNat <
+      Challenge.EvmProof.Limbs.radix
+  · rw [if_pos hoverflow, if_neg (by omega), Nat.add_zero,
+      Nat.mod_eq_of_lt (by omega)]
+    omega
+  · rw [if_neg hoverflow, if_pos (by omega),
+      Nat.mod_eq_of_lt hcarry]
+    rw [Nat.mul_add, Nat.mul_one]
+    omega
+
+/-- Each source-specific append increments the accumulated carry by at most
+one. -/
+theorem barrettAddTerm_carry_le (sum : Challenge.EvmProof.Limbs.WordSum)
+    (term : UInt256)
+    (hcarry : sum.carry.toNat + 1 < Challenge.EvmProof.Limbs.radix) :
+    (barrettAddTerm sum term).carry.toNat ≤ sum.carry.toNat + 1 := by
+  unfold barrettAddTerm
+  dsimp only
+  simp only [Challenge.EvmProof.Word.word_toNat_add,
+    Challenge.EvmProof.Word.word_toNat_lt]
+  rw [show 2 ^ 256 = Challenge.EvmProof.Limbs.radix by rfl]
+  split_ifs <;> rw [Nat.mod_eq_of_lt (by omega)]
+  omega
+
 def barrettL1 (partials : BarrettPartials) : Challenge.EvmProof.Limbs.WordSum :=
-  Challenge.EvmProof.Limbs.addThree256
-    partials.p00.hi partials.p01.lo partials.p10.lo
+  barrettAddTerm
+    (Challenge.EvmProof.Limbs.addTwo256 partials.p00.hi partials.p01.lo)
+    partials.p10.lo
 
 def barrettL2 (partials : BarrettPartials) : Challenge.EvmProof.Limbs.WordSum :=
-  ((Challenge.EvmProof.Limbs.addThree256
-    partials.p01.hi partials.p10.hi partials.p02.lo).add
-      partials.p11.lo).add (barrettL1 partials).carry
+  barrettAddTerm
+    (barrettAddTerm
+      (barrettAddTerm
+        (Challenge.EvmProof.Limbs.addTwo256 partials.p01.hi partials.p10.hi)
+        partials.p02.lo)
+      partials.p11.lo)
+    (barrettL1 partials).carry
 
 def barrettL3 (partials : BarrettPartials) : Challenge.EvmProof.Limbs.WordSum :=
-  (Challenge.EvmProof.Limbs.addThree256
-    partials.p02.hi partials.p11.hi partials.p12.lo).add
-      (barrettL2 partials).carry
+  barrettAddTerm
+    (barrettAddTerm
+      (Challenge.EvmProof.Limbs.addTwo256 partials.p02.hi partials.p11.hi)
+      partials.p12.lo)
+    (barrettL2 partials).carry
 
 structure BarrettQuotient where
   q1 : UInt256
@@ -83,68 +139,90 @@ theorem barrettSchedule_value (product : SchoolbookProduct) :
         (partials.p12.hi.toNat + l3.carry.toNat) := by
   dsimp only
   let partials := barrettPartials product
+  let l1base := Challenge.EvmProof.Limbs.addTwo256
+    partials.p00.hi partials.p01.lo
   let l1 := barrettL1 partials
-  let l2base := Challenge.EvmProof.Limbs.addThree256
-    partials.p01.hi partials.p10.hi partials.p02.lo
-  let l2a := l2base.add partials.p11.lo
-  let l2 := l2a.add l1.carry
-  let l3base := Challenge.EvmProof.Limbs.addThree256
-    partials.p02.hi partials.p11.hi partials.p12.lo
-  let l3 := l3base.add l2.carry
+  let l2base := Challenge.EvmProof.Limbs.addTwo256
+    partials.p01.hi partials.p10.hi
+  let l2a := barrettAddTerm l2base partials.p02.lo
+  let l2b := barrettAddTerm l2a partials.p11.lo
+  let l2 := barrettAddTerm l2b l1.carry
+  let l3base := Challenge.EvmProof.Limbs.addTwo256
+    partials.p02.hi partials.p11.hi
+  let l3a := barrettAddTerm l3base partials.p12.lo
+  let l3 := barrettAddTerm l3a l2.carry
   have hR : 5 < Challenge.EvmProof.Limbs.radix := by
     norm_num [Challenge.EvmProof.Limbs.radix]
-  have hl1 := Challenge.EvmProof.Limbs.addThree256_value
-    partials.p00.hi partials.p01.lo partials.p10.lo
-  have hl1carry := Challenge.EvmProof.Limbs.addThree256_carry_lt_three
-    partials.p00.hi partials.p01.lo partials.p10.lo
-  change l1.value = partials.p00.hi.toNat + partials.p01.lo.toNat +
-    partials.p10.lo.toNat at hl1
-  change l1.carry.toNat < 3 at hl1carry
-  have hl2base := Challenge.EvmProof.Limbs.addThree256_value
-    partials.p01.hi partials.p10.hi partials.p02.lo
-  have hl2baseCarry := Challenge.EvmProof.Limbs.addThree256_carry_lt_three
-    partials.p01.hi partials.p10.hi partials.p02.lo
-  change l2base.value = partials.p01.hi.toNat + partials.p10.hi.toNat +
-    partials.p02.lo.toNat at hl2base
-  change l2base.carry.toNat < 3 at hl2baseCarry
-  have hl2a := Challenge.EvmProof.Limbs.WordSum.value_add
-    l2base partials.p11.lo (by omega)
-  have hl2aCarryLe := Challenge.EvmProof.Limbs.WordSum.carry_add_le
-    l2base partials.p11.lo (by omega)
-  change l2a.value = l2base.value + partials.p11.lo.toNat at hl2a
+  have hl1base := Challenge.EvmProof.Limbs.addTwo256_value
+    partials.p00.hi partials.p01.lo
+  have hl1baseCarry : l1base.carry.toNat < 2 := by
+    unfold l1base Challenge.EvmProof.Limbs.addTwo256
+    dsimp only
+    simp only [Challenge.EvmProof.Word.word_toNat_add,
+      Challenge.EvmProof.Word.word_toNat_lt]
+    split_ifs <;> norm_num
+  have hl1raw := barrettAddTerm_value l1base partials.p10.lo (by omega)
+  have hl1CarryLe := barrettAddTerm_carry_le l1base partials.p10.lo (by omega)
+  have hl1 : l1.value = partials.p00.hi.toNat + partials.p01.lo.toNat +
+      partials.p10.lo.toNat := by
+    calc
+      l1.value = l1base.value + partials.p10.lo.toNat := hl1raw
+      _ = partials.p00.hi.toNat + partials.p01.lo.toNat +
+          partials.p10.lo.toNat := by rw [hl1base]
+  change l1.carry.toNat ≤ l1base.carry.toNat + 1 at hl1CarryLe
+  have hl1carry : l1.carry.toNat < 3 := hl1CarryLe.trans_lt (by omega)
+  have hl2base := Challenge.EvmProof.Limbs.addTwo256_value
+    partials.p01.hi partials.p10.hi
+  have hl2baseCarry : l2base.carry.toNat < 2 := by
+    unfold l2base Challenge.EvmProof.Limbs.addTwo256
+    dsimp only
+    simp only [Challenge.EvmProof.Word.word_toNat_add,
+      Challenge.EvmProof.Word.word_toNat_lt]
+    split_ifs <;> norm_num
+  have hl2a := barrettAddTerm_value l2base partials.p02.lo (by omega)
+  have hl2aCarryLe := barrettAddTerm_carry_le l2base partials.p02.lo (by omega)
   change l2a.carry.toNat ≤ l2base.carry.toNat + 1 at hl2aCarryLe
-  have hl2aCarry : l2a.carry.toNat < 4 :=
+  have hl2aCarry : l2a.carry.toNat < 3 :=
     hl2aCarryLe.trans_lt (by omega)
-  have hl2 := Challenge.EvmProof.Limbs.WordSum.value_add
-    l2a l1.carry (by omega)
-  have hl2CarryLe := Challenge.EvmProof.Limbs.WordSum.carry_add_le
-    l2a l1.carry (by omega)
-  change l2.value = l2a.value + l1.carry.toNat at hl2
-  change l2.carry.toNat ≤ l2a.carry.toNat + 1 at hl2CarryLe
+  have hl2b := barrettAddTerm_value l2a partials.p11.lo (by omega)
+  have hl2bCarryLe := barrettAddTerm_carry_le l2a partials.p11.lo (by omega)
+  change l2b.carry.toNat ≤ l2a.carry.toNat + 1 at hl2bCarryLe
+  have hl2bCarry : l2b.carry.toNat < 4 :=
+    hl2bCarryLe.trans_lt (by omega)
+  have hl2 := barrettAddTerm_value l2b l1.carry (by omega)
+  have hl2CarryLe := barrettAddTerm_carry_le l2b l1.carry (by omega)
+  change l2.carry.toNat ≤ l2b.carry.toNat + 1 at hl2CarryLe
   have hl2Carry : l2.carry.toNat < 5 :=
     hl2CarryLe.trans_lt (by omega)
-  have hl3base := Challenge.EvmProof.Limbs.addThree256_value
-    partials.p02.hi partials.p11.hi partials.p12.lo
-  have hl3baseCarry := Challenge.EvmProof.Limbs.addThree256_carry_lt_three
-    partials.p02.hi partials.p11.hi partials.p12.lo
-  change l3base.value = partials.p02.hi.toNat + partials.p11.hi.toNat +
-    partials.p12.lo.toNat at hl3base
-  change l3base.carry.toNat < 3 at hl3baseCarry
-  have hl3 := Challenge.EvmProof.Limbs.WordSum.value_add
-    l3base l2.carry (by omega)
-  change l3.value = l3base.value + l2.carry.toNat at hl3
+  have hl3base := Challenge.EvmProof.Limbs.addTwo256_value
+    partials.p02.hi partials.p11.hi
+  have hl3baseCarry : l3base.carry.toNat < 2 := by
+    unfold l3base Challenge.EvmProof.Limbs.addTwo256
+    dsimp only
+    simp only [Challenge.EvmProof.Word.word_toNat_add,
+      Challenge.EvmProof.Word.word_toNat_lt]
+    split_ifs <;> norm_num
+  have hl3a := barrettAddTerm_value l3base partials.p12.lo (by omega)
+  have hl3aCarryLe := barrettAddTerm_carry_le l3base partials.p12.lo (by omega)
+  change l3a.carry.toNat ≤ l3base.carry.toNat + 1 at hl3aCarryLe
+  have hl3aCarry : l3a.carry.toNat < 3 :=
+    hl3aCarryLe.trans_lt (by omega)
+  have hl3 := barrettAddTerm_value l3a l2.carry (by omega)
   have hl2value : l2.value = partials.p01.hi.toNat + partials.p10.hi.toNat +
       partials.p02.lo.toNat + partials.p11.lo.toNat + l1.carry.toNat := by
     calc
-      l2.value = l2a.value + l1.carry.toNat := hl2
-      _ = l2base.value + partials.p11.lo.toNat + l1.carry.toNat := by rw [hl2a]
+      l2.value = l2b.value + l1.carry.toNat := hl2
+      _ = l2a.value + partials.p11.lo.toNat + l1.carry.toNat := by rw [hl2b]
+      _ = l2base.value + partials.p02.lo.toNat + partials.p11.lo.toNat +
+          l1.carry.toNat := by rw [hl2a]
       _ = partials.p01.hi.toNat + partials.p10.hi.toNat +
           partials.p02.lo.toNat + partials.p11.lo.toNat +
           l1.carry.toNat := by rw [hl2base]
   have hl3value : l3.value = partials.p02.hi.toNat + partials.p11.hi.toNat +
       partials.p12.lo.toNat + l2.carry.toNat := by
     calc
-      l3.value = l3base.value + l2.carry.toNat := hl3
+      l3.value = l3a.value + l2.carry.toNat := hl3
+      _ = l3base.value + partials.p12.lo.toNat + l2.carry.toNat := by rw [hl3a]
       _ = partials.p02.hi.toNat + partials.p11.hi.toNat +
           partials.p12.lo.toNat + l2.carry.toNat := by rw [hl3base]
   have hp00 := Challenge.EvmProof.Limbs.fullMul256_value product.r1 barrettMu0
