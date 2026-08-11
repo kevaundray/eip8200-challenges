@@ -1,4 +1,6 @@
 import EvmSemantics.EVM.BigStep
+import Challenge.Bls12381.ProofSupport.CodecG2
+import Challenge.Bls12381.ProofSupport.G2Affine
 
 set_option warningAsError true
 
@@ -6,8 +8,88 @@ namespace Challenge.Bls12381G2Add
 
 open EvmSemantics EvmSemantics.EVM
 
+/-- Exact EIP-2537 G2ADD input length: two 256-byte decoded points. -/
+def inputBytes : Nat := 2 * Challenge.Bls12381.ProofSupport.Codec.g2Bytes
+
+/--
+EIP-correct G2ADD adapter at the decoded affine boundary. Addition is routed
+through the local lawful `Fp2` semantics and does not depend on the opaque
+pinned inverse. Ordinary G2 decoding deliberately performs no prime-subgroup
+check, as required by EIP-2537 G2ADD.
+-/
 def spec (input : ByteArray) : Option ByteArray :=
-  Crypto.Bls12381G2Add.run? input
+  if input.size ≠ inputBytes then none
+  else do
+    let left ← Challenge.Bls12381.ProofSupport.Codec.decodeG2 input 0
+    let right ← Challenge.Bls12381.ProofSupport.Codec.decodeG2 input
+      Challenge.Bls12381.ProofSupport.Codec.g2Bytes
+    some (Challenge.Bls12381.ProofSupport.Codec.encodeG2
+      (Challenge.Bls12381.ProofSupport.G2Affine.toWire
+        (Challenge.Bls12381.ProofSupport.G2Affine.add
+          (Challenge.Bls12381.ProofSupport.G2Affine.ofWire left)
+          (Challenge.Bls12381.ProofSupport.G2Affine.ofWire right))))
+
+theorem spec_eq_some_iff {input output : ByteArray} :
+    spec input = some output ↔
+      input.size = inputBytes ∧
+      ∃ left right,
+        Challenge.Bls12381.ProofSupport.Codec.decodeG2 input 0 = some left ∧
+        Challenge.Bls12381.ProofSupport.Codec.decodeG2 input
+          Challenge.Bls12381.ProofSupport.Codec.g2Bytes = some right ∧
+        output = Challenge.Bls12381.ProofSupport.Codec.encodeG2
+          (Challenge.Bls12381.ProofSupport.G2Affine.toWire
+            (Challenge.Bls12381.ProofSupport.G2Affine.add
+              (Challenge.Bls12381.ProofSupport.G2Affine.ofWire left)
+              (Challenge.Bls12381.ProofSupport.G2Affine.ofWire right))) := by
+  unfold spec
+  by_cases hsize : input.size = inputBytes
+  · rw [if_neg (not_not_intro hsize)]
+    cases hleft : Challenge.Bls12381.ProofSupport.Codec.decodeG2 input 0 with
+    | none => simp_all
+    | some left =>
+        cases hright : Challenge.Bls12381.ProofSupport.Codec.decodeG2 input
+            Challenge.Bls12381.ProofSupport.Codec.g2Bytes with
+        | none => simp_all
+        | some right => simp_all [eq_comm]
+  · rw [if_pos hsize]
+    simp [hsize]
+
+theorem spec_eq_none_iff {input : ByteArray} :
+    spec input = none ↔
+      input.size ≠ inputBytes ∨
+      Challenge.Bls12381.ProofSupport.Codec.decodeG2 input 0 = none ∨
+      Challenge.Bls12381.ProofSupport.Codec.decodeG2 input
+        Challenge.Bls12381.ProofSupport.Codec.g2Bytes = none := by
+  unfold spec
+  by_cases hsize : input.size = inputBytes
+  · rw [if_neg (not_not_intro hsize)]
+    cases hleft : Challenge.Bls12381.ProofSupport.Codec.decodeG2 input 0 with
+    | none => simp_all
+    | some left =>
+        cases hright : Challenge.Bls12381.ProofSupport.Codec.decodeG2 input
+            Challenge.Bls12381.ProofSupport.Codec.g2Bytes with
+        | none => simp_all
+        | some right => simp_all
+  · rw [if_pos hsize]
+    simp [hsize]
+
+theorem spec_invalid_length {input : ByteArray}
+    (hsize : input.size ≠ inputBytes) : spec input = none := by
+  exact spec_eq_none_iff.mpr (Or.inl hsize)
+
+theorem spec_success {input : ByteArray}
+    {left right : Crypto.Bls12381.G2Point}
+    (hsize : input.size = inputBytes)
+    (hleft : Challenge.Bls12381.ProofSupport.Codec.decodeG2 input 0 = some left)
+    (hright : Challenge.Bls12381.ProofSupport.Codec.decodeG2 input
+      Challenge.Bls12381.ProofSupport.Codec.g2Bytes = some right) :
+    spec input = some (Challenge.Bls12381.ProofSupport.Codec.encodeG2
+      (Challenge.Bls12381.ProofSupport.G2Affine.toWire
+        (Challenge.Bls12381.ProofSupport.G2Affine.add
+          (Challenge.Bls12381.ProofSupport.G2Affine.ofWire left)
+          (Challenge.Bls12381.ProofSupport.G2Affine.ofWire right)))) := by
+  apply spec_eq_some_iff.mpr
+  exact ⟨hsize, left, right, hleft, hright, rfl⟩
 
 def deployAddress : AccountAddress := AccountAddress.ofNat 0x820d
 
@@ -59,4 +141,3 @@ def Correct (code : ByteArray) : Prop :=
       ∃ result, Eval (initialState code calldata g) result ∧ Matches calldata result
 
 end Challenge.Bls12381G2Add
-
