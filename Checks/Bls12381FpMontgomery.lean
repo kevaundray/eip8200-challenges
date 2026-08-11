@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryReduce
+import Challenge.Bls12381.ProofSupport.FpMontgomeryCancel
 
 set_option warningAsError true
 
@@ -78,6 +78,12 @@ example : Fp.montgomeryN0Inv.toNat * Fp.modulusLo.toNat ≡
       [MOD Challenge.EvmProof.Limbs.radix] :=
   Fp.montgomeryN0Inv_modEq
 
+example (state : Fp.MontgomeryState) :
+    (Fp.montgomeryReductionMultiplier state).toNat * Fp.modulusLo.toNat ≡
+      state.t0.toNat * (Challenge.EvmProof.Limbs.radix - 1)
+        [MOD Challenge.EvmProof.Limbs.radix] :=
+  Fp.montgomeryReductionProduct_modEq state
+
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryN0Inv_spec' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms Fp.montgomeryN0Inv_spec
@@ -109,5 +115,13 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryAccumulateZero_top_lt' depen
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryN0Inv_modEq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp.montgomeryN0Inv_modEq
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReductionProduct_modEq' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryReductionProduct_modEq
 
 end Checks.Bls12381FpMontgomery
