@@ -1,0 +1,29 @@
+import Challenge.Bls12381.ProofSupport.FpAddSub
+
+set_option warningAsError true
+
+namespace Checks.Bls12381FpAdd
+
+open Challenge.Bls12381.ProofSupport
+
+example {a b : Fp.Limbs} (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    Fp.value (Fp.addSource a b) = (Fp.value a + Fp.value b) %
+      EvmSemantics.Crypto.Bls12381.p := Fp.value_addSource ha hb
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_addRaw' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.value_addRaw
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.addNeedsCorrection_eq_wideGeWord' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.addNeedsCorrection_eq_wideGeWord
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.asWide_addCorrect' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.asWide_addCorrect
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_addSource' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.value_addSource
+
+end Checks.Bls12381FpAdd
