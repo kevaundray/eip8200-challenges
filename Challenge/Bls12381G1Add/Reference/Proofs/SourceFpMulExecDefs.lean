@@ -18,6 +18,31 @@ def fpMulBody : Block Op :=
   | some (Stmt.funDef _ _ _ body) => body
   | _ => []
 
+def fpMulStmt0 : Stmt Op := fpMulBody[0]!
+def fpMulStmt1 : Stmt Op := fpMulBody[1]!
+def fpMulStmt2 : Stmt Op := fpMulBody[2]!
+def fpMulStmt3 : Stmt Op := fpMulBody[3]!
+def fpMulStmt4 : Stmt Op := fpMulBody[4]!
+def fpMulStmt5 : Stmt Op := fpMulBody[5]!
+def fpMulStmt6 : Stmt Op := fpMulBody[6]!
+def fpMulStmt7 : Stmt Op := fpMulBody[7]!
+def fpMulStmt8 : Stmt Op := fpMulBody[8]!
+def fpMulStmt9 : Stmt Op := fpMulBody[9]!
+def fpMulStmt10 : Stmt Op := fpMulBody[10]!
+def fpMulStmt11 : Stmt Op := fpMulBody[11]!
+
+/-- The frozen helper has exactly the twelve source statements audited below. -/
+theorem fpMulBody_eq : fpMulBody =
+    [fpMulStmt0, fpMulStmt1, fpMulStmt2, fpMulStmt3,
+      fpMulStmt4, fpMulStmt5, fpMulStmt6, fpMulStmt7,
+      fpMulStmt8, fpMulStmt9, fpMulStmt10, fpMulStmt11] := by
+  rfl
+
+/-- The helper body introduces no nested function declarations. -/
+theorem hoist_fpMulBody :
+    hoist Challenge.EvmProof.modexpExec.toDialect fpMulBody = [] := by
+  rfl
+
 def fpMulDecl : FDecl Challenge.EvmProof.modexpExec.toDialect :=
   { params := ["\x0068", "\x0069", "\x0070", "\x0071"]
     rets := ["\x0072", "\x0073"]

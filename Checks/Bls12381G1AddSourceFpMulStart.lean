@@ -6,6 +6,23 @@ namespace Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
 
 open YulSemantics YulSemantics.EVM
 
+example : fpMulBody =
+    [fpMulStmt0, fpMulStmt1, fpMulStmt2, fpMulStmt3,
+      fpMulStmt4, fpMulStmt5, fpMulStmt6, fpMulStmt7,
+      fpMulStmt8, fpMulStmt9, fpMulStmt10, fpMulStmt11] :=
+  fpMulBody_eq
+
+example : hoist Challenge.EvmProof.modexpExec.toDialect fpMulBody = [] :=
+  hoist_fpMulBody
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpMulBody_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms fpMulBody_eq
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.hoist_fpMulBody' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms hoist_fpMulBody
+
 example (ahi alo bhi blo : U256) (yst final : EvmState)
     (Vend : VEnv Challenge.EvmProof.modexpExec.toDialect)
     (hbody : Interp.execStmt Challenge.EvmProof.modexpExec 67 fpMulFuns
