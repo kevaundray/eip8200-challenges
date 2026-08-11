@@ -14,6 +14,32 @@ def SqrtCellRel (a : Fp.Limbs) (b : LawfulFp2.Base) : Prop :=
 def SqrtPairRel (a : Repr) (b : LawfulFp2.Carrier) : Prop :=
   Canonical a ∧ toLawful a = b
 
+/-- The concrete source `INV_TWO` limbs refine the purely algebraic inverse
+of two used by the lawful square-root interpreter. -/
+theorem invTwo_refines_lawful :
+    (Fp.value invTwo : LawfulFp2.Base) = lawfulInvTwo := by
+  rw [lawfulInvTwo_eq]
+  apply eq_inv_of_mul_eq_one_left
+  rw [value_invTwo, mul_comm]
+  change ((2 : Nat) : LawfulFp2.Base) *
+    (((EvmSemantics.Crypto.Bls12381.p + 1) / 2 : Nat) : LawfulFp2.Base) = 1
+  rw [← Nat.cast_mul]
+  rw [show 2 * ((EvmSemantics.Crypto.Bls12381.p + 1) / 2) =
+      EvmSemantics.Crypto.Bls12381.p + 1 by
+    norm_num [EvmSemantics.Crypto.Bls12381.p,
+      EvmSemantics.Crypto.Bls12381.absU]]
+  push_cast
+  simp
+
+/-- The concrete source exponentiation refines the lawful base-field square
+root operation while preserving canonical limbs. -/
+theorem sqrtCell_refines_lawful {a : Fp.Limbs} {b : LawfulFp2.Base}
+    (h : SqrtCellRel a b) :
+    SqrtCellRel (Fp.sqrtCanonical a) (lawfulSqrt b) := by
+  rcases h with ⟨ha, hab⟩
+  exact ⟨Fp.canonical_sqrtCanonical ha, by
+    rw [Fp.sqrtCanonical_refines_lawful ha, hab]⟩
+
 private theorem canonical_zero_repr : Canonical zero := by
   constructor <;> exact ⟨Fp.canonical_normalize 0⟩
 
@@ -89,8 +115,7 @@ theorem sqrtSourceOps_refines :
     exact ⟨Fp.canonical_squareCanonical ha, by
       rw [Fp.lawful_squareCanonical ha, hab]⟩
   · rintro a b ⟨ha, hab⟩
-    exact ⟨Fp.canonical_sqrtCanonical ha, by
-      rw [Fp.lawful_sqrtCanonical_pow ha, hab, lawfulSqrt_eq]⟩
+    exact sqrtCell_refines_lawful ⟨ha, hab⟩
   · rintro a b ⟨ha, hab⟩
     exact ⟨Fp.canonical_invCanonical ha, by
       change PrimeField.finEquiv (Fp.toField (Fp.invCanonical a)) = _
@@ -98,7 +123,7 @@ theorem sqrtSourceOps_refines :
   · rintro a b ⟨ha, hab⟩
     exact ⟨canonical_sqrSource ha, by
       rw [toLawful_sqrSource ha, hab]⟩
-  · exact ⟨canonical_invTwo, rfl⟩
+  · exact ⟨canonical_invTwo, invTwo_refines_lawful⟩
 
 theorem sqrtSource_refines_lawful {a : Repr} (ha : Canonical a) :
     (sqrtSource a).exists_ =

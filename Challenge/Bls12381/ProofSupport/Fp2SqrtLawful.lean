@@ -1,4 +1,3 @@
-import Challenge.Bls12381.ProofSupport.Fp2SqrtRefinement
 import Challenge.Bls12381.ProofSupport.Fp2SqrtLawfulOps
 
 set_option warningAsError true
@@ -8,32 +7,6 @@ set_option warningAsError true
 namespace Challenge.Bls12381.ProofSupport.Fp2
 
 open PrimeField
-
-theorem lawfulInvTwo_eq : lawfulInvTwo = (2 : LawfulFp2.Base)⁻¹ := by
-  apply eq_inv_of_mul_eq_one_left
-  unfold lawfulInvTwo
-  rw [value_invTwo]
-  rw [mul_comm]
-  change ((2 : Nat) : LawfulFp2.Base) *
-    (((EvmSemantics.Crypto.Bls12381.p + 1) / 2 : Nat) : LawfulFp2.Base) = 1
-  rw [← Nat.cast_mul]
-  rw [show 2 * ((EvmSemantics.Crypto.Bls12381.p + 1) / 2) =
-      EvmSemantics.Crypto.Bls12381.p + 1 by
-    norm_num [EvmSemantics.Crypto.Bls12381.p,
-      EvmSemantics.Crypto.Bls12381.absU]]
-  push_cast
-  simp
-
-theorem lawfulSqrt_square {x : LawfulFp2.Base} (hx : IsSquare x) :
-    lawfulSqrt x ^ 2 = x := by
-  rw [lawfulSqrt_eq]
-  exact Fp.lawful_sqrt_pow_square_of_isSquare x hx
-
-theorem lawfulSqrt_isSquare {x : LawfulFp2.Base} (hx : IsSquare x) :
-    IsSquare (lawfulSqrt x) := by
-  rcases hx with ⟨y, rfl⟩
-  refine ⟨y ^ ((EvmSemantics.Crypto.Bls12381.p + 1) / 4), ?_⟩
-  simp only [lawfulSqrt_eq, mul_pow]
 
 private theorem lawful_two_ne_zero : (2 : LawfulFp2.Base) ≠ 0 := by
   intro h

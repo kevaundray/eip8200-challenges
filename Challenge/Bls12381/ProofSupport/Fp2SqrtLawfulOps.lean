@@ -1,5 +1,5 @@
 import Challenge.Bls12381.ProofSupport.Fp2SqrtProgram
-import Challenge.Bls12381.ProofSupport.Fp2SqrtConstants
+import Challenge.Bls12381.ProofSupport.FpSqrtLawful
 import Challenge.Bls12381.ProofSupport.LawfulFp2
 
 set_option warningAsError true
@@ -10,12 +10,26 @@ namespace Challenge.Bls12381.ProofSupport.Fp2
 
 open PrimeField
 
-irreducible_def lawfulSqrt (lemma := lawfulSqrt_eq)
-    (x : LawfulFp2.Base) : LawfulFp2.Base :=
-  x ^ ((EvmSemantics.Crypto.Bls12381.p + 1) / 4)
+abbrev lawfulSqrt : LawfulFp2.Base → LawfulFp2.Base :=
+  Fp.lawfulSqrt
+
+theorem lawfulSqrt_eq (x : LawfulFp2.Base) :
+    lawfulSqrt x =
+      x ^ ((EvmSemantics.Crypto.Bls12381.p + 1) / 4) :=
+  Fp.lawfulSqrt_eq x
 
 def lawfulInvTwo : LawfulFp2.Base :=
-  (Fp.value invTwo : LawfulFp2.Base)
+  (2 : LawfulFp2.Base)⁻¹
+
+theorem lawfulInvTwo_eq : lawfulInvTwo = (2 : LawfulFp2.Base)⁻¹ := rfl
+
+theorem lawfulSqrt_square {x : LawfulFp2.Base} (hx : IsSquare x) :
+    lawfulSqrt x ^ 2 = x :=
+  Fp.lawfulSqrt_square hx
+
+theorem lawfulSqrt_isSquare {x : LawfulFp2.Base} (hx : IsSquare x) :
+    IsSquare (lawfulSqrt x) :=
+  Fp.lawfulSqrt_isSquare hx
 
 def lawfulSqrtOps : SqrtProgram.Ops LawfulFp2.Base LawfulFp2.Carrier where
   c0 := QuadraticAlgebra.re
