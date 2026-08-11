@@ -70,6 +70,14 @@ theorem mul_inv_of_norm_ne_zero (a : Carrier) (hnorm : norm a ≠ 0) :
     simp [adjugate]
     ring
 
+theorem mul_comm (a b : Carrier) : mul a b = mul b a := by
+  apply Carrier.ext <;> simp [mul] <;> ring
+
+theorem inv_mul_of_norm_ne_zero (a : Carrier) (hnorm : norm a ≠ 0) :
+    mul (inv a) a = one := by
+  rw [mul_comm]
+  exact mul_inv_of_norm_ne_zero a hnorm
+
 /-- Inverse-free adapter from the pinned three-component wire carrier. -/
 def ofWire (a : EvmSemantics.Crypto.Bls12381.Fp6) : Carrier :=
   { c0 := LawfulFp2.ofWire a.c0

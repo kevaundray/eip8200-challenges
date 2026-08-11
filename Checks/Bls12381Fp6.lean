@@ -32,7 +32,12 @@ example (a : LawfulFp6.Carrier) (hnorm : LawfulFp6.norm a ≠ 0) :
     LawfulFp6.mul a (LawfulFp6.inv a) = LawfulFp6.one :=
   LawfulFp6.mul_inv_of_norm_ne_zero a hnorm
 
+example (a : LawfulFp6.Carrier) (hnorm : LawfulFp6.norm a ≠ 0) :
+    LawfulFp6.mul (LawfulFp6.inv a) a = LawfulFp6.one :=
+  LawfulFp6.inv_mul_of_norm_ne_zero a hnorm
+
 #print axioms LawfulFp6.mul_inv_of_norm_ne_zero
+#print axioms LawfulFp6.inv_mul_of_norm_ne_zero
 
 example : Challenge.Bls12381.ProofSupport.Fp6.toField
     Challenge.Bls12381.ProofSupport.Fp6.zero = 0 :=
