@@ -1,4 +1,4 @@
-import Mathlib.Tactic.Ring
+import Mathlib.Algebra.Ring.Defs
 
 set_option warningAsError true
 
@@ -43,39 +43,5 @@ def mul : List R → List R → List R
 def pow : List R → Nat → List R
   | _, 0 => [1]
   | coefficients, n + 1 => mul coefficients (pow coefficients n)
-
-theorem eval_add (left right : List R) (x : R) :
-    eval (add left right) x = eval left x + eval right x := by
-  induction left generalizing right with
-  | nil => simp [add, eval]
-  | cons a as ih =>
-      cases right with
-      | nil => simp [add, eval]
-      | cons b bs => simp [add, eval, ih]; ring
-
-theorem eval_scale (a : R) (coefficients : List R) (x : R) :
-    eval (scale a coefficients) x = a * eval coefficients x := by
-  induction coefficients with
-  | nil => simp [scale, eval]
-  | cons b bs ih => simp [scale, eval, ih]; ring
-
-theorem eval_mul (left right : List R) (x : R) :
-    eval (mul left right) x = eval left x * eval right x := by
-  induction left with
-  | nil => simp [mul, eval]
-  | cons a as ih =>
-      cases right with
-      | nil => simp [mul, eval]
-      | cons b bs =>
-          simp only [mul, eval_add, eval_scale, eval, ih]
-          ring
-
-theorem eval_pow (coefficients : List R) (exponent : Nat) (x : R) :
-    eval (pow coefficients exponent) x = eval coefficients x ^ exponent := by
-  induction exponent with
-  | zero => simp [pow, eval]
-  | succ exponent ih =>
-      rw [pow, eval_mul, ih, pow_succ]
-      exact mul_comm _ _
 
 end Challenge.Bls12381.ProofSupport.MapPolynomial

@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.MapPolynomial
+import Challenge.Bls12381.ProofSupport.MapPolynomialLawful
 import Challenge.Bls12381.ProofSupport.MapToG1Isogeny
 
 set_option warningAsError true
