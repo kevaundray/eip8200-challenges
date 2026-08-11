@@ -43,11 +43,6 @@ theorem sqrtCell_refines_lawful {a : Fp.Limbs} {b : LawfulFp2.Base}
 private theorem canonical_zero_repr : Canonical zero := by
   constructor <;> exact ⟨Fp.canonical_normalize 0⟩
 
-theorem toLawful_zero_repr : toLawful zero = 0 := by
-  unfold toLawful
-  rw [toField_zero]
-  rfl
-
 theorem sqrtSourceOps_refines :
     SqrtProgram.Refines sqrtSourceOps lawfulSqrtOps SqrtCellRel SqrtPairRel := by
   constructor <;> dsimp only [sqrtSourceOps, lawfulSqrtOps]

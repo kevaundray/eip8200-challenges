@@ -32,10 +32,6 @@ example {a : Fp2.Repr} (ha : Fp2.Canonical a) :
 #guard_msgs in
 #print axioms Fp2.sqrtSource_refines_lawful
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.toLawful_zero_repr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Fp2.toLawful_zero_repr
-
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp2.invTwo_refines_lawful' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp2.invTwo_refines_lawful
