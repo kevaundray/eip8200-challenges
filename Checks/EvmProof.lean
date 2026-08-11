@@ -3,6 +3,7 @@ import Checks.EvmProofByteWindow
 import Checks.EvmProofCallMemory
 import Checks.EvmProofModexpCallGas
 import Checks.EvmProofModexpCalls
+import Checks.EvmProofModexpExec
 import Checks.EvmProofProfiledCorrectness
 import Checks.EvmProofProfiledCalls
 import Checks.EvmProofProfiledLower
