@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryRelation
+import Challenge.Bls12381.ProofSupport.FpMontgomeryMul
 
 set_option warningAsError true
 
@@ -202,6 +202,20 @@ example (x : Fp.Limbs) {y : Fp.Limbs} (hy : Fp.Canonical y) :
 example {x y : Fp.Limbs} (hx : Fp.Canonical x) (hy : Fp.Canonical y) :
     (Fp.montgomeryResultWords x y).value < 2 * p :=
   Fp.montgomeryResultWords_lt_two_modulus hx hy
+
+example {x y : Fp.Limbs} (hx : Fp.Canonical x) (hy : Fp.Canonical y) :
+    Fp.value (Fp.montMul2 x y) =
+      (Fp.montgomeryResultWords x y).value % p :=
+  Fp.value_montMul2 hx hy
+
+example {x y : Fp.Limbs} (hx : Fp.Canonical x) (hy : Fp.Canonical y) :
+    Fp.Canonical (Fp.montMul2 x y) :=
+  Fp.canonical_montMul2 hx hy
+
+example {x y : Fp.Limbs} (hx : Fp.Canonical x) (hy : Fp.Canonical y) :
+    Fp.montgomeryRadix * Fp.value (Fp.montMul2 x y) ≡
+      Fp.value x * Fp.value y [MOD p] :=
+  Fp.montMul2_modEq hx hy
 
 example (x : Fp.Limbs) {y : Fp.Limbs} (hy : Fp.Canonical y) :
     Fp.montgomeryReductionTopNat (Fp.montgomerySecondAccumulate x y) <
@@ -524,5 +538,25 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryResultWords_lt_two_modulus' 
 -/
 #guard_msgs in
 #print axioms Fp.montgomeryResultWords_lt_two_modulus
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.oneConditionalSubtraction_eq_mod' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.oneConditionalSubtraction_eq_mod
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_montgomeryOfWide' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.value_montgomeryOfWide
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_montMul2' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.value_montMul2
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_montMul2' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.canonical_montMul2
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montMul2_modEq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.montMul2_modEq
 
 end Checks.Bls12381FpMontgomery
