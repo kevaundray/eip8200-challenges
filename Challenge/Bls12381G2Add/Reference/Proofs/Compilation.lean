@@ -61,4 +61,29 @@ theorem referenceComputedOptimizedAssembly_eq :
   set_option maxRecDepth 30000 in
     with_unfolding_all decide
 
+abbrev CompactStackEntry :=
+  Nat × YulEvmCompiler.FLayout × Nat × YulEvmCompiler.FLayout
+
+def encodeStackSlot : YulEvmCompiler.FSlot → Nat
+  | .word => 0
+  | .ret => 1
+  | .retTo label => label + 2
+
+def decodeStackSlot : Nat → YulEvmCompiler.FSlot
+  | 0 => .word
+  | 1 => .ret
+  | n + 2 => .retTo n
+
+abbrev FrozenStackEntry := Nat × List Nat × Nat × List Nat
+
+def thawStackEntry (entry : FrozenStackEntry) : CompactStackEntry :=
+  (entry.1, entry.2.1.map decodeStackSlot, entry.2.2.1,
+    entry.2.2.2.map decodeStackSlot)
+
+def materializeStackCertificate (program : List YulEvmCompiler.Asm)
+    (entries : List CompactStackEntry) : YulEvmCompiler.CertData where
+  entries := entries.map fun entry =>
+    (entry.1, program.drop (program.length - entry.1),
+      entry.2.1, entry.2.2.1, entry.2.2.2)
+
 end Challenge.Bls12381G2Add.Reference.Proofs.Compilation
