@@ -68,6 +68,18 @@ def g1Msm : Vector :=
       0x166a9d8cabc673a322fda673779d8e3822ba3ecb8670e461f73bb9021d5fd76a4c56d9d4cd16bd1bba86881979749d28
     gas := 12000 }
 
+/--
+The compact two-term G1 MSM vector `bls_g1msm_(2g1+2p1)` from the
+execution-spec-tests EIP-2537 fixture `msm_G1_bls.json`.
+-/
+def g1MsmMulti : Vector :=
+  { label := "official 2 * g1 + 2 * p1"
+    input := generatorG1 ++ scalar 2 ++ p1 ++ scalar 2
+    expected := pointG1
+      0x148f92dced907361b4782ab542a75281d4b6f71f65c8abf94a5a9082388c64662d30fd6a01ced724feef3e284752038c
+      0x15c3634c3b67bc18e19150e12bfd8a1769306ed010f59be645a0823acb5b38f39e8e0d86e59b6353fdafc59ca971b769
+    gas := 22776 }
+
 def g2Add : Vector :=
   { label := "official g2 + p2"
     input := generatorG2 ++ p2
@@ -87,6 +99,20 @@ def g2Msm : Vector :=
       0x0468fb440d82b0630aeb8dca2b5256789a66da69bf91009cbfe6bd221e47aa8ae88dece9764bf3bd999d95d71e4c9899
       0x0f6d4552fa65dd2638b361543f887136a43253d9c66c411697003f7a13c308f5422e1aa0a59c8967acdefd8b6e36ccf3
     gas := 22500 }
+
+/--
+The compact two-term G2 MSM vector `bls_g2msm_(2g2+2p2)` from the
+execution-spec-tests EIP-2537 fixture `msm_G2_bls.json`.
+-/
+def g2MsmMulti : Vector :=
+  { label := "official 2 * g2 + 2 * p2"
+    input := generatorG2 ++ scalar 2 ++ p2 ++ scalar 2
+    expected := pointG2
+      0x009cc9ed6635623ba19b340cbc1b0eb05c3a58770623986bb7e041645175b0a38d663d929afb9a949f7524656043bccc
+      0x0c0fb19d3f083fd5641d22a861a11979da258003f888c59c33005cb4a2df4df9e5a2868832063ac289dfa3e997f21f8a
+      0x168bf7d87cef37cf1707849e0a6708cb856846f5392d205ae7418dd94d94ef6c8aa5b424af2e99d957567654b9dae1d9
+      0x17e0fa3c3b2665d52c26c7d4cea9f35443f4f9007840384163d3aa3c7d4d18b21b65ff4380cf3f3b48e94b5eecb221dd
+    gas := 45000 }
 
 def mapFpToG1 : Vector :=
   { label := "official map fp to g1"
