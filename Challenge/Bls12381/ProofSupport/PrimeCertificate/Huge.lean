@@ -33,4 +33,17 @@ theorem prime475709467 : Nat.Prime 475709467 := by
     exact ⟨by bls_norm_mod_pow, by bls_norm_mod_pow, by bls_norm_mod_pow,
       by bls_norm_mod_pow, by simp⟩
 
+theorem prime92691255082156974996979 : Nat.Prime 92691255082156974996979 := by
+  apply prime_of_modPow_lucas_factors 92691255082156974996979 3
+    [2, 3, 31, 467, 16447, 64881703735777]
+  · norm_num
+  · norm_num
+  · simp only [List.mem_cons, forall_eq_or_imp]
+    exact ⟨Nat.prime_two, Nat.prime_three, prime31, prime467, prime16447,
+      prime64881703735777, by simp⟩
+  · bls_norm_mod_pow
+  · simp only [List.mem_cons, forall_eq_or_imp]
+    exact ⟨by bls_norm_mod_pow, by bls_norm_mod_pow, by bls_norm_mod_pow,
+      by bls_norm_mod_pow, by bls_norm_mod_pow, by bls_norm_mod_pow, by simp⟩
+
 end Challenge.Bls12381.ProofSupport.PrimeCertificate
