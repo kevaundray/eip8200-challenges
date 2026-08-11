@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryNextValue
+import Challenge.Bls12381.ProofSupport.FpMontgomerySecond
 
 set_option warningAsError true
 
@@ -177,6 +177,27 @@ example (state : Fp.MontgomeryState) (x1 : UInt256) {y : Fp.Limbs}
     (Fp.montgomeryAccumulateNext state x1 y).value =
       state.value + x1.toNat * Fp.value y :=
   Fp.montgomeryAccumulateNext_value_of_t2_zero state x1 hy ht2
+
+example (state : Fp.MontgomeryState) (x1 : UInt256) {y : Fp.Limbs}
+    (hy : Fp.Canonical y) :
+    (Fp.montgomeryAccumulateNext state x1 y).t2.toNat ≤ y.hi.toNat + 2 :=
+  Fp.montgomeryAccumulateNext_t2_le state x1 hy
+
+example (x y : Fp.Limbs) :
+    Fp.montgomerySecondAccumulate x y =
+      Fp.montgomeryAccumulateNext (Fp.montgomeryFirstReduce x.lo y) x.hi y :=
+  rfl
+
+example (x : Fp.Limbs) {y : Fp.Limbs} (hy : Fp.Canonical y) :
+    Fp.montgomeryReductionTopNat (Fp.montgomerySecondAccumulate x y) <
+      Challenge.EvmProof.Limbs.radix :=
+  Fp.montgomerySecondTop_lt x hy
+
+example (x : Fp.Limbs) {y : Fp.Limbs} (hy : Fp.Canonical y) :
+    Challenge.EvmProof.Limbs.radix *
+        (Fp.montgomerySecondReduce x y).value =
+      Fp.montgomeryReductionNumerator (Fp.montgomerySecondAccumulate x y) :=
+  Fp.montgomerySecondReduce_scaled x hy
 
 example (state : Fp.MontgomeryState) :
     (Fp.montgomeryReductionMultiplier state).toNat =
@@ -399,5 +420,25 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryAccumulateNext_value_of_t2_z
 -/
 #guard_msgs in
 #print axioms Fp.montgomeryAccumulateNext_value_of_t2_zero
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryAccumulateNext_t2_le' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryAccumulateNext_t2_le
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomerySecondTop_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.montgomerySecondTop_lt
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomerySecondReduce_scaled' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomerySecondReduce_scaled
 
 end Checks.Bls12381FpMontgomery
