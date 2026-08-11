@@ -87,6 +87,24 @@ asked Lean to prove the complete source result equal to the shared
 19.8 GB resident memory after 50 seconds without producing an error or proof
 state, and was terminated.
 
+The precise boundary was the proposition now named `conv_fpSubValue`. It
+relates the following source and shared definitions:
+
+| Frozen source representation | Shared proof representation |
+| --- | --- |
+| `fpSubRawValue` | `Fp.subRaw` |
+| `fpSubNeedsRepairValue` | the `UInt256.gt` repair predicate |
+| `fpSubRepairValue` | `Fp.subRepair` |
+| `fpSubValue` | `Fp.subSource` |
+
+The proposition itself is not intrinsically too large: the current staged
+proof establishes the same equality. The trigger was the attempted proof
+strategy, which exposed both complete implementations before their
+intermediate values and branch conditions had been related. The text of that
+failed attempt was not committed, so it is not possible to attribute the
+spike to a surviving tactic line more precisely than this elaboration
+boundary.
+
 The spike was not caused by difficult subtraction mathematics. The combined
 theorem made elaboration and definitional equality normalize all of the
 following at once:
@@ -121,10 +139,17 @@ fpSubRawValue
 The execution theorem is compiled separately from the representation
 refinement. Conversion is then proved one stage at a time in small modules:
 
-- convert the raw high/low subtraction to `Fp.subRaw`;
-- convert only the underflow test;
-- convert only the modulus-repair result to `Fp.subRepair`;
-- split on the already named test and compose the opaque stage theorems.
+- `SourceSubRaw.lean` converts the raw high/low subtraction to `Fp.subRaw`
+  and separately converts the underflow test;
+- `SourceSubRepair.lean` converts only the modulus-repair result to
+  `Fp.subRepair`;
+- `SourceSub.lean` splits on the already named source test, translates that
+  test to the target predicate, and composes the imported stage theorems.
+
+In the final module, `fpSubValue` and `Fp.subSource` are unfolded only after
+the branch has been selected. At that point exact `rw` steps use the raw,
+predicate, and repair theorems. Lean no longer has to discover all of those
+relationships through definitional equality.
 
 This arrangement matters even though the final proposition is logically the
 same. Once a stage has been compiled to an `.olean`, downstream elaboration
@@ -140,6 +165,39 @@ expensive object was the attempted all-at-once equality between two large,
 reducible representations of that computation. Naming intermediates,
 compiling them independently, and composing their theorems changes kernel
 work from one enormous normalization problem into several bounded checks.
+
+Focused re-elaboration on the same development machine, with dependencies
+already compiled, gave the following comparison:
+
+- the historical all-at-once attempt exceeded approximately 19.8 GB and did
+  not finish in 50 seconds;
+- the staged `SourceSub.lean` module completed in approximately 1.8 seconds
+  with a peak resident set near 2.7 GB;
+- the similarly staged full-multiplication refinement completed in
+  approximately 1.8 seconds with a peak resident set near 2.7 GB.
+
+These figures are machine- and cache-dependent, but the order-of-magnitude
+difference identifies the important architectural change. The multiplication
+proof follows the same pattern: `SourceMulDefs.lean` names the source graph,
+`SourceMulWord.lean` proves the word and accumulator bridges, and
+`SourceMul.lean` composes them into the three-word result.
+
+There are therefore two distinct memory risks to control:
+
+1. A single declaration can expand both sides of a representation boundary.
+   Prevent this with named intermediate values, small bridge theorems,
+   explicit projection lemmas, branch splitting, and targeted rewriting.
+2. Several individually acceptable Lean processes can peak concurrently.
+   Prevent this by compiling heavy stages serially before building the proof
+   umbrella and by enforcing a measured per-module memory budget in CI.
+
+To keep the first failure mode from returning, composite refinement theorems
+should compose already compiled bridge lemmas rather than broadly simplifying
+or unfolding both implementations. Large constant conversions, such as the
+high and low words of the BLS modulus, should also be proved once behind an
+opaque interface. Source value definitions should be separated from
+interpreter execution proofs, so arithmetic bridge modules do not import more
+execution machinery than they need.
 
 ### 2. Symbolic EVM states are large
 
