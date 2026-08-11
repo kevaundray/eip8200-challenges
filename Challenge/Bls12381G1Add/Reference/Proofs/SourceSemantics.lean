@@ -30,6 +30,11 @@ def fpGeModulusValue (hi lo : U256) : U256 :=
         (BitVec.ofNat 256
           45442060874369865957053122457065728162598490762543039060009208264153100167851)) = 0))
 
+/-- Source-word validity predicate, defined by the frozen source's negation of
+the modulus comparison helper. -/
+def fpValidValue (hi lo : U256) : U256 :=
+  b2w (fpGeModulusValue hi lo = 0)
+
 theorem conv_fpGeModulusValue (hi lo : U256) :
     YulEvmCompiler.conv (fpGeModulusValue hi lo) =
     Challenge.Bls12381.ProofSupport.Fp.addNeedsCorrection
@@ -49,6 +54,14 @@ theorem conv_fpGeModulusValue (hi lo : U256) :
     YulEvmCompiler.conv_and, YulEvmCompiler.conv_eq,
     YulEvmCompiler.conv_iszero, YulEvmCompiler.conv_lt, hhi, hlo]
   rfl
+
+theorem conv_fpValidValue (hi lo : U256) :
+    YulEvmCompiler.conv (fpValidValue hi lo) =
+    UInt256.isZero
+      (Challenge.Bls12381.ProofSupport.Fp.addNeedsCorrection
+        { hi := YulEvmCompiler.conv hi, lo := YulEvmCompiler.conv lo }) := by
+  unfold fpValidValue
+  rw [YulEvmCompiler.conv_iszero, conv_fpGeModulusValue]
 
 private def isFunctionDefinition {Op : Type} : Stmt Op → Bool
   | .funDef .. => true
@@ -131,6 +144,16 @@ theorem eval_fpGeModulus (hi lo : U256) (yst : EvmState) :
     lookupFun, hoist, referenceCompiledBlock, frozenReferenceBlock,
     modexpExec, modexpBuiltinFn, stepOp, bin, un, fpGeModulusValue,
     Dialect.zero, restore]
+  rfl
+
+/-- The second frozen helper negates `fpGeModulus` exactly once. -/
+theorem eval_fpValid (hi lo : U256) (yst : EvmState) :
+    Interp.evalExpr modexpExec 64
+      [hoist modexpExec.toDialect referenceCompiledBlock]
+      [("hi", hi), ("lo", lo)] yst
+      (.call "\x001" [.var "hi", .var "lo"]) =
+    .ok (.vals [fpValidValue hi lo] yst) := by
+  rw [Interp.evalExpr]
   rfl
 
 private theorem calldataSizeWord_ne {yst : EvmState}

@@ -23,6 +23,32 @@ example (hi lo : U256) :
   Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpGeModulusValue
     hi lo
 
+example (hi lo : U256) (yst : EvmState) :
+    Interp.evalExpr Challenge.EvmProof.modexpExec 64
+      [hoist Challenge.EvmProof.modexpExec.toDialect
+        Challenge.Bls12381G1Add.Reference.Proofs.Compilation.referenceCompiledBlock]
+      [("hi", hi), ("lo", lo)] yst
+      (.call "\x001" [.var "hi", .var "lo"]) =
+    .ok (.vals [Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpValidValue
+      hi lo] yst) :=
+  Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpValid hi lo yst
+
+example (hi lo : U256) :
+    YulEvmCompiler.conv
+      (Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpValidValue hi lo) =
+    EvmSemantics.UInt256.isZero
+      (Challenge.Bls12381.ProofSupport.Fp.addNeedsCorrection
+        { hi := YulEvmCompiler.conv hi, lo := YulEvmCompiler.conv lo }) :=
+  Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpValidValue hi lo
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpValid' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpValid
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpValidValue' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpValidValue
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpGeModulus' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpGeModulus
