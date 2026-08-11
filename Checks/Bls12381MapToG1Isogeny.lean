@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.MapToG1Isogeny
+import Challenge.Bls12381.ProofSupport.MapToG1IsogenyLawful
 
 set_option warningAsError true
 
@@ -26,6 +26,13 @@ example (numerator denominator y : Field)
     iso11 numerator denominator y = G1Affine.infinity :=
   iso11_eq_infinity_of_pole numerator denominator y hpole
 
+example (numerator denominator y : Field)
+    (hcurve : y ^ 2 * denominator ^ 3 =
+      numerator ^ 3 + isoA * numerator * denominator ^ 2 +
+        isoB * denominator ^ 3) :
+    G1Affine.OnCurve (iso11 numerator denominator y) :=
+  iso11_onCurve numerator denominator y hcurve
+
 /-- info: 'Challenge.Bls12381.ProofSupport.MapToG1.kXNum_length' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms kXNum_length
@@ -47,5 +54,15 @@ example (numerator denominator y : Field)
  Quot.sound] -/
 #guard_msgs in
 #print axioms iso11_eq_infinity_of_pole
+
+/-- info: 'Challenge.Bls12381.ProofSupport.MapToG1.evalHom_eq_scaled_eval' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms evalHom_eq_scaled_eval
+
+/-- info: 'Challenge.Bls12381.ProofSupport.MapToG1.iso11_onCurve' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms iso11_onCurve
 
 end Challenge.Bls12381.ProofSupport.MapToG1
