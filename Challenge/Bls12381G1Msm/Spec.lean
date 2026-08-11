@@ -1,5 +1,7 @@
 import EvmSemantics.EVM.BigStep
-import Challenge.Bls12381.ProofSupport.Subgroup
+import Challenge.Bls12381.ProofSupport.CodecSubgroup
+import Challenge.Bls12381.ProofSupport.CodecScalar
+import Challenge.Bls12381.ProofSupport.Msm
 
 set_option warningAsError true
 
@@ -9,25 +11,34 @@ open EvmSemantics EvmSemantics.EVM
 
 def pairBytes : Nat := 160
 
-abbrev inSubgroup := Challenge.Bls12381.ProofSupport.Subgroup.g1
+open Challenge.Bls12381.ProofSupport
 
-/-- EIP-2537-conformant core. This adds the subgroup rejection omitted by the
-pinned `Bls12381G1Msm.run?` wrapper. -/
-def spec (input : ByteArray) : Option ByteArray := Id.run do
-  if input.size = 0 ∨ input.size % pairBytes ≠ 0 then return none
-  let k := input.size / pairBytes
-  let mut acc : Crypto.Bls12381.Point := .infinity
-  for i in [0:k] do
-    let off := i * pairBytes
-    match Crypto.Bls12381G1Add.decodePoint input off with
-    | none => return none
-    | some point =>
-      if !inSubgroup point then return none
-      let scalar := Data.Bytes.bytesToBigEndianNat
-        (input.extract (off + 128) (off + pairBytes))
-      acc := Crypto.Bls12381.addPoint acc
-        (Crypto.Bls12381.scalarMul scalar point)
-  return some (Crypto.Bls12381G1Add.encodePoint acc)
+/-- Decode one exact EIP-2537 `(G1, scalar)` term.  The point decoder includes
+the mandatory subgroup check, while the scalar is retained as the full
+unreduced unsigned 256-bit wire value. -/
+def decodeTerm (input : ByteArray) (offset : Nat) : Option Msm.G1WireTerm := do
+  let point ← Codec.decodeG1Subgroup input offset
+  match hscalar : Codec.decodeScalar input (offset + Codec.g1Bytes) with
+  | none => none
+  | some _ =>
+      some (point, ScalarMul.scalar256OfDecode hscalar)
+
+/-- Decode `count` consecutive terms, preserving their wire order. -/
+def decodeTerms (input : ByteArray) (offset : Nat) :
+    Nat → Option (List Msm.G1WireTerm)
+  | 0 => some []
+  | count + 1 => do
+      let term ← decodeTerm input offset
+      let rest ← decodeTerms input (offset + pairBytes) count
+      some (term :: rest)
+
+/-- EIP-2537-conformant G1MSM core using the local proof-visible codecs and
+the shared naive left-fold MSM. -/
+def spec (input : ByteArray) : Option ByteArray := do
+  if input.size = 0 ∨ input.size % pairBytes ≠ 0 then none
+  else
+  let terms ← decodeTerms input 0 (input.size / pairBytes)
+  return Codec.encodeG1 (Msm.g1Wire terms)
 
 def deployAddress : AccountAddress := AccountAddress.ofNat 0x820c
 
