@@ -38,5 +38,11 @@ open Challenge.Bls12381.ProofSupport.PrimeCertificate
 #print axioms prime1125266252156850182658904441386709967
 #print axioms prime2584487767265781317813
 #print axioms prime15778400344354997994418419698270088123916926905054652752758194827714659
+#print axioms prime_certifiedModulus
+#print axioms prime_p
+#print axioms lawful_mul_inv_cancel_p
+
+example (a : Challenge.Bls12381.ProofSupport.PrimeField.LawfulFp) (ha : a ≠ 0) :
+    a * a⁻¹ = 1 := lawful_mul_inv_cancel_p a ha
 
 end Checks.Bls12381PrimeCertificate
