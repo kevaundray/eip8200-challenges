@@ -14,6 +14,13 @@ namespace Challenge.EvmProof.Limbs
 
 open EvmSemantics
 
+/-- Three little-endian digits reconstruct as the expected quadratic radix
+polynomial. -/
+theorem ofDigits_three (base x y z : Nat) :
+    Nat.ofDigits base [x, y, z] = x + base * y + base ^ 2 * z := by
+  simp [Nat.ofDigits_cons]
+  ring
+
 /-- Radix of one EVM word. -/
 def radix : Nat := 2 ^ 256
 
@@ -165,6 +172,18 @@ theorem radix_gt_one : 1 < radix := by
 
 theorem radix_pos : 0 < radix := by
   exact Nat.zero_lt_of_lt radix_gt_one
+
+/-- Three EVM words always reconstruct below the three-word radix bound. -/
+theorem threeWords_lt (x y z : UInt256) :
+    x.toNat + radix * y.toNat + radix ^ 2 * z.toNat < radix ^ 3 := by
+  rw [← ofDigits_three]
+  apply Nat.ofDigits_lt_base_pow_length radix_gt_one
+  simp only [List.mem_cons, List.not_mem_nil, or_false]
+  intro digit hdigit
+  rcases hdigit with rfl | rfl | rfl
+  · exact x.val.isLt
+  · exact y.val.isLt
+  · exact z.val.isLt
 
 theorem splitTwo_low_lt (value : Nat) : (splitTwo value).1 < radix := by
   exact Nat.mod_lt _ radix_pos

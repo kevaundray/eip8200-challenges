@@ -7,6 +7,15 @@ namespace Checks.EvmProofWideMul
 open EvmSemantics
 open Challenge.EvmProof
 
+example (base x y z : Nat) :
+    Nat.ofDigits base [x, y, z] = x + base * y + base ^ 2 * z :=
+  Limbs.ofDigits_three base x y z
+
+example (x y z : UInt256) :
+    x.toNat + Limbs.radix * y.toNat + Limbs.radix ^ 2 * z.toNat <
+      Limbs.radix ^ 3 :=
+  Limbs.threeWords_lt x y z
+
 example (base value : Nat) (hbase : 0 < base) :
     Limbs.joinAt base (Limbs.splitAt base value) = value :=
   Limbs.join_splitAt hbase value
@@ -78,5 +87,13 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.WordSum.carry_add_le' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Limbs.WordSum.carry_add_le
+
+/-- info: 'Challenge.EvmProof.Limbs.ofDigits_three' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Limbs.ofDigits_three
+
+/-- info: 'Challenge.EvmProof.Limbs.threeWords_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.threeWords_lt
 
 end Checks.EvmProofWideMul
