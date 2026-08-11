@@ -24,12 +24,13 @@ def decodeScalar (input : ByteArray) (offset : Nat) : Option Nat :=
   if offset + scalarBytes > input.size then none
   else some (scalarWindowValue input offset)
 
-/-- Encode a scalar that fits in the 32-byte EIP window. -/
-def encodeScalar (scalar : Nat) : ByteArray :=
+/-- Encode a scalar in the 32-byte EIP window.  The proof argument makes the
+no-truncation precondition explicit at every call site. -/
+def encodeScalar (scalar : Nat) (_hscalar : scalar < 2 ^ 256) : ByteArray :=
   EvmSemantics.Data.Bytes.natToBytesPadded scalar scalarBytes
 
-@[simp] theorem encodeScalar_size (scalar : Nat) :
-    (encodeScalar scalar).size = scalarBytes := by
+@[simp] theorem encodeScalar_size (scalar : Nat) (hscalar : scalar < 2 ^ 256) :
+    (encodeScalar scalar hscalar).size = scalarBytes := by
   simp [encodeScalar, scalarBytes,
     YulEvmCompiler.BytesLemmas.natToBytesPadded_size]
 
@@ -76,14 +77,22 @@ theorem scalarWindowValue_lt (input : ByteArray) (offset : Nat) :
     omega
   exact h.trans_le (Nat.pow_le_pow_right (by omega) hlength)
 
+theorem decodeScalar_value_lt {input : ByteArray} {offset scalar : Nat}
+    (hdecode : decodeScalar input offset = some scalar) : scalar < 2 ^ 256 := by
+  obtain ⟨_, hvalue⟩ :=
+    (decodeScalar_eq_some_iff input offset scalar).1 hdecode
+  rw [← hvalue]
+  exact scalarWindowValue_lt input offset
+
 theorem decodeScalar_framed (pre suffix : ByteArray) (scalar : Nat)
     (hscalar : scalar < 2 ^ 256) :
-    decodeScalar (pre ++ encodeScalar scalar ++ suffix) pre.size = some scalar := by
+    decodeScalar (pre ++ encodeScalar scalar hscalar ++ suffix) pre.size =
+      some scalar := by
   apply (decodeScalar_eq_some_iff _ _ _).2
   constructor
   · simp [encodeScalar_size]
   · unfold scalarWindowValue
-    rw [← encodeScalar_size scalar]
+    rw [← encodeScalar_size scalar hscalar]
     rw [Challenge.EvmProof.ByteWindow.extract_append_window]
     apply Challenge.EvmProof.Memory.bytesToBigEndianNat_natToBytesPadded
     simpa [show 256 ^ scalarBytes = 2 ^ 256 by norm_num [scalarBytes]]
@@ -91,7 +100,8 @@ theorem decodeScalar_framed (pre suffix : ByteArray) (scalar : Nat)
 
 theorem encodeScalar_decodeScalar {input : ByteArray} {offset scalar : Nat}
     (hdecode : decodeScalar input offset = some scalar) :
-    encodeScalar scalar = input.extract offset (offset + scalarBytes) := by
+    encodeScalar scalar (decodeScalar_value_lt hdecode) =
+      input.extract offset (offset + scalarBytes) := by
   obtain ⟨hsize, hvalue⟩ :=
     (decodeScalar_eq_some_iff input offset scalar).1 hdecode
   let window := input.extract offset (offset + scalarBytes)
