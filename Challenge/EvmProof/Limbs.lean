@@ -182,6 +182,20 @@ theorem ciosReduction_reconstruct
   ring_nf at *
   nlinarith
 
+/-- Width-generic algebra for the product-accumulation half of a CIOS
+iteration, before its low word is cancelled by Montgomery reduction. -/
+theorem ciosAccumulate_reconstruct
+    {base t0 t1 m n0 n1 low0 carry low1 high1
+      sum1 carry1 sum2 carry2 : Nat}
+    (hcarry : low0 + base * carry = t0 + m * n0)
+    (hprod1 : low1 + base * high1 = m * n1)
+    (hsum1 : sum1 + base * carry1 = t1 + low1)
+    (hsum2 : sum2 + base * carry2 = sum1 + carry) :
+    low0 + base * (sum2 + base * (high1 + carry1 + carry2)) =
+      t0 + base * t1 + m * (n0 + base * n1) := by
+  ring_nf at *
+  nlinarith
+
 /-! ## Source-faithful EVM full-word multiplication -/
 
 /-- Two EVM words holding a 512-bit product, low word first. -/
