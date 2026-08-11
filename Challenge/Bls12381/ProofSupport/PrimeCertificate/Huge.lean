@@ -46,4 +46,18 @@ theorem prime92691255082156974996979 : Nat.Prime 92691255082156974996979 := by
     exact ⟨by bls_norm_mod_pow, by bls_norm_mod_pow, by bls_norm_mod_pow,
       by bls_norm_mod_pow, by bls_norm_mod_pow, by bls_norm_mod_pow, by simp⟩
 
+theorem prime1125266252156850182658904441386709967 :
+    Nat.Prime 1125266252156850182658904441386709967 := by
+  apply prime_of_modPow_lucas_factors 1125266252156850182658904441386709967 5
+    [2, 3373, 43670061551, 3819663927398918131021]
+  · norm_num
+  · norm_num
+  · simp only [List.mem_cons, forall_eq_or_imp]
+    exact ⟨Nat.prime_two, prime3373, prime43670061551,
+      prime3819663927398918131021, by simp⟩
+  · bls_norm_mod_pow
+  · simp only [List.mem_cons, forall_eq_or_imp]
+    exact ⟨by bls_norm_mod_pow, by bls_norm_mod_pow, by bls_norm_mod_pow,
+      by bls_norm_mod_pow, by simp⟩
+
 end Challenge.Bls12381.ProofSupport.PrimeCertificate
