@@ -1,6 +1,7 @@
 import Challenge.EvmProof
 import Checks.EvmProofByteWindow
 import Checks.EvmProofModexpCalls
+import Checks.EvmProofProfiledCalls
 import Checks.EvmProofWideMul
 set_option warningAsError true
 /-!

@@ -9,6 +9,7 @@ import Challenge.EvmProof.MemoryRegion
 import Challenge.EvmProof.ModexpCalls
 import Challenge.EvmProof.Ops
 import Challenge.EvmProof.Program
+import Challenge.EvmProof.ProfiledCalls
 import Challenge.EvmProof.Word
 set_option warningAsError true
 /-!
