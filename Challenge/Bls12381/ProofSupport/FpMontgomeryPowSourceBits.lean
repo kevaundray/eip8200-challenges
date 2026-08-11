@@ -42,7 +42,7 @@ def sourceScanExponent (bytes : List UInt8) : Option (UInt8 × List Bool) :=
 
 /-! Each exhaustive theorem below is a small, kernel-checked certificate over
 the 256 possible bytes. This directly pins the source's fixed eight-bit control
-flow without `native_decide` or an axiom. -/
+flow using ordinary kernel reduction and no axiom. -/
 
 set_option maxRecDepth 4096 in
 theorem sourceTopBit_eq_highestSetBit : ∀ byte : UInt8,
