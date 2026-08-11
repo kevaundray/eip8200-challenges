@@ -26,6 +26,16 @@ def storeFpState (yst : EvmState) (ptr hi lo : U256) : EvmState :=
   { touchMemory first nextPtr.toNat 32 with
     memory := storeWord first.memory nextPtr.toNat lo }
 
+/-- The two `MSTORE`s are the complete memory effect of `storeFp`; memory
+touch accounting changes no byte values. -/
+theorem storeFpState_memory (ptr hi lo : U256) (yst : EvmState)
+    (address : Nat) :
+    (storeFpState yst ptr hi lo).memory address =
+      storeWord
+        (storeWord yst.memory ptr.toNat (hi <<< 128))
+        (ptr + BitVec.ofNat 256 16).toNat lo address := by
+  rfl
+
 /-- The eighth frozen helper executes the two source-ordered field stores. -/
 theorem eval_storeFp (ptr hi lo : U256) (yst : EvmState) :
     Interp.evalExpr Challenge.EvmProof.modexpExec 64
