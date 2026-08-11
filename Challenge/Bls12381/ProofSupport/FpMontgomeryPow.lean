@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryPowBits
+import Challenge.Bls12381.ProofSupport.FpMontgomeryPowSourceBits
 
 set_option warningAsError true
 
@@ -23,7 +23,7 @@ first significant one bit initializes the accumulator to `aM`; subsequent
 bits execute square-then-conditional-multiply. -/
 def montgomeryPow (base : Limbs) (exponent : List UInt8) : Limbs :=
   let baseM := montgomeryEncode base
-  match scanExponent exponent with
+  match sourceScanExponent exponent with
   | none => montgomeryOne
   | some (_, bits) => foldMontgomeryBits baseM baseM bits
 

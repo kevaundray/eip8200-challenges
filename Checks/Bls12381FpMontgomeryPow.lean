@@ -92,6 +92,14 @@ example (base : Fp.Limbs) :
     Fp.montgomeryPow base [1] = Fp.montgomeryEncode base :=
   rfl
 
+example (base : Fp.Limbs) (exponent : List UInt8) :
+    Fp.montgomeryPow base exponent =
+      let baseM := Fp.montgomeryEncode base
+      match Fp.sourceScanExponent exponent with
+      | none => Fp.montgomeryOne
+      | some (_, bits) => Fp.foldMontgomeryBits baseM baseM bits :=
+  rfl
+
 /-! Lawful accumulator and decoded-result refinement. -/
 
 example {baseM acc : Fp.Limbs} (hbaseM : Fp.Canonical baseM)

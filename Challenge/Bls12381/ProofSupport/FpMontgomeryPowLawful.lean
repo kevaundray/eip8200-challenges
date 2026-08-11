@@ -45,6 +45,7 @@ theorem lawful_montgomeryPow {base : Limbs} (hbase : Canonical base)
       (value base : LawfulFp) ^ bytesValue exponent *
         (montgomeryRadix : LawfulFp) := by
   unfold montgomeryPow
+  rw [sourceScanExponent_eq]
   generalize hscan : scanExponent exponent = scanned
   cases scanned with
   | none =>
