@@ -76,4 +76,80 @@ example {a : Fp2.Repr} {s : Fp.Limbs}
 #guard_msgs in
 #print axioms Fp2.canonical_mulFpSource
 
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_mulV0Source' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.canonical_mulV0Source
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_mulV1Source' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.canonical_mulV1Source
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_mulRealSource' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.canonical_mulRealSource
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_mulImaginarySource' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp2.canonical_mulImaginarySource
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_mulC0Source' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.canonical_mulC0Source
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_mulC1Source' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.canonical_mulC1Source
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_sqrRealSource' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.canonical_sqrRealSource
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_sqrImaginarySource' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp2.canonical_sqrImaginarySource
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_sqrProductSource' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp2.canonical_sqrProductSource
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_sqrC1Source' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.canonical_sqrC1Source
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_invNormSource' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.canonical_invNormSource
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_invRealSource' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.canonical_invRealSource
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_invImaginarySource' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp2.canonical_invImaginarySource
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_invC0Source' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.canonical_invC0Source
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.canonical_invC1Source' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.canonical_invC1Source
+
 end Checks.Bls12381Fp2SourceCanonical
