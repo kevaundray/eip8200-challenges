@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryLowZero
+import Challenge.Bls12381.ProofSupport.FpMontgomeryLowWord
 
 set_option warningAsError true
 
@@ -90,6 +90,10 @@ example (state : Fp.MontgomeryState) :
       [MOD Challenge.EvmProof.Limbs.radix] :=
   Fp.montgomeryReductionCancellation_modEq state
 
+example (state : Fp.MontgomeryState) :
+    (Fp.montgomeryReductionLowSum state).word = UInt256.ofNat 0 :=
+  Fp.montgomeryReductionLowSum_word_eq_zero state
+
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryN0Inv_spec' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms Fp.montgomeryN0Inv_spec
@@ -137,5 +141,13 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReductionCancellation_modEq'
 -/
 #guard_msgs in
 #print axioms Fp.montgomeryReductionCancellation_modEq
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReductionLowSum_word_eq_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryReductionLowSum_word_eq_zero
 
 end Checks.Bls12381FpMontgomery
