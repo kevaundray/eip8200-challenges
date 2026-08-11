@@ -154,6 +154,34 @@ def fullMul256 (a b : UInt256) : WideProduct :=
   let borrow := UInt256.lt mm lo
   { hi := mm - lo - borrow, lo := lo }
 
+/-- Exact two-word EVM subtraction schedule: subtract the low words, propagate
+the `LT` borrow, then perform the two wrapped high-word `SUB`s. -/
+def subWide256 (a b : WideProduct) : WideProduct :=
+  let borrow := UInt256.lt a.lo b.lo
+  { hi := a.hi - b.hi - borrow, lo := a.lo - b.lo }
+
+/-- Reconstructing the exact two-word EVM subtraction gives ordinary
+subtraction when it does not underflow, and the radix-squared wrapped value
+otherwise. -/
+theorem subWide256_value (a b : WideProduct) :
+    (subWide256 a b).value =
+      if b.value ≤ a.value then a.value - b.value
+      else radix ^ 2 + a.value - b.value := by
+  have halo := a.lo.val.isLt
+  have hahi := a.hi.val.isLt
+  have hblo := b.lo.val.isLt
+  have hbhi := b.hi.val.isLt
+  change a.lo.toNat < radix at halo
+  change a.hi.toNat < radix at hahi
+  change b.lo.toNat < radix at hblo
+  change b.hi.toNat < radix at hbhi
+  unfold subWide256 WideProduct.value
+  simp only [Challenge.EvmProof.Word.word_toNat_sub_cond,
+    Challenge.EvmProof.Word.word_toNat_lt,
+    show 2 ^ 256 = radix by rfl]
+  unfold radix at *
+  split_ifs <;> omega
+
 theorem fullMul256_words_lt (a b : UInt256) :
     (fullMul256 a b).lo.toNat < radix ∧
       (fullMul256 a b).hi.toNat < radix := by
