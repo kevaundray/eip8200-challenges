@@ -1,5 +1,6 @@
 import Challenge.Bls12381.ProofSupport.MsmSemantics
 import Challenge.Bls12381.ProofSupport.SubgroupSemantics
+import Challenge.Bls12381.ProofSupport.CodecSubgroup
 
 set_option warningAsError true
 
@@ -14,6 +15,96 @@ in the prime subgroup whenever every input point is accepted.
 namespace Challenge.Bls12381.ProofSupport.MsmSubgroup
 
 open EvmSemantics.Crypto.Bls12381
+
+private def g1ValidTermsOfWire (terms : List Msm.G1WireTerm)
+    (hvalid : ∀ term ∈ terms, Codec.ValidG1 term.1) :
+    List MsmSemantics.G1ValidTerm :=
+  match terms with
+  | [] => []
+  | term :: rest =>
+      (SubgroupSemantics.g1PointOfWire term.1
+          (hvalid term (by simp)), term.2) ::
+        g1ValidTermsOfWire rest fun item hitem =>
+          hvalid item (by simp [hitem])
+
+private def g2ValidTermsOfWire (terms : List Msm.G2WireTerm)
+    (hvalid : ∀ term ∈ terms, Codec.ValidG2 term.1) :
+    List MsmSemantics.G2ValidTerm :=
+  match terms with
+  | [] => []
+  | term :: rest =>
+      (SubgroupSemantics.g2PointOfWire term.1
+          (hvalid term (by simp)), term.2) ::
+        g2ValidTermsOfWire rest fun item hitem =>
+          hvalid item (by simp [hitem])
+
+private theorem g1Value_validTermsOfWire (terms : List Msm.G1WireTerm)
+    (hvalid : ∀ term ∈ terms, Codec.ValidG1 term.1) :
+    G1Affine.toWire
+        (MsmSemantics.g1Value (g1ValidTermsOfWire terms hvalid)) =
+      Msm.g1Wire terms := by
+  congr 1
+  change Msm.g1
+      ((g1ValidTermsOfWire terms hvalid).map MsmSemantics.forgetG1Term) =
+    Msm.g1 (terms.map Msm.g1TermOfWire)
+  congr 1
+  induction terms with
+  | nil => rfl
+  | cons term rest ih =>
+      simp only [g1ValidTermsOfWire, List.map_cons]
+      congr 1
+      exact ih (fun item hitem => hvalid item (by simp [hitem]))
+
+private theorem g2Value_validTermsOfWire (terms : List Msm.G2WireTerm)
+    (hvalid : ∀ term ∈ terms, Codec.ValidG2 term.1) :
+    G2Affine.toWire
+        (MsmSemantics.g2Value (g2ValidTermsOfWire terms hvalid)) =
+      Msm.g2Wire terms := by
+  congr 1
+  change Msm.g2
+      ((g2ValidTermsOfWire terms hvalid).map MsmSemantics.forgetG2Term) =
+    Msm.g2 (terms.map Msm.g2TermOfWire)
+  congr 1
+  induction terms with
+  | nil => rfl
+  | cons term rest ih =>
+      simp only [g2ValidTermsOfWire, List.map_cons]
+      congr 1
+      exact ih (fun item hitem => hvalid item (by simp [hitem]))
+
+private theorem g1ValidTermsOfWire_accepted (terms : List Msm.G1WireTerm)
+    (hvalid : ∀ term ∈ terms, Codec.ValidG1 term.1)
+    (hsubgroup : ∀ term ∈ terms, Subgroup.g1 term.1 = true) :
+    ∀ term ∈ g1ValidTermsOfWire terms hvalid,
+      Subgroup.g1Affine term.1.1 = true := by
+  induction terms with
+  | nil => simp [g1ValidTermsOfWire]
+  | cons wireTerm rest ih =>
+      intro term hterm
+      simp only [g1ValidTermsOfWire, List.mem_cons] at hterm
+      rcases hterm with rfl | hrest
+      · simpa [Subgroup.g1, SubgroupSemantics.g1PointOfWire] using
+          hsubgroup wireTerm (by simp)
+      · exact ih
+          (fun item hitem => hvalid item (by simp [hitem]))
+          (fun item hitem => hsubgroup item (by simp [hitem])) term hrest
+
+private theorem g2ValidTermsOfWire_accepted (terms : List Msm.G2WireTerm)
+    (hvalid : ∀ term ∈ terms, Codec.ValidG2 term.1)
+    (hsubgroup : ∀ term ∈ terms, Subgroup.g2 term.1 = true) :
+    ∀ term ∈ g2ValidTermsOfWire terms hvalid,
+      Subgroup.g2Affine term.1.1 = true := by
+  induction terms with
+  | nil => simp [g2ValidTermsOfWire]
+  | cons wireTerm rest ih =>
+      intro term hterm
+      simp only [g2ValidTermsOfWire, List.mem_cons] at hterm
+      rcases hterm with rfl | hrest
+      · simpa [Subgroup.g2, SubgroupSemantics.g2PointOfWire] using
+          hsubgroup wireTerm (by simp)
+      · exact ih
+          (fun item hitem => hvalid item (by simp [hitem]))
+          (fun item hitem => hsubgroup item (by simp [hitem])) term hrest
 
 theorem g1MathSum_nsmul_zero (terms : List MsmSemantics.G1ValidTerm)
     (hterms : ∀ term ∈ terms, Subgroup.g1Affine term.1.1 = true) :
@@ -88,5 +179,39 @@ theorem g2_wire_output (terms : List MsmSemantics.G2ValidTerm)
     (hterms : ∀ term ∈ terms, Subgroup.g2Affine term.1.1 = true) :
     Subgroup.g2 (G2Affine.toWire (MsmSemantics.g2Value terms)) = true := by
   simpa [Subgroup.g2] using g2_output terms hterms
+
+/-- If every decoded G1 term is curve-valid and passes the prime-subgroup
+predicate, the encoded naive-MSM output decodes through the subgroup codec. -/
+theorem g1Wire_encoded_output (terms : List Msm.G1WireTerm)
+    (hvalid : ∀ term ∈ terms, Codec.ValidG1 term.1)
+    (hsubgroup : ∀ term ∈ terms, Subgroup.g1 term.1 = true) :
+    Codec.decodeG1Subgroup (Codec.encodeG1 (Msm.g1Wire terms)) 0 =
+      some (Msm.g1Wire terms) := by
+  let validTerms := g1ValidTermsOfWire terms hvalid
+  have haccepted : ∀ term ∈ validTerms,
+      Subgroup.g1Affine term.1.1 = true :=
+    g1ValidTermsOfWire_accepted terms hvalid hsubgroup
+  have hout : Subgroup.g1 (Msm.g1Wire terms) = true := by
+    rw [← g1Value_validTermsOfWire terms hvalid]
+    exact g1_wire_output validTerms haccepted
+  apply (Codec.decodeG1Subgroup_eq_some_iff _ _ _).2
+  exact ⟨Codec.decodeG1_encodeG1 _ (Msm.g1Wire_valid terms hvalid), hout⟩
+
+/-- If every decoded G2 term is curve-valid and passes the prime-subgroup
+predicate, the encoded naive-MSM output decodes through the subgroup codec. -/
+theorem g2Wire_encoded_output (terms : List Msm.G2WireTerm)
+    (hvalid : ∀ term ∈ terms, Codec.ValidG2 term.1)
+    (hsubgroup : ∀ term ∈ terms, Subgroup.g2 term.1 = true) :
+    Codec.decodeG2Subgroup (Codec.encodeG2 (Msm.g2Wire terms)) 0 =
+      some (Msm.g2Wire terms) := by
+  let validTerms := g2ValidTermsOfWire terms hvalid
+  have haccepted : ∀ term ∈ validTerms,
+      Subgroup.g2Affine term.1.1 = true :=
+    g2ValidTermsOfWire_accepted terms hvalid hsubgroup
+  have hout : Subgroup.g2 (Msm.g2Wire terms) = true := by
+    rw [← g2Value_validTermsOfWire terms hvalid]
+    exact g2_wire_output validTerms haccepted
+  apply (Codec.decodeG2Subgroup_eq_some_iff _ _ _).2
+  exact ⟨Codec.decodeG2_encodeG2 _ (Msm.g2Wire_valid terms hvalid), hout⟩
 
 end Challenge.Bls12381.ProofSupport.MsmSubgroup
