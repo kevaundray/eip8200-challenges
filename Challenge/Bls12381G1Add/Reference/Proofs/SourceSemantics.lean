@@ -56,18 +56,26 @@ def fpAddValue (ahi alo bhi blo : U256) : U256 × U256 :=
      sLo - BitVec.ofNat 256
        45442060874369865957053122457065728162598490762543039060009208264153100167851)
 
+/-- The frozen source's initial two-word subtraction. -/
+def fpSubRawValue (ahi alo bhi blo : U256) : U256 × U256 :=
+  (ahi - bhi - b2w (BitVec.ult alo blo), alo - blo)
+
+/-- The frozen source's high-word underflow test. -/
+def fpSubNeedsRepairValue (diff : U256 × U256) : U256 :=
+  b2w (BitVec.ult
+    (BitVec.ofNat 256 34565483545414906068789196026815425751) diff.1)
+
+/-- The frozen source's conditional modulus-addition repair. -/
+def fpSubRepairValue (diff : U256 × U256) : U256 × U256 :=
+  let newLo := diff.2 + BitVec.ofNat 256
+    45442060874369865957053122457065728162598490762543039060009208264153100167851
+  (diff.1 + BitVec.ofNat 256 34565483545414906068789196026815425751 +
+    b2w (BitVec.ult newLo diff.2), newLo)
+
 /-- Exact two-word result of the frozen source's canonical field subtraction. -/
 def fpSubValue (ahi alo bhi blo : U256) : U256 × U256 :=
-  let dLo := alo - blo
-  let dHi := ahi - bhi - b2w (BitVec.ult alo blo)
-  if b2w (BitVec.ult
-      (BitVec.ofNat 256 34565483545414906068789196026815425751) dHi) = 0 then
-    (dHi, dLo)
-  else
-    let newLo := dLo + BitVec.ofNat 256
-      45442060874369865957053122457065728162598490762543039060009208264153100167851
-    (dHi + BitVec.ofNat 256 34565483545414906068789196026815425751 +
-      b2w (BitVec.ult newLo dLo), newLo)
+  let diff := fpSubRawValue ahi alo bhi blo
+  if fpSubNeedsRepairValue diff = 0 then diff else fpSubRepairValue diff
 
 theorem conv_fpGeModulusValue (hi lo : U256) :
     YulEvmCompiler.conv (fpGeModulusValue hi lo) =
@@ -328,15 +336,13 @@ theorem eval_fpSub (ahi alo bhi blo : U256) (yst : EvmState) :
   split
   case isTrue hsource =>
     have hnamed := hsource
-    change b2w (BitVec.ult
-      (BitVec.ofNat 256 34565483545414906068789196026815425751)
-      (ahi - bhi - b2w (BitVec.ult alo blo))) = 0 at hnamed
-    simp [fpSubValue, hnamed]
+    change fpSubNeedsRepairValue (fpSubRawValue ahi alo bhi blo) = 0 at hnamed
+    unfold fpSubValue
+    rw [if_pos hnamed]
+    rfl
   case isFalse hsource =>
     have hnamed := hsource
-    change ¬b2w (BitVec.ult
-      (BitVec.ofNat 256 34565483545414906068789196026815425751)
-      (ahi - bhi - b2w (BitVec.ult alo blo))) = 0 at hnamed
+    change ¬fpSubNeedsRepairValue (fpSubRawValue ahi alo bhi blo) = 0 at hnamed
     unfold fpSubValue
     rw [if_neg hnamed]
     rfl
