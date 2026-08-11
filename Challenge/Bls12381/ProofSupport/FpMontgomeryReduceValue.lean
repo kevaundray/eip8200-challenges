@@ -8,15 +8,13 @@ namespace Challenge.Bls12381.ProofSupport.Fp
 
 open EvmSemantics
 
-/-- Under the three-word numerator bound, all three nested source top-word
+/-- If the unwrapped top fits one word, all three nested source top-word
 `ADD`s are nonwrapping. -/
-theorem montgomeryReduceStep_t1_value (state : MontgomeryState)
-    (hbound : montgomeryReductionNumerator state <
-      Challenge.EvmProof.Limbs.radix *
-        (Challenge.EvmProof.Limbs.radix * Challenge.EvmProof.Limbs.radix)) :
+theorem montgomeryReduceStep_t1_value_of_top_lt (state : MontgomeryState)
+    (htop : montgomeryReductionTopNat state <
+      Challenge.EvmProof.Limbs.radix) :
     (montgomeryReduceStep state).t1.toNat =
       montgomeryReductionTopNat state := by
-  have htop := montgomeryReductionTopNat_lt state hbound
   unfold montgomeryReductionTopNat at htop
   have hcarries :
       (montgomeryReductionHighSum state).carry.toNat +
@@ -42,14 +40,14 @@ theorem montgomeryReduceStep_t1_value (state : MontgomeryState)
     Nat.mod_eq_of_lt hall]
   simp [montgomeryReductionTopNat, Nat.add_assoc]
 
-/-- The exact source state reconstructs the unwrapped two-word quotient. -/
-theorem montgomeryReduceStep_value (state : MontgomeryState)
-    (hbound : montgomeryReductionNumerator state <
-      Challenge.EvmProof.Limbs.radix *
-        (Challenge.EvmProof.Limbs.radix * Challenge.EvmProof.Limbs.radix)) :
+/-- The exact source state reconstructs the unwrapped two-word quotient when
+its top accumulator fits one word. -/
+theorem montgomeryReduceStep_value_of_top_lt (state : MontgomeryState)
+    (htopBound : montgomeryReductionTopNat state <
+      Challenge.EvmProof.Limbs.radix) :
     (montgomeryReduceStep state).value =
       montgomeryReductionQuotient state := by
-  have htop := montgomeryReduceStep_t1_value state hbound
+  have htop := montgomeryReduceStep_t1_value_of_top_lt state htopBound
   unfold MontgomeryState.value
   change (montgomeryReductionShiftedSum state).word.toNat +
       Challenge.EvmProof.Limbs.radix *
@@ -59,6 +57,36 @@ theorem montgomeryReduceStep_value (state : MontgomeryState)
     Nat.mul_zero, Nat.add_zero]
   rfl
 
+/-- Direct scaled refinement from a source-local top-word bound. -/
+theorem montgomeryReduceStep_scaled_of_top_lt (state : MontgomeryState)
+    (htop : montgomeryReductionTopNat state <
+      Challenge.EvmProof.Limbs.radix) :
+    Challenge.EvmProof.Limbs.radix * (montgomeryReduceStep state).value =
+      montgomeryReductionNumerator state := by
+  rw [montgomeryReduceStep_value_of_top_lt state htop]
+  exact montgomeryReduction_reconstruct_numerator state
+
+/-- Under the three-word numerator bound, all nested source top-word `ADD`s
+are nonwrapping. -/
+theorem montgomeryReduceStep_t1_value (state : MontgomeryState)
+    (hbound : montgomeryReductionNumerator state <
+      Challenge.EvmProof.Limbs.radix *
+        (Challenge.EvmProof.Limbs.radix * Challenge.EvmProof.Limbs.radix)) :
+    (montgomeryReduceStep state).t1.toNat =
+      montgomeryReductionTopNat state :=
+  montgomeryReduceStep_t1_value_of_top_lt state
+    (montgomeryReductionTopNat_lt state hbound)
+
+/-- The numerator-bound compatibility endpoint. -/
+theorem montgomeryReduceStep_value (state : MontgomeryState)
+    (hbound : montgomeryReductionNumerator state <
+      Challenge.EvmProof.Limbs.radix *
+        (Challenge.EvmProof.Limbs.radix * Challenge.EvmProof.Limbs.radix)) :
+    (montgomeryReduceStep state).value =
+      montgomeryReductionQuotient state :=
+  montgomeryReduceStep_value_of_top_lt state
+    (montgomeryReductionTopNat_lt state hbound)
+
 /-- One exact source reduction divides the reconstructed numerator by one
 word radix. -/
 theorem montgomeryReduceStep_scaled (state : MontgomeryState)
@@ -67,7 +95,7 @@ theorem montgomeryReduceStep_scaled (state : MontgomeryState)
         (Challenge.EvmProof.Limbs.radix * Challenge.EvmProof.Limbs.radix)) :
     Challenge.EvmProof.Limbs.radix * (montgomeryReduceStep state).value =
       montgomeryReductionNumerator state := by
-  rw [montgomeryReduceStep_value state hbound]
-  exact montgomeryReduction_reconstruct_numerator state
+  exact montgomeryReduceStep_scaled_of_top_lt state
+    (montgomeryReductionTopNat_lt state hbound)
 
 end Challenge.Bls12381.ProofSupport.Fp
