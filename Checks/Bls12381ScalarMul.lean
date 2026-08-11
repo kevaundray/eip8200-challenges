@@ -59,17 +59,128 @@ info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_preserves' depends on ax
 #guard_msgs in
 #print axioms ScalarMul.binary_preserves
 
-example (point : G1Projective.Point) :
-    ScalarMul.g1 0 point = G1Projective.infinity := ScalarMul.g1_zero point
-example (point : G1Projective.Point) : ScalarMul.g1 1 point = point :=
+example {input : ByteArray} {offset scalar : Nat}
+    (hdecode : Codec.decodeScalar input offset = some scalar) :
+    (ScalarMul.scalar256OfDecode hdecode).val = scalar :=
+  ScalarMul.scalar256OfDecode_val hdecode
+
+example (point : G1Affine.Point) :
+    ScalarMul.g1 0 point = G1Affine.infinity := ScalarMul.g1_zero point
+example (point : G1Affine.Point) : ScalarMul.g1 1 point = point :=
   ScalarMul.g1_one point
-example (point : G2Projective.Point) :
-    ScalarMul.g2 0 point = G2Projective.infinity := ScalarMul.g2_zero point
-example (point : G2Projective.Point) : ScalarMul.g2 1 point = point :=
+example (point : G2Affine.Point) :
+    ScalarMul.g2 0 point = G2Affine.infinity := ScalarMul.g2_zero point
+example (point : G2Affine.Point) : ScalarMul.g2 1 point = point :=
   ScalarMul.g2_one point
 
+example (scalar : Nat) (point : G1Affine.Point) :
+    ScalarMul.g1 (2 * scalar) point =
+      ScalarMul.g1 scalar (G1Affine.double point) :=
+  ScalarMul.g1_even scalar point
+
+example (scalar : Nat) (point : G2Affine.Point) :
+    ScalarMul.g2 (2 * scalar + 1) point =
+      G2Affine.add (ScalarMul.g2 scalar (G2Affine.double point)) point :=
+  ScalarMul.g2_odd scalar point
+
+example (scalar : Nat) (point : G1Affine.Point)
+    (hpoint : G1Affine.OnCurve point) :
+    G1Affine.OnCurve (ScalarMul.g1 scalar point) :=
+  ScalarMul.g1_onCurve scalar point hpoint
+
+example (scalar : Nat) (point : G2Affine.Point)
+    (hpoint : G2Affine.OnCurve point) :
+    G2Affine.OnCurve (ScalarMul.g2 scalar point) :=
+  ScalarMul.g2_onCurve scalar point hpoint
+
+example (scalar : Nat) (point : EvmSemantics.Crypto.Bls12381.Point) :
+    G1Affine.ofWire (ScalarMul.g1Wire scalar point) =
+      ScalarMul.g1 scalar (G1Affine.ofWire point) :=
+  ScalarMul.g1Wire_refines scalar point
+
+example (scalar : Nat) (point : EvmSemantics.Crypto.Bls12381.G2Point) :
+    G2Affine.ofWire (ScalarMul.g2Wire scalar point) =
+      ScalarMul.g2 scalar (G2Affine.ofWire point) :=
+  ScalarMul.g2Wire_refines scalar point
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.scalar256OfDecode_val' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.scalar256OfDecode_val
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g1_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g1_zero
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g2_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g2_zero
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g1_one' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms ScalarMul.g1_one
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g2_one' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms ScalarMul.g2_one
-#print axioms ScalarMul.loopG1_step
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g1_even' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g1_even
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g2_even' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g2_even
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g1_odd' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g1_odd
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g2_odd' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g2_odd
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g1_onCurve' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g1_onCurve
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g2_onCurve' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g2_onCurve
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g1Wire_refines' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g1Wire_refines
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g2Wire_refines' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g2Wire_refines
 
 end Checks.Bls12381ScalarMul

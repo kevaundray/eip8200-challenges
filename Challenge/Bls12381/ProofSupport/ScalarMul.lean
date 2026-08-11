@@ -1,5 +1,6 @@
-import Challenge.Bls12381.ProofSupport.G1Projective
-import Challenge.Bls12381.ProofSupport.G2Projective
+import Challenge.Bls12381.ProofSupport.G1Affine
+import Challenge.Bls12381.ProofSupport.G2Affine
+import Challenge.Bls12381.ProofSupport.CodecScalar
 
 set_option warningAsError true
 
@@ -8,6 +9,18 @@ set_option warningAsError true
 namespace Challenge.Bls12381.ProofSupport.ScalarMul
 
 open EvmSemantics.Crypto.Bls12381
+
+/-- An exact EIP-2537 scalar: an unreduced unsigned 256-bit integer. -/
+abbrev Scalar256 := Fin (2 ^ 256)
+
+/-- Package the exact scalar returned by the approved 32-byte codec. -/
+def scalar256OfDecode {input : ByteArray} {offset scalar : Nat}
+    (hdecode : Codec.decodeScalar input offset = some scalar) : Scalar256 :=
+  ⟨scalar, Codec.decodeScalar_value_lt hdecode⟩
+
+@[simp] theorem scalar256OfDecode_val {input : ByteArray} {offset scalar : Nat}
+    (hdecode : Codec.decodeScalar input offset = some scalar) :
+    (scalar256OfDecode hdecode).val = scalar := rfl
 
 /-! ## Transparent binary scalar semantics -/
 
@@ -89,70 +102,90 @@ theorem binary_preserves {Point : Type} (zero : Point)
         · rw [if_neg hodd]
           exact hrest
 
-/-- Right-to-left binary G1 scalar multiplication. `fuel` is a structural
-termination argument; the public entry supplies the scalar itself, while the
-working scalar is halved on every nonterminal iteration. -/
-def loopG1 : Nat → Nat → G1Projective.Point → G1Projective.Point →
-    G1Projective.Point
-  | 0, _, acc, _ => acc
-  | fuel + 1, scalar, acc, base =>
-      if scalar = 0 then acc
-      else
-        let acc' := if scalar % 2 = 1 then G1Projective.add acc base else acc
-        loopG1 fuel (scalar / 2) acc' (G1Projective.double base)
+/-! ## BLS12-381 curve instantiations -/
 
-def g1 (scalar : Nat) (point : G1Projective.Point) : G1Projective.Point :=
-  loopG1 scalar scalar G1Projective.infinity point
+/-- Local EIP-correct G1 scalar multiplication. -/
+def g1 (scalar : Nat) (point : G1Affine.Point) : G1Affine.Point :=
+  binary G1Affine.infinity G1Affine.add G1Affine.double scalar point
 
-/-- Right-to-left binary G2 scalar multiplication. -/
-def loopG2 : Nat → Nat → G2Projective.Point → G2Projective.Point →
-    G2Projective.Point
-  | 0, _, acc, _ => acc
-  | fuel + 1, scalar, acc, base =>
-      if scalar = 0 then acc
-      else
-        let acc' := if scalar % 2 = 1 then G2Projective.add acc base else acc
-        loopG2 fuel (scalar / 2) acc' (G2Projective.double base)
+/-- Local EIP-correct G2 scalar multiplication. -/
+def g2 (scalar : Nat) (point : G2Affine.Point) : G2Affine.Point :=
+  binary G2Affine.infinity G2Affine.add G2Affine.double scalar point
 
-def g2 (scalar : Nat) (point : G2Projective.Point) : G2Projective.Point :=
-  loopG2 scalar scalar G2Projective.infinity point
+/-- Restrict G1 scalar multiplication to an exact EIP 256-bit scalar. -/
+def g1Eip (scalar : Scalar256) (point : G1Affine.Point) : G1Affine.Point :=
+  g1 scalar.val point
 
-/-- Pinned affine specifications, kept separate from the executable
-projective algorithms. -/
-def g1Spec (scalar : Nat) (point : EvmSemantics.Crypto.Bls12381.Point) :
+/-- Restrict G2 scalar multiplication to an exact EIP 256-bit scalar. -/
+def g2Eip (scalar : Scalar256) (point : G2Affine.Point) : G2Affine.Point :=
+  g2 scalar.val point
+
+@[simp] theorem g1_zero (point : G1Affine.Point) :
+    g1 0 point = G1Affine.infinity := binary_zero _ _ _ point
+
+@[simp] theorem g2_zero (point : G2Affine.Point) :
+    g2 0 point = G2Affine.infinity := binary_zero _ _ _ point
+
+@[simp] theorem g1_one (point : G1Affine.Point) : g1 1 point = point := by
+  simpa [g1, G1Affine.add] using
+    binary_odd G1Affine.infinity G1Affine.add G1Affine.double 0 point
+
+@[simp] theorem g2_one (point : G2Affine.Point) : g2 1 point = point := by
+  simpa [g2, G2Affine.add] using
+    binary_odd G2Affine.infinity G2Affine.add G2Affine.double 0 point
+
+theorem g1_even (scalar : Nat) (point : G1Affine.Point) :
+    g1 (2 * scalar) point = g1 scalar (G1Affine.double point) :=
+  binary_even _ _ _ scalar point
+
+theorem g2_even (scalar : Nat) (point : G2Affine.Point) :
+    g2 (2 * scalar) point = g2 scalar (G2Affine.double point) :=
+  binary_even _ _ _ scalar point
+
+theorem g1_odd (scalar : Nat) (point : G1Affine.Point) :
+    g1 (2 * scalar + 1) point =
+      G1Affine.add (g1 scalar (G1Affine.double point)) point :=
+  binary_odd _ _ _ scalar point
+
+theorem g2_odd (scalar : Nat) (point : G2Affine.Point) :
+    g2 (2 * scalar + 1) point =
+      G2Affine.add (g2 scalar (G2Affine.double point)) point :=
+  binary_odd _ _ _ scalar point
+
+theorem g1_onCurve (scalar : Nat) (point : G1Affine.Point)
+    (hpoint : G1Affine.OnCurve point) :
+    G1Affine.OnCurve (g1 scalar point) :=
+  binary_preserves _ _ _ G1Affine.OnCurve
+    (LawfulAffine.onCurve_infinity G1Affine.curve)
+    G1Affine.onCurve_add G1Affine.onCurve_double scalar point hpoint
+
+theorem g2_onCurve (scalar : Nat) (point : G2Affine.Point)
+    (hpoint : G2Affine.OnCurve point) :
+    G2Affine.OnCurve (g2 scalar point) :=
+  binary_preserves _ _ _ G2Affine.OnCurve
+    (LawfulAffine.onCurve_infinity G2Affine.curve)
+    G2Affine.onCurve_add G2Affine.onCurve_double scalar point hpoint
+
+/-- Decode-level wire adapter for lawful G1 scalar multiplication. -/
+def g1Wire (scalar : Nat) (point : EvmSemantics.Crypto.Bls12381.Point) :
     EvmSemantics.Crypto.Bls12381.Point :=
-  EvmSemantics.Crypto.Bls12381.scalarMul scalar point
+  G1Affine.toWire (g1 scalar (G1Affine.ofWire point))
 
-def g2Spec (scalar : Nat) (point : EvmSemantics.Crypto.Bls12381.G2Point) :
+/-- Decode-level wire adapter for lawful G2 scalar multiplication. -/
+def g2Wire (scalar : Nat) (point : EvmSemantics.Crypto.Bls12381.G2Point) :
     EvmSemantics.Crypto.Bls12381.G2Point :=
-  EvmSemantics.Crypto.G2.scalarMul scalar point
+  G2Affine.toWire (g2 scalar (G2Affine.ofWire point))
 
-@[simp] theorem g1_zero (point : G1Projective.Point) :
-    g1 0 point = G1Projective.infinity := rfl
+theorem g1Wire_refines (scalar : Nat)
+    (point : EvmSemantics.Crypto.Bls12381.Point) :
+    G1Affine.ofWire (g1Wire scalar point) =
+      g1 scalar (G1Affine.ofWire point) := by
+  simp [g1Wire]
 
-@[simp] theorem g2_zero (point : G2Projective.Point) :
-    g2 0 point = G2Projective.infinity := rfl
-
-@[simp] theorem g1_one (point : G1Projective.Point) : g1 1 point = point := by
-  simp [g1, loopG1]
-
-@[simp] theorem g2_one (point : G2Projective.Point) : g2 1 point = point := by
-  simp [g2, loopG2]
-
-theorem loopG1_step (fuel scalar : Nat) (acc base : G1Projective.Point)
-    (hscalar : scalar ≠ 0) :
-    loopG1 (fuel + 1) scalar acc base =
-      loopG1 fuel (scalar / 2)
-        (if scalar % 2 = 1 then G1Projective.add acc base else acc)
-        (G1Projective.double base) := by
-  simp [loopG1, hscalar]
-
-theorem loopG2_step (fuel scalar : Nat) (acc base : G2Projective.Point)
-    (hscalar : scalar ≠ 0) :
-    loopG2 (fuel + 1) scalar acc base =
-      loopG2 fuel (scalar / 2)
-        (if scalar % 2 = 1 then G2Projective.add acc base else acc)
-        (G2Projective.double base) := by
-  simp [loopG2, hscalar]
+theorem g2Wire_refines (scalar : Nat)
+    (point : EvmSemantics.Crypto.Bls12381.G2Point) :
+    G2Affine.ofWire (g2Wire scalar point) =
+      g2 scalar (G2Affine.ofWire point) := by
+  simp [g2Wire]
 
 end Challenge.Bls12381.ProofSupport.ScalarMul
