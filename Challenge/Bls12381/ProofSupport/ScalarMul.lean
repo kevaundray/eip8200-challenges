@@ -9,6 +9,59 @@ namespace Challenge.Bls12381.ProofSupport.ScalarMul
 
 open EvmSemantics.Crypto.Bls12381
 
+/-! ## Transparent binary scalar semantics -/
+
+/-- Proof-friendly right-to-left binary double-and-add.  This transparent
+recursion is the local mathematical scalar operation; no equality to the
+pinned inverse-dependent curve scalar multiplication is claimed. -/
+def binary {Point : Type} (zero : Point) (add : Point → Point → Point)
+    (double : Point → Point) (scalar : Nat) (point : Point) : Point :=
+  if hzero : scalar = 0 then zero
+  else
+    let rest := binary zero add double (scalar / 2) (double point)
+    if scalar % 2 = 1 then add rest point else rest
+termination_by scalar
+decreasing_by
+  exact Nat.div_lt_self (Nat.zero_lt_of_ne_zero hzero) (by omega)
+
+@[simp] theorem binary_zero {Point : Type} (zero : Point)
+    (add : Point → Point → Point) (double : Point → Point) (point : Point) :
+    binary zero add double 0 point = zero := by
+  rw [binary]
+  simp
+
+theorem binary_step {Point : Type} (zero : Point)
+    (add : Point → Point → Point) (double : Point → Point)
+    (scalar : Nat) (point : Point) (hscalar : scalar ≠ 0) :
+    binary zero add double scalar point =
+      if scalar % 2 = 1 then
+        add (binary zero add double (scalar / 2) (double point)) point
+      else binary zero add double (scalar / 2) (double point) := by
+  rw [binary]
+  simp [hscalar]
+
+theorem binary_even {Point : Type} (zero : Point)
+    (add : Point → Point → Point) (double : Point → Point)
+    (scalar : Nat) (point : Point) :
+    binary zero add double (2 * scalar) point =
+      binary zero add double scalar (double point) := by
+  cases scalar with
+  | zero => simp
+  | succ scalar =>
+      rw [binary_step]
+      · norm_num
+      · omega
+
+theorem binary_odd {Point : Type} (zero : Point)
+    (add : Point → Point → Point) (double : Point → Point)
+    (scalar : Nat) (point : Point) :
+    binary zero add double (2 * scalar + 1) point =
+      add (binary zero add double scalar (double point)) point := by
+  rw [binary_step]
+  · rw [show (2 * scalar + 1) / 2 = scalar by omega]
+    norm_num
+  · omega
+
 /-- Right-to-left binary G1 scalar multiplication. `fuel` is a structural
 termination argument; the public entry supplies the scalar itself, while the
 working scalar is halved on every nonterminal iteration. -/
