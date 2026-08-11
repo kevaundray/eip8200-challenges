@@ -62,6 +62,33 @@ theorem binary_odd {Point : Type} (zero : Point)
     norm_num
   · omega
 
+/-- Binary scalar multiplication preserves any invariant preserved by the
+identity, addition, and doubling operations. -/
+theorem binary_preserves {Point : Type} (zero : Point)
+    (add : Point → Point → Point) (double : Point → Point)
+    (Valid : Point → Prop)
+    (hzero : Valid zero)
+    (hadd : ∀ left right, Valid left → Valid right → Valid (add left right))
+    (hdouble : ∀ point, Valid point → Valid (double point))
+    (scalar : Nat) (point : Point) (hpoint : Valid point) :
+    Valid (binary zero add double scalar point) := by
+  induction scalar using Nat.strong_induction_on generalizing point with
+  | h scalar ih =>
+      by_cases hscalar : scalar = 0
+      · subst scalar
+        simpa using hzero
+      · rw [binary_step zero add double scalar point hscalar]
+        have hhalf : scalar / 2 < scalar :=
+          Nat.div_lt_self (Nat.zero_lt_of_ne_zero hscalar) (by omega)
+        have hrest :
+            Valid (binary zero add double (scalar / 2) (double point)) :=
+          ih (scalar / 2) hhalf (double point) (hdouble point hpoint)
+        by_cases hodd : scalar % 2 = 1
+        · rw [if_pos hodd]
+          exact hadd _ _ hrest hpoint
+        · rw [if_neg hodd]
+          exact hrest
+
 /-- Right-to-left binary G1 scalar multiplication. `fuel` is a structural
 termination argument; the public entry supplies the scalar itself, while the
 working scalar is halved on every nonterminal iteration. -/

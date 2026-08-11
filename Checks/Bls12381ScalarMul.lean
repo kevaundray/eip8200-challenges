@@ -45,6 +45,20 @@ info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_odd' depends on axioms: 
 #guard_msgs in
 #print axioms ScalarMul.binary_odd
 
+example (Valid : P → Prop)
+    (hzero : Valid zero)
+    (hadd : ∀ left right, Valid left → Valid right → Valid (add left right))
+    (hdouble : ∀ point, Valid point → Valid (double point))
+    (scalar : Nat) (point : P) (hpoint : Valid point) :
+    Valid (ScalarMul.binary zero add double scalar point) :=
+  ScalarMul.binary_preserves zero add double Valid hzero hadd hdouble scalar point hpoint
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_preserves' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.binary_preserves
+
 example (point : G1Projective.Point) :
     ScalarMul.g1 0 point = G1Projective.infinity := ScalarMul.g1_zero point
 example (point : G1Projective.Point) : ScalarMul.g1 1 point = point :=
