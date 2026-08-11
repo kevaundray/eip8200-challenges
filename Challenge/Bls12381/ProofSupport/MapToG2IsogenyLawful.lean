@@ -1,45 +1,34 @@
-import Challenge.Bls12381.ProofSupport.MapToG1IsogenyIdentity
 import Challenge.Bls12381.ProofSupport.MapPolynomialLawful
+import Challenge.Bls12381.ProofSupport.MapToG2IsogenyIdentity
 import Mathlib.Tactic.FieldSimp
 
 set_option warningAsError true
 
-/-! # Lawful refinement of the G1 11-isogeny -/
+/-! # Lawful refinement of the G2 3-isogeny -/
 
-namespace Challenge.Bls12381.ProofSupport.MapToG1
+namespace Challenge.Bls12381.ProofSupport.MapToG2
 
 open Challenge.Bls12381.ProofSupport
 
-/-- Homogeneous evaluation agrees with ordinary evaluation at `N/D`, scaled
-by the expected denominator power. -/
-theorem evalHom_eq_scaled_eval (coefficients : List Field)
-    (numerator denominator : Field) (hcoefficients : coefficients ≠ [])
-    (hdenominator : denominator ≠ 0) :
-    MapPolynomial.evalHom coefficients numerator denominator =
-      denominator ^ (coefficients.length - 1) *
-        MapPolynomial.eval coefficients (numerator / denominator) :=
-  MapPolynomial.evalHom_eq_scaled_eval coefficients numerator denominator
-    hcoefficients hdenominator
-
-/-- The RFC 11-isogeny maps every projective point on the isogenous curve to
-a lawful G1 point; either rational pole maps to infinity. -/
-theorem iso11_onCurve (numerator denominator y : Field)
+/-- The RFC 3-isogeny maps every projective point on the isogenous curve to
+a lawful G2 point; either rational pole maps to infinity. -/
+theorem iso3_onCurve (numerator denominator y : Field)
     (hcurve : y ^ 2 * denominator ^ 3 =
       numerator ^ 3 + isoA * numerator * denominator ^ 2 +
         isoB * denominator ^ 3) :
-    G1Affine.OnCurve (iso11 numerator denominator y) := by
-  let values := iso11Components numerator denominator
+    G2Affine.OnCurve (iso3 numerator denominator y) := by
+  let values := iso3Components numerator denominator
   let xDenominator := values.xDen * denominator
-  unfold iso11
-  change G1Affine.OnCurve
-    (if xDenominator = 0 ∨ values.yDen = 0 then G1Affine.infinity
+  unfold iso3
+  change G2Affine.OnCurve
+    (if xDenominator = 0 ∨ values.yDen = 0 then G2Affine.infinity
       else .affine (values.xNum / xDenominator)
         (y * values.yNum / values.yDen))
   by_cases hpole : xDenominator = 0 ∨ values.yDen = 0
   · rw [if_pos hpole]
     trivial
   · rw [if_neg hpole]
-    simp only [G1Affine.OnCurve, G1Affine.curve, LawfulAffine.OnCurve]
+    simp only [G2Affine.OnCurve, G2Affine.curve, LawfulAffine.OnCurve]
     have hxDenominator : xDenominator ≠ 0 := fun h => hpole (Or.inl h)
     have hyDenominator : values.yDen ≠ 0 := fun h => hpole (Or.inr h)
     have hdenominator : denominator ≠ 0 := by
@@ -51,25 +40,29 @@ theorem iso11_onCurve (numerator denominator y : Field)
     let xd := MapPolynomial.eval kXDen x
     let yn := MapPolynomial.eval kYNum x
     let yd := MapPolynomial.eval kYDen x
-    have hxn := evalHom_eq_scaled_eval kXNum numerator denominator
+    have hxn := MapPolynomial.evalHom_eq_scaled_eval kXNum
+      numerator denominator
       (by
         intro hzero
         have hlength := kXNum_length
         rw [hzero] at hlength
         norm_num at hlength) hdenominator
-    have hxd := evalHom_eq_scaled_eval kXDen numerator denominator
+    have hxd := MapPolynomial.evalHom_eq_scaled_eval kXDen
+      numerator denominator
       (by
         intro hzero
         have hlength := kXDen_length
         rw [hzero] at hlength
         norm_num at hlength) hdenominator
-    have hyn := evalHom_eq_scaled_eval kYNum numerator denominator
+    have hyn := MapPolynomial.evalHom_eq_scaled_eval kYNum
+      numerator denominator
       (by
         intro hzero
         have hlength := kYNum_length
         rw [hzero] at hlength
         norm_num at hlength) hdenominator
-    have hyd := evalHom_eq_scaled_eval kYDen numerator denominator
+    have hyd := MapPolynomial.evalHom_eq_scaled_eval kYDen
+      numerator denominator
       (by
         intro hzero
         have hlength := kYDen_length
@@ -77,10 +70,10 @@ theorem iso11_onCurve (numerator denominator y : Field)
         norm_num at hlength) hdenominator
     simp only [kXNum_length, kXDen_length, kYNum_length, kYDen_length,
       Nat.reduceSubDiff] at hxn hxd hyn hyd
-    change values.xNum = denominator ^ 11 * xn at hxn
-    change values.xDen = denominator ^ 10 * xd at hxd
-    change values.yNum = denominator ^ 15 * yn at hyn
-    change values.yDen = denominator ^ 15 * yd at hyd
+    change values.xNum = denominator ^ 3 * xn at hxn
+    change values.xDen = denominator ^ 2 * xd at hxd
+    change values.yNum = denominator ^ 3 * yn at hyn
+    change values.yDen = denominator ^ 3 * yd at hyd
     have hxdNonzero : xd ≠ 0 := by
       intro hzero
       apply hxDenominator
@@ -108,13 +101,14 @@ theorem iso11_onCurve (numerator denominator y : Field)
         rw [← hnumerator] at hcurve
         convert hcurve using 1 <;> ring
       exact mul_left_cancel₀ (pow_ne_zero 3 hdenominator) hscaled
-    have hidentity := iso11_affine_identity x
+    have hidentity := iso3_affine_identity x
     rw [← hcurveAffine] at hidentity
     rw [hxRatio, hyRatio]
     simp only [zero_mul, add_zero]
-    change (y * yn / yd) ^ 2 = (xn / xd) ^ 3 + 4
+    change (y * yn / yd) ^ 2 =
+      (xn / xd) ^ 3 + G2Affine.curve.b
     field_simp [hxdNonzero, hydNonzero]
     convert hidentity using 1
     all_goals ring
 
-end Challenge.Bls12381.ProofSupport.MapToG1
+end Challenge.Bls12381.ProofSupport.MapToG2
