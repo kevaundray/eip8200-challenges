@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryNext
+import Challenge.Bls12381.ProofSupport.FpMontgomeryNextBound
 
 set_option warningAsError true
 
@@ -139,6 +139,24 @@ example (state : Fp.MontgomeryState) (x1 : UInt256) (y : Fp.Limbs) :
         t2 := highProduct.hi + (highSum.carry + shiftedSum.carry) :
           Fp.MontgomeryState } :=
   rfl
+
+example (state : Fp.MontgomeryState) (x1 : UInt256) (y : Fp.Limbs) :
+    (Fp.montgomeryNextCarry state x1 y).toNat =
+      (Fp.montgomeryNextLowProduct x1 y).hi.toNat +
+        (Fp.montgomeryNextLowSum state x1 y).carry.toNat :=
+  Fp.montgomeryNextCarry_value state x1 y
+
+example (state : Fp.MontgomeryState) (x1 : UInt256) {y : Fp.Limbs}
+    (hy : Fp.Canonical y) :
+    Fp.montgomeryNextTopNat state x1 y <
+      Challenge.EvmProof.Limbs.radix :=
+  Fp.montgomeryNextTopNat_lt state x1 hy
+
+example (state : Fp.MontgomeryState) (x1 : UInt256) {y : Fp.Limbs}
+    (hy : Fp.Canonical y) :
+    (Fp.montgomeryAccumulateNext state x1 y).t2.toNat =
+      Fp.montgomeryNextTopNat state x1 y :=
+  Fp.montgomeryAccumulateNext_t2_value state x1 hy
 
 example (state : Fp.MontgomeryState) :
     (Fp.montgomeryReductionMultiplier state).toNat =
@@ -317,5 +335,25 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryFirstReduce_scaled' depends 
 -/
 #guard_msgs in
 #print axioms Fp.montgomeryFirstReduce_scaled
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryNextCarry_value' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryNextCarry_value
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryNextTopNat_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.montgomeryNextTopNat_lt
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryAccumulateNext_t2_value' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryAccumulateNext_t2_value
 
 end Checks.Bls12381FpMontgomery
