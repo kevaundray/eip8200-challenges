@@ -159,6 +159,14 @@ theorem mul_add_lt_sq {base a b c : Nat} (hbase : 0 < base)
       (Nat.sub_lt hbase (by omega))
     _ = base ^ 2 := by rw [pow_two]
 
+/-- Product-form variant for concrete machine-word consumers.  Keeping the
+square unexpanded at a fixed huge radix can make kernel conversion expensive. -/
+theorem mul_add_lt_mul_self {base a b c : Nat} (hbase : 0 < base)
+    (ha : a < base) (hb : b < base) (hc : c < base) :
+    a * b + c < base * base := by
+  rw [← pow_two]
+  exact mul_add_lt_sq hbase ha hb hc
+
 /-! ## Source-faithful EVM full-word multiplication -/
 
 /-- Two EVM words holding a 512-bit product, low word first. -/
