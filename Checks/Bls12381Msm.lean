@@ -16,7 +16,40 @@ example (acc : G2Affine.Point)
     Msm.foldG2 acc (left ++ right) = Msm.foldG2 (Msm.foldG2 acc left) right :=
   Msm.foldG2_append acc left right
 
+/--
+info: 'Challenge.Bls12381.ProofSupport.Msm.foldG1_nil' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Msm.foldG1_nil
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Msm.foldG1_cons' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Msm.foldG1_cons
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Msm.foldG1_append' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms Msm.foldG1_append
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Msm.foldG2_nil' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Msm.foldG2_nil
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Msm.foldG2_cons' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Msm.foldG2_cons
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Msm.foldG2_append' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms Msm.foldG2_append
 
 end Checks.Bls12381Msm
