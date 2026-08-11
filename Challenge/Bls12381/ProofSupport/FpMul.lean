@@ -1,5 +1,6 @@
 import Challenge.Bls12381.ProofSupport.FpBarrettReduce
 import Challenge.Bls12381.ProofSupport.FpRepresentation
+import Challenge.Bls12381.ProofSupport.FpWordBridge
 
 set_option warningAsError true
 
@@ -12,13 +13,6 @@ low-word subtraction, and two corrective modulus subtractions.
 -/
 
 namespace Challenge.Bls12381.ProofSupport.Fp
-
-/-- Reuse a verified two-word result as the base-field wire representation. -/
-def ofWide (words : Challenge.EvmProof.Limbs.WideProduct) : Limbs :=
-  { hi := words.hi, lo := words.lo }
-
-@[simp] theorem value_ofWide (words : Challenge.EvmProof.Limbs.WideProduct) :
-    value (ofWide words) = words.value := rfl
 
 /-- Source-faithful canonical multiplication.  The implementation contains
 only word operations and the fixed Barrett schedule; it does not call `% p`,

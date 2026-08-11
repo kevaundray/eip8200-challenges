@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.FpMontgomerySecond
+import Challenge.Bls12381.ProofSupport.FpWordBridge
 
 set_option warningAsError true
 
@@ -8,15 +9,6 @@ namespace Challenge.Bls12381.ProofSupport.Fp
 
 open EvmSemantics
 open EvmSemantics.Crypto.Bls12381
-
-/-- Fixed modulus pair in the same low/high order as the source result. -/
-def montgomeryModulusWords : Challenge.EvmProof.Limbs.WideProduct :=
-  { lo := modulusLo, hi := modulusHi }
-
-@[simp] theorem montgomeryModulusWords_value :
-    montgomeryModulusWords.value = p := by
-  unfold montgomeryModulusWords Challenge.EvmProof.Limbs.WideProduct.value
-  exact modulus_words
 
 /-- Exact source subtraction block.  In particular, the borrow is the source
 `GT(_n0,z0)`, rather than a normalized semantic comparison. -/
@@ -30,14 +22,14 @@ def montgomeryFinalSubModulus
 theorem montgomeryFinalSubModulus_eq_subWide256
     (result : Challenge.EvmProof.Limbs.WideProduct) :
     montgomeryFinalSubModulus result =
-      Challenge.EvmProof.Limbs.subWide256 result montgomeryModulusWords := rfl
+      Challenge.EvmProof.Limbs.subWide256 result modulusWide := rfl
 
 /-- Exact high-first source comparison and conditional subtraction. -/
 def montgomeryFinalCorrect
     (result : Challenge.EvmProof.Limbs.WideProduct) :
     Challenge.EvmProof.Limbs.WideProduct :=
   if (Challenge.EvmProof.Limbs.wideGeWord result
-      montgomeryModulusWords).toNat ≠ 0 then
+      modulusWide).toNat ≠ 0 then
     montgomeryFinalSubModulus result
   else result
 
@@ -49,14 +41,14 @@ theorem montgomeryFinalCorrect_value
   unfold montgomeryFinalCorrect
   have hcondition :
       (Challenge.EvmProof.Limbs.wideGeWord result
-          montgomeryModulusWords).toNat ≠ 0 ↔ p ≤ result.value := by
+          modulusWide).toNat ≠ 0 ↔ p ≤ result.value := by
     rw [Challenge.EvmProof.Limbs.wideGeWord_nonzero_iff,
-      montgomeryModulusWords_value]
+      modulusWide_value]
   by_cases hge : p ≤ result.value
   · rw [if_pos (hcondition.mpr hge), if_pos hge,
       montgomeryFinalSubModulus_eq_subWide256,
       Challenge.EvmProof.Limbs.subWide256_value,
-      montgomeryModulusWords_value, if_pos hge]
+      modulusWide_value, if_pos hge]
   · rw [if_neg (mt hcondition.mp hge), if_neg hge]
 
 /-- Low/high pair output by the second exact CIOS reduction. -/

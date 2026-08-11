@@ -6,14 +6,6 @@ namespace Checks.Bls12381FpAddSub
 
 open Challenge.Bls12381.ProofSupport
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.asWide_value' depends on axioms: [propext] -/
-#guard_msgs in
-#print axioms Fp.asWide_value
-
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.modulusWide_value' depends on axioms: [propext] -/
-#guard_msgs in
-#print axioms Fp.modulusWide_value
-
 example {a b : Fp.Limbs} (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
     Fp.value (Fp.addSource a b) = (Fp.value a + Fp.value b) %
       EvmSemantics.Crypto.Bls12381.p := Fp.value_addSource ha hb
@@ -35,13 +27,13 @@ example {a : Fp.Limbs} (ha : Fp.Canonical a) :
       (EvmSemantics.Crypto.Bls12381.p - Fp.value a) %
         EvmSemantics.Crypto.Bls12381.p := Fp.value_negSource ha
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.asWide_subRaw' does not depend on any axioms -/
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.toWide_subRaw' does not depend on any axioms -/
 #guard_msgs in
-#print axioms Fp.asWide_subRaw
+#print axioms Fp.toWide_subRaw
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.asWide_subRepair' does not depend on any axioms -/
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.toWide_subRepair' does not depend on any axioms -/
 #guard_msgs in
-#print axioms Fp.asWide_subRepair
+#print axioms Fp.toWide_subRepair
 
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_subRepair' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

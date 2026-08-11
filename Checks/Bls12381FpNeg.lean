@@ -17,9 +17,9 @@ example {a : Fp.Limbs} (ha : Fp.Canonical a) :
 example {a : Fp.Limbs} (ha : Fp.Canonical a) :
     Fp.toField (Fp.negSource a) = -Fp.toField a := Fp.toField_negSource ha
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.asWide_negNonzero' does not depend on any axioms -/
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.toWide_negNonzero' does not depend on any axioms -/
 #guard_msgs in
-#print axioms Fp.asWide_negNonzero
+#print axioms Fp.toWide_negNonzero
 
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_negSource' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

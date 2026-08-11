@@ -13,7 +13,7 @@ example (remainder : Challenge.EvmProof.Limbs.WideProduct) :
 
 example (remainder : Challenge.EvmProof.Limbs.WideProduct) :
     Fp.barrettSubModulus remainder =
-      Challenge.EvmProof.Limbs.subWide256 remainder Fp.modulusWords :=
+      Challenge.EvmProof.Limbs.subWide256 remainder Fp.modulusWide :=
   Fp.barrettSubModulus_eq_subWide256 remainder
 
 example (remainder : Challenge.EvmProof.Limbs.WideProduct) :

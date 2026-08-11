@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.FpBarrett
+import Challenge.Bls12381.ProofSupport.FpWordBridge
 
 set_option warningAsError true
 
@@ -17,15 +18,11 @@ def quotientWords (product : SchoolbookProduct) :
   { hi := (barrettQuotient product).q1
     lo := (barrettQuotient product).q0 }
 
-/-- The fixed modulus as the same low/high word pair used by the source. -/
-def modulusWords : Challenge.EvmProof.Limbs.WideProduct :=
-  { hi := modulusHi, lo := modulusLo }
-
 /-- Exact source schedule for the low two words of `q * p`: full-multiply
 `Q0 * p0`, then add the two cross terms into its high word. -/
 def barrettMultipleLow (product : SchoolbookProduct) :
     Challenge.EvmProof.Limbs.WideProduct :=
-  Challenge.EvmProof.Limbs.mulWideLow256 (quotientWords product) modulusWords
+  Challenge.EvmProof.Limbs.mulWideLow256 (quotientWords product) modulusWide
 
 /-- The low two product words `(r1:r0)` consumed by the source subtraction. -/
 def productLowWords (product : SchoolbookProduct) :
@@ -42,10 +39,6 @@ def barrettRemainder (product : SchoolbookProduct) :
 @[simp] theorem quotientWords_value (product : SchoolbookProduct) :
     (quotientWords product).value = (barrettQuotient product).value := rfl
 
-@[simp] theorem modulusWords_value :
-    modulusWords.value = EvmSemantics.Crypto.Bls12381.p := by
-  exact modulus_words
-
 /-- The source schedule reconstructs the low two words of the mathematical
 multiple `q * p`. -/
 theorem value_barrettMultipleLow (product : SchoolbookProduct) :
@@ -55,7 +48,7 @@ theorem value_barrettMultipleLow (product : SchoolbookProduct) :
           Challenge.EvmProof.Limbs.radix ^ 2 := by
   unfold barrettMultipleLow
   rw [Challenge.EvmProof.Limbs.mulWideLow256_value,
-    quotientWords_value, modulusWords_value]
+    quotientWords_value, modulusWide_value]
 
 /-- The source operand `(r1:r0)` is the full three-word product modulo two
 words. -/

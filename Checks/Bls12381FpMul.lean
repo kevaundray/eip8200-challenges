@@ -101,8 +101,4 @@ example {a : Fp.Limbs} (ha : Fp.Canonical a) :
 #guard_msgs in
 #print axioms Fp.toField_squareCanonical
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_ofWide' depends on axioms: [propext] -/
-#guard_msgs in
-#print axioms Fp.value_ofWide
-
 end Checks.Bls12381FpMul

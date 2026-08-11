@@ -27,13 +27,13 @@ subtraction value theorem. -/
 theorem barrettSubModulus_eq_subWide256
     (remainder : Challenge.EvmProof.Limbs.WideProduct) :
     barrettSubModulus remainder =
-      Challenge.EvmProof.Limbs.subWide256 remainder modulusWords := rfl
+      Challenge.EvmProof.Limbs.subWide256 remainder modulusWide := rfl
 
 /-- One exact source correction: compute the high-first EVM comparison word
 and, when nonzero, execute the low-word subtraction with propagated borrow. -/
 def barrettCorrectOnce (remainder : Challenge.EvmProof.Limbs.WideProduct) :
     Challenge.EvmProof.Limbs.WideProduct :=
-  if (Challenge.EvmProof.Limbs.wideGeWord remainder modulusWords).toNat ≠ 0 then
+  if (Challenge.EvmProof.Limbs.wideGeWord remainder modulusWide).toNat ≠ 0 then
     barrettSubModulus remainder
   else remainder
 
@@ -52,14 +52,14 @@ theorem value_barrettCorrectOnce
       else remainder.value := by
   unfold barrettCorrectOnce
   have hcondition :
-      (Challenge.EvmProof.Limbs.wideGeWord remainder modulusWords).toNat ≠ 0 ↔
+      (Challenge.EvmProof.Limbs.wideGeWord remainder modulusWide).toNat ≠ 0 ↔
         EvmSemantics.Crypto.Bls12381.p ≤ remainder.value := by
     rw [Challenge.EvmProof.Limbs.wideGeWord_nonzero_iff,
-      modulusWords_value]
+      modulusWide_value]
   by_cases hge : EvmSemantics.Crypto.Bls12381.p ≤ remainder.value
   · rw [if_pos (hcondition.mpr hge), if_pos hge,
       barrettSubModulus_eq_subWide256,
-      Challenge.EvmProof.Limbs.subWide256_value, modulusWords_value,
+      Challenge.EvmProof.Limbs.subWide256_value, modulusWide_value,
       if_pos hge]
   · rw [if_neg (mt hcondition.mp hge), if_neg hge]
 

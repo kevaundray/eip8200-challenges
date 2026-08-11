@@ -25,9 +25,9 @@ example {a b : Fp.Limbs} (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
 #guard_msgs in
 #print axioms Fp.addNeedsCorrection_eq_wideGeWord
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.asWide_addCorrect' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.toWide_addCorrect' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
-#print axioms Fp.asWide_addCorrect
+#print axioms Fp.toWide_addCorrect
 
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_addSource' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

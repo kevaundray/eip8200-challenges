@@ -1,5 +1,6 @@
 import Challenge.Bls12381
 import Checks.Bls12381FpRepresentation
+import Checks.Bls12381FpWordBridge
 import Checks.Bls12381FpAddSubSchedule
 import Checks.Bls12381FpAdd
 import Checks.Bls12381FpAddSub

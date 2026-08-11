@@ -285,7 +285,7 @@ example (result : Challenge.EvmProof.Limbs.WideProduct) :
 example (result : Challenge.EvmProof.Limbs.WideProduct) :
     Fp.montgomeryFinalCorrect result =
       if (Challenge.EvmProof.Limbs.wideGeWord result
-        Fp.montgomeryModulusWords).toNat ≠ 0
+        Fp.modulusWide).toNat ≠ 0
       then Fp.montgomeryFinalSubModulus result
       else result :=
   rfl
@@ -551,10 +551,6 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomerySecondReduce_scaled' depends
 #guard_msgs in
 #print axioms Fp.montgomerySecondReduce_scaled
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryModulusWords_value' depends on axioms: [propext] -/
-#guard_msgs in
-#print axioms Fp.montgomeryModulusWords_value
-
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryFinalSubModulus_eq_subWide256' does not depend on any axioms -/
 #guard_msgs in
 #print axioms Fp.montgomeryFinalSubModulus_eq_subWide256
@@ -598,10 +594,6 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryResultWords_lt_two_modulus' 
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.oneConditionalSubtraction_eq_mod' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp.oneConditionalSubtraction_eq_mod
-
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_montgomeryOfWide' depends on axioms: [propext] -/
-#guard_msgs in
-#print axioms Fp.value_montgomeryOfWide
 
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_montMul2' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

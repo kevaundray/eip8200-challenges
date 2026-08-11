@@ -1,5 +1,6 @@
 import Challenge.Bls12381.ProofSupport.FpMul
 import Challenge.Bls12381.ProofSupport.FpRepresentation
+import Challenge.Bls12381.ProofSupport.FpWordBridge
 
 set_option warningAsError true
 

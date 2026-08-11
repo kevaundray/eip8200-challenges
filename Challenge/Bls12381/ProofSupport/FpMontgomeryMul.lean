@@ -1,5 +1,6 @@
 import Challenge.Bls12381.ProofSupport.FpMontgomeryRelation
 import Challenge.Bls12381.ProofSupport.FpRepresentation
+import Challenge.Bls12381.ProofSupport.FpWordBridge
 
 set_option warningAsError true
 
@@ -25,22 +26,13 @@ theorem oneConditionalSubtraction_eq_mod {n modulus : Nat}
     rw [if_pos hge, Nat.mod_eq_sub_mod hge,
       Nat.mod_eq_of_lt hdifference]
 
-/-- Reinterpret a source low/high pair as a base-field limb value without
-performing arithmetic. -/
-def montgomeryOfWide (words : Challenge.EvmProof.Limbs.WideProduct) : Limbs :=
-  { hi := words.hi, lo := words.lo }
-
-@[simp] theorem value_montgomeryOfWide
-    (words : Challenge.EvmProof.Limbs.WideProduct) :
-    value (montgomeryOfWide words) = words.value := rfl
-
 /-- Reinterpret the exact source output pair as a base-field limb value. -/
 def montMul2 (x y : Limbs) : Limbs :=
-  montgomeryOfWide (montMul2Words x y)
+  ofWide (montMul2Words x y)
 
 @[simp] theorem value_montMul2_words (x y : Limbs) :
     value (montMul2 x y) = (montMul2Words x y).value := by
-  exact value_montgomeryOfWide _
+  exact value_ofWide _
 
 /-- The final source correction reduces the raw CIOS result modulo `p`. -/
 theorem value_montMul2 {x y : Limbs} (hx : Canonical x) (hy : Canonical y) :
