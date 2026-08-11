@@ -72,23 +72,38 @@ theorem bytesToNatPadded_readWindow96 (memory : Nat → UInt8)
 private def storedWordBytes (value : YulSemantics.EVM.U256) : List UInt8 :=
   (List.range 32).map (fun i => YulSemantics.EVM.byteAt value (31 - i))
 
-private theorem readBytes_storeWord (memory : Nat → UInt8) (start : Nat)
-    (value : YulSemantics.EVM.U256) :
+private def storedWordBytesPrefix (value : YulSemantics.EVM.U256)
+    (width : Nat) : List UInt8 :=
+  (List.range width).map (fun i => YulSemantics.EVM.byteAt value (31 - i))
+
+private theorem readBytes_storeWord_prefix (memory : Nat → UInt8)
+    (start width : Nat) (value : YulSemantics.EVM.U256)
+    (hwidth : width ≤ 32) :
     YulSemantics.EVM.readBytes
-        (YulSemantics.EVM.storeWord memory start value) start 32 =
-      storedWordBytes value := by
-  unfold YulSemantics.EVM.readBytes storedWordBytes
+        (YulSemantics.EVM.storeWord memory start value) start width =
+      storedWordBytesPrefix value width := by
+  unfold YulSemantics.EVM.readBytes storedWordBytesPrefix
   apply List.map_congr_left
   intro i hi
-  have hi' : i < 32 := by simpa using hi
+  have hi' : i < width := by simpa using hi
   simp only [YulSemantics.EVM.storeWord]
   rw [if_pos]
   · congr 1
     omega
   · constructor <;> omega
 
-private theorem bytesNat_storedWordBytes (value : YulSemantics.EVM.U256) :
-    Challenge.EvmProof.Bytes.bytesNat (storedWordBytes value) = value.toNat := by
+private theorem readBytes_storeWord (memory : Nat → UInt8) (start : Nat)
+    (value : YulSemantics.EVM.U256) :
+    YulSemantics.EVM.readBytes
+        (YulSemantics.EVM.storeWord memory start value) start 32 =
+      storedWordBytes value := by
+  simpa [storedWordBytes, storedWordBytesPrefix] using
+    readBytes_storeWord_prefix memory start 32 value (by omega)
+
+private theorem bytesNat_storedWordBytesPrefix
+    (value : YulSemantics.EVM.U256) (width : Nat) (hwidth : width ≤ 32) :
+    Challenge.EvmProof.Bytes.bytesNat (storedWordBytesPrefix value width) =
+      value.toNat / 256 ^ (32 - width) := by
   have decodePrefix : ∀ n, n ≤ 32 →
       ((List.range n).map
           (fun i => YulSemantics.EVM.byteAt value (31 - i))).foldl
@@ -116,10 +131,26 @@ private theorem bytesNat_storedWordBytes (value : YulSemantics.EVM.U256) :
       have hdiv := Nat.mod_add_div
         (value.toNat / 256 ^ (32 - (n + 1))) 256
       omega
-  unfold storedWordBytes
+  unfold storedWordBytesPrefix
   unfold Challenge.EvmProof.Bytes.bytesNat Challenge.EvmProof.Bytes.step
-  rw [decodePrefix 32 (by omega)]
-  simp
+  exact decodePrefix width hwidth
+
+private theorem bytesNat_storedWordBytes (value : YulSemantics.EVM.U256) :
+    Challenge.EvmProof.Bytes.bytesNat (storedWordBytes value) = value.toNat := by
+  simpa [storedWordBytes, storedWordBytesPrefix] using
+    bytesNat_storedWordBytesPrefix value 32 (by omega)
+
+/-- Reading a prefix of the exact 32-byte window written by Yul `MSTORE`
+recovers the corresponding big-endian prefix of the source word. -/
+theorem bytesNat_readBytes_storeWord_prefix (memory : Nat → UInt8)
+    (start width : Nat) (value : YulSemantics.EVM.U256)
+    (hwidth : width ≤ 32) :
+    Challenge.EvmProof.Bytes.bytesNat
+        (YulSemantics.EVM.readBytes
+          (YulSemantics.EVM.storeWord memory start value) start width) =
+      value.toNat / 256 ^ (32 - width) := by
+  rw [readBytes_storeWord_prefix memory start width value hwidth]
+  exact bytesNat_storedWordBytesPrefix value width hwidth
 
 /-- Reading back the exact 32-byte window written by Yul `MSTORE` recovers
 the source word's unsigned value. -/

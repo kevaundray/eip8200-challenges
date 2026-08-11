@@ -49,6 +49,20 @@ example (memory : Nat → UInt8) (start : Nat) (value : YulSemantics.EVM.U256) :
       value.toNat :=
   bytesNat_readBytes_storeWord memory start value
 
+example (memory : Nat → UInt8) (start width : Nat)
+    (value : YulSemantics.EVM.U256) (hwidth : width ≤ 32) :
+    Challenge.EvmProof.Bytes.bytesNat
+        (YulSemantics.EVM.readBytes
+          (YulSemantics.EVM.storeWord memory start value) start width) =
+      value.toNat / 256 ^ (32 - width) :=
+  bytesNat_readBytes_storeWord_prefix memory start width value hwidth
+
+/-- info: 'Challenge.EvmProof.ModexpMemory.bytesNat_readBytes_storeWord_prefix' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms bytesNat_readBytes_storeWord_prefix
+
 /-- info: 'Challenge.EvmProof.ModexpMemory.bytesNat_readBytes_storeWord' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
