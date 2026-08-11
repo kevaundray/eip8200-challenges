@@ -35,6 +35,10 @@ the modulus comparison helper. -/
 def fpValidValue (hi lo : U256) : U256 :=
   b2w (fpGeModulusValue hi lo = 0)
 
+/-- Source-word zero test over the two decoded field limbs. -/
+def fpZeroValue (hi lo : U256) : U256 :=
+  b2w (hi = 0) &&& b2w (lo = 0)
+
 theorem conv_fpGeModulusValue (hi lo : U256) :
     YulEvmCompiler.conv (fpGeModulusValue hi lo) =
     Challenge.Bls12381.ProofSupport.Fp.addNeedsCorrection
@@ -62,6 +66,14 @@ theorem conv_fpValidValue (hi lo : U256) :
         { hi := YulEvmCompiler.conv hi, lo := YulEvmCompiler.conv lo }) := by
   unfold fpValidValue
   rw [YulEvmCompiler.conv_iszero, conv_fpGeModulusValue]
+
+theorem conv_fpZeroValue (hi lo : U256) :
+    YulEvmCompiler.conv (fpZeroValue hi lo) =
+    UInt256.land (UInt256.isZero (YulEvmCompiler.conv hi))
+      (UInt256.isZero (YulEvmCompiler.conv lo)) := by
+  unfold fpZeroValue
+  rw [YulEvmCompiler.conv_and, YulEvmCompiler.conv_iszero,
+    YulEvmCompiler.conv_iszero]
 
 private def isFunctionDefinition {Op : Type} : Stmt Op → Bool
   | .funDef .. => true
@@ -153,6 +165,16 @@ theorem eval_fpValid (hi lo : U256) (yst : EvmState) :
       [("hi", hi), ("lo", lo)] yst
       (.call "\x001" [.var "hi", .var "lo"]) =
     .ok (.vals [fpValidValue hi lo] yst) := by
+  rw [Interp.evalExpr]
+  rfl
+
+/-- The third frozen helper tests both decoded limbs for zero. -/
+theorem eval_fpZero (hi lo : U256) (yst : EvmState) :
+    Interp.evalExpr modexpExec 64
+      [hoist modexpExec.toDialect referenceCompiledBlock]
+      [("hi", hi), ("lo", lo)] yst
+      (.call "\x002" [.var "hi", .var "lo"]) =
+    .ok (.vals [fpZeroValue hi lo] yst) := by
   rw [Interp.evalExpr]
   rfl
 
