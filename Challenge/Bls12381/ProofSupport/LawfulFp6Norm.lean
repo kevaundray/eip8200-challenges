@@ -119,6 +119,9 @@ theorem embed_ne_zero {a : Carrier} (ha : a ≠ zero) : embed a ≠ 0 := by
   apply AdjoinRoot.mk_ne_zero_of_natDegree_lt cubic_monic (poly_ne_zero ha)
   simpa [cubic] using poly_natDegree_lt a
 
+@[simp] theorem embed_zero : embed zero = 0 := by
+  simp [embed, poly, zero]
+
 theorem embed_mul (a b : Carrier) : embed (mul a b) = embed a * embed b := by
   simp only [embed, poly, mul, map_add, map_mul, map_pow, AdjoinRoot.mk_X,
     AdjoinRoot.mk_C]
@@ -195,5 +198,19 @@ theorem mul_inv_cancel (a : Carrier) (ha : a ≠ zero) :
 theorem inv_mul_cancel (a : Carrier) (ha : a ≠ zero) :
     mul (inv a) a = one :=
   inv_mul_of_norm_ne_zero a (norm_ne_zero a ha)
+
+theorem mul_eq_zero (a b : Carrier) :
+    mul a b = zero ↔ a = zero ∨ b = zero := by
+  constructor
+  · intro hmul
+    by_cases ha : a = zero
+    · exact Or.inl ha
+    · right
+      by_contra hb
+      letI : Fact (Irreducible cubic) := ⟨cubic_irreducible⟩
+      have hembed : embed a * embed b = 0 := by
+        rw [← embed_mul, hmul, embed_zero]
+      exact (mul_ne_zero (embed_ne_zero ha) (embed_ne_zero hb)) hembed
+  · rintro (rfl | rfl) <;> simp [mul, zero]
 
 end Challenge.Bls12381.ProofSupport.LawfulFp6

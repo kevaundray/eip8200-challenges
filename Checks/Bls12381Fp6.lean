@@ -55,6 +55,13 @@ example (a : LawfulFp6.Carrier) (ha : a ≠ LawfulFp6.zero) :
 #print axioms LawfulFp6.mul_inv_cancel
 #print axioms LawfulFp6.inv_mul_cancel
 
+example (a b : LawfulFp6.Carrier) :
+    LawfulFp6.mul a b = LawfulFp6.zero ↔
+      a = LawfulFp6.zero ∨ b = LawfulFp6.zero :=
+  LawfulFp6.mul_eq_zero a b
+
+#print axioms LawfulFp6.mul_eq_zero
+
 example : Challenge.Bls12381.ProofSupport.Fp6.toField
     Challenge.Bls12381.ProofSupport.Fp6.zero = 0 :=
   Challenge.Bls12381.ProofSupport.Fp6.toField_zero
