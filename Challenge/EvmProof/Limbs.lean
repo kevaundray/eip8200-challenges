@@ -45,6 +45,75 @@ def splitTwo (value : Nat) : Nat × Nat :=
 def joinTwo (limbs : Nat × Nat) : Nat :=
   limbs.1 + radix * limbs.2
 
+/-! ## Width-generic word splitting
+
+The concrete EVM algorithms below use 256-bit words, but the arithmetic facts
+that justify splitting, carries, and reconstruction do not depend on that
+width.  Keeping the base explicit makes the same lemmas reusable for smaller
+test models and future word sizes.
+-/
+
+/-- Split a natural at an arbitrary positive word base, low word first. -/
+def splitAt (base value : Nat) : Nat × Nat :=
+  (value % base, value / base)
+
+/-- Reconstruct a low/high pair at an arbitrary word base. -/
+def joinAt (base : Nat) (words : Nat × Nat) : Nat :=
+  words.1 + base * words.2
+
+/-- Split the full natural-number product of two words at `base`. -/
+def mulSplit (base a b : Nat) : Nat × Nat :=
+  splitAt base (a * b)
+
+@[simp] theorem join_splitAt {base : Nat} (_hbase : 0 < base) (value : Nat) :
+    joinAt base (splitAt base value) = value := by
+  simpa [joinAt, splitAt] using Nat.mod_add_div value base
+
+@[simp] theorem join_mulSplit {base : Nat} (hbase : 0 < base) (a b : Nat) :
+    joinAt base (mulSplit base a b) = a * b := by
+  exact join_splitAt hbase (a * b)
+
+theorem splitAt_low_lt {base value : Nat} (hbase : 0 < base) :
+    (splitAt base value).1 < base := by
+  exact Nat.mod_lt value hbase
+
+theorem mulSplit_high_lt {base a b : Nat} (hbase : 0 < base)
+    (ha : a < base) (hb : b < base) :
+    (mulSplit base a b).2 < base := by
+  simp only [mulSplit, splitAt]
+  rw [Nat.div_lt_iff_lt_mul hbase]
+  nlinarith
+
+/-! ## Source-faithful EVM full-word multiplication -/
+
+/-- Two EVM words holding a 512-bit product, low word first. -/
+structure WideProduct where
+  hi : UInt256
+  lo : UInt256
+deriving DecidableEq, Repr
+
+namespace WideProduct
+
+/-- Reconstruct the natural value of a low/high EVM-word pair. -/
+def value (product : WideProduct) : Nat :=
+  product.lo.toNat + radix * product.hi.toNat
+
+end WideProduct
+
+/-- The exact EVM full-multiply idiom used by `Fp.sol`: the low word comes
+from `MUL`, while the high word is recovered with `MULMOD (2^256-1)` and two
+wrapped subtractions. -/
+def fullMul256 (a b : UInt256) : WideProduct :=
+  let lo := a * b
+  let mm := UInt256.mulMod a b (UInt256.lnot (UInt256.ofNat 0))
+  let borrow := UInt256.lt mm lo
+  { hi := mm - lo - borrow, lo := lo }
+
+theorem fullMul256_words_lt (a b : UInt256) :
+    (fullMul256 a b).lo.toNat < radix ∧
+      (fullMul256 a b).hi.toNat < radix := by
+  exact ⟨(fullMul256 a b).lo.val.isLt, (fullMul256 a b).hi.val.isLt⟩
+
 @[simp] theorem join_splitTwo (value : Nat) :
     joinTwo (splitTwo value) = value := by
   simpa [joinTwo, splitTwo] using Nat.mod_add_div value radix
@@ -170,6 +239,105 @@ theorem mod_eq_cond_sub {total modulus : Nat}
   split_ifs with hlt
   · exact Nat.mod_eq_of_lt hlt
   · rw [Nat.mod_eq_sub_mod (by omega), Nat.mod_eq_of_lt (by omega)]
+
+/-- The high-word identity behind the EVM `mul`/`mulmod (base - 1)` trick.
+The conditional subtraction is exactly the pair of wrapped `SUB`s used by the
+source implementation. -/
+theorem mulSplit_high_eq_mersenne {base a b : Nat} (hbase : 1 < base)
+    (ha : a < base) (hb : b < base) :
+    let words := mulSplit base a b
+    let mm := (a * b) % (base - 1)
+    (if mm < words.1 then base + mm - words.1 - 1 else mm - words.1) =
+      words.2 := by
+  dsimp only
+  by_cases htwo : base = 2
+  · subst base
+    interval_cases a <;> interval_cases b <;>
+      norm_num [mulSplit, splitAt]
+  have hbase2 : 2 < base := by omega
+  let lo := (mulSplit base a b).1
+  let hi := (mulSplit base a b).2
+  have hbase0 : 0 < base := by omega
+  have hlo : lo < base := splitAt_low_lt hbase0
+  have hhi : hi < base - 1 := by
+    have ha' : a ≤ base - 1 := by omega
+    have hb' : b ≤ base - 1 := by omega
+    have hproduct : a * b ≤ (base - 1) * (base - 1) :=
+      Nat.mul_le_mul ha' hb'
+    have hstrict : a * b < (base - 1) * base :=
+      hproduct.trans_lt ((Nat.mul_lt_mul_left (by omega : 0 < base - 1)).2
+        (by omega : base - 1 < base))
+    simpa [hi, mulSplit, splitAt, Nat.div_lt_iff_lt_mul hbase0]
+      using hstrict
+  have hreconstruct : lo + base * hi = a * b := by
+    change joinAt base (mulSplit base a b) = a * b
+    exact join_mulSplit hbase0 a b
+  have hbaseMod : base % (base - 1) = 1 := by
+    rw [Nat.mod_eq_sub_mod (by omega : base - 1 ≤ base)]
+    have hdiff : base - (base - 1) = 1 := by omega
+    rw [hdiff, Nat.mod_eq_of_lt (by omega)]
+  have hmm : (a * b) % (base - 1) = (lo + hi) % (base - 1) := by
+    have heq := congrArg (fun n => n % (base - 1)) hreconstruct
+    simpa [Nat.add_mod, Nat.mul_mod, hbaseMod] using heq.symm
+  have hsum : lo + hi < 2 * (base - 1) := by omega
+  rw [hmm, mod_eq_cond_sub hsum]
+  change (if (if lo + hi < base - 1 then lo + hi
+      else lo + hi - (base - 1)) < lo then
+        base + (if lo + hi < base - 1 then lo + hi
+          else lo + hi - (base - 1)) - lo - 1
+      else (if lo + hi < base - 1 then lo + hi
+        else lo + hi - (base - 1)) - lo) = hi
+  split_ifs <;> omega
+
+theorem fullMul256_value (a b : UInt256) :
+    (fullMul256 a b).value = a.toNat * b.toNat := by
+  have hlo : (a * b).toNat = (a.toNat * b.toNat) % radix := by
+    change (a.val * b.val).val = _
+    rw [Fin.val_mul]
+    rfl
+  have hmax : (UInt256.lnot (UInt256.ofNat 0)).toNat = radix - 1 := by
+    norm_num [UInt256.lnot, UInt256.ofNat, UInt256.toNat, UInt256.size, radix]
+  have hmm :
+      (UInt256.mulMod a b (UInt256.lnot (UInt256.ofNat 0))).toNat =
+        (a.toNat * b.toNat) % (radix - 1) := by
+    unfold UInt256.mulMod
+    rw [if_neg]
+    · rw [Challenge.EvmProof.Word.word_toNat_ofNat]
+      rw [hmax]
+      apply Nat.mod_eq_of_lt
+      exact (Nat.mod_lt _ (by norm_num [radix])).trans
+        (by norm_num [radix])
+    · simpa [UInt256.toNat] using (show
+        (UInt256.lnot (UInt256.ofNat 0)).toNat ≠ 0 by
+          rw [hmax]
+          norm_num [radix])
+  unfold WideProduct.value fullMul256
+  dsimp only
+  rw [Challenge.EvmProof.Word.word_toNat_sub_cond]
+  rw [Challenge.EvmProof.Word.word_toNat_lt]
+  rw [Challenge.EvmProof.Word.word_toNat_sub_cond]
+  rw [hlo, hmm]
+  rw [show 2 ^ 256 = radix by rfl]
+  have hhigh := mulSplit_high_eq_mersenne
+    (base := radix) (a := a.toNat) (b := b.toNat)
+    (by norm_num [radix]) a.val.isLt b.val.isLt
+  dsimp only at hhigh
+  simp only [mulSplit, splitAt] at hhigh
+  have hloBound : a.toNat * b.toNat % radix < radix :=
+    Nat.mod_lt _ radix_pos
+  by_cases hborrow : a.toNat * b.toNat % (radix - 1) <
+      a.toNat * b.toNat % radix
+  · simp only [if_pos hborrow]
+    rw [if_neg (by omega)]
+    rw [if_pos hborrow] at hhigh
+    rw [hhigh]
+    simpa [joinAt, mulSplit, splitAt] using
+      join_mulSplit (base := radix) radix_pos a.toNat b.toNat
+  · simp only [if_neg hborrow, Nat.not_lt_zero, ↓reduceIte, Nat.sub_zero]
+    rw [if_neg hborrow] at hhigh
+    rw [hhigh]
+    simpa [joinAt, mulSplit, splitAt] using
+      join_mulSplit (base := radix) radix_pos a.toNat b.toNat
 
 theorem masked_sum_mod_eq_cond_sub {x y take modulus : Nat}
     (hx : x < modulus) (hy : y < modulus) (htake : take ≤ 1) :
@@ -533,4 +701,3 @@ theorem subLimbBits {x y borrow : Nat}
         · norm_num
 
 end Challenge.EvmProof.Limbs
-
