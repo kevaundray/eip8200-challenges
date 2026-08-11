@@ -84,6 +84,9 @@ example (x y : UInt256) :
     (Limbs.addTwo256 x y).value = x.toNat + y.toNat :=
   Limbs.addTwo256_value x y
 
+example (x y : UInt256) : (Limbs.addTwo256 x y).carry.toNat < 2 :=
+  Limbs.addTwo256_carry_lt_two x y
+
 example (x y : UInt256) (hzero : x.toNat + y.toNat ≡ 0 [MOD Limbs.radix]) :
     (Limbs.addTwo256 x y).word = UInt256.ofNat 0 :=
   Limbs.addTwo256_word_eq_zero_of_modEq x y hzero
@@ -106,6 +109,10 @@ example (a b : UInt256) :
     (Limbs.fullMul256 a b).lo.toNat < Limbs.radix ∧
       (Limbs.fullMul256 a b).hi.toNat < Limbs.radix :=
   Limbs.fullMul256_words_lt a b
+
+example (a b : UInt256) :
+    (Limbs.fullMul256 a b).hi.toNat < Limbs.radix - 1 :=
+  Limbs.fullMul256_hi_lt_pred a b
 
 /-- info: 'Challenge.EvmProof.Limbs.join_mulSplit' depends on axioms: [propext] -/
 #guard_msgs in
@@ -199,6 +206,10 @@ example (a b : UInt256) :
 #guard_msgs in
 #print axioms Limbs.addTwo256_value
 
+/-- info: 'Challenge.EvmProof.Limbs.addTwo256_carry_lt_two' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.addTwo256_carry_lt_two
+
 /-- info: 'Challenge.EvmProof.Limbs.addTwo256_word_eq_zero_of_modEq' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms Limbs.addTwo256_word_eq_zero_of_modEq
@@ -218,5 +229,9 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.fullMul256_words_lt' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms Limbs.fullMul256_words_lt
+
+/-- info: 'Challenge.EvmProof.Limbs.fullMul256_hi_lt_pred' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.fullMul256_hi_lt_pred
 
 end Checks.EvmProofWideMul

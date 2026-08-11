@@ -545,6 +545,13 @@ theorem addTwo256_value (x y : UInt256) :
     exact Nat.sub_add_cancel (by
       simpa [radix] using (Nat.le_of_not_gt hoverflow))
 
+theorem addTwo256_carry_lt_two (x y : UInt256) :
+    (addTwo256 x y).carry.toNat < 2 := by
+  unfold addTwo256
+  dsimp only
+  simp only [Challenge.EvmProof.Word.word_toNat_lt]
+  split_ifs <;> norm_num
+
 /-- If the mathematical sum is zero modulo one word, the exact wrapped source
 `ADD` result is the zero word. -/
 theorem addTwo256_word_eq_zero_of_modEq (x y : UInt256)
@@ -699,6 +706,30 @@ theorem fullMul256_value (a b : UInt256) :
     rw [hhigh]
     simpa [joinAt, mulSplit, splitAt] using
       join_mulSplit (base := radix) radix_pos a.toNat b.toNat
+
+/-- A product of two words cannot have the maximal word as its high half. -/
+theorem fullMul256_hi_lt_pred (a b : UInt256) :
+    (fullMul256 a b).hi.toNat < radix - 1 := by
+  have hvalue := fullMul256_value a b
+  have ha : a.toNat ≤ radix - 1 := Nat.le_pred_of_lt a.val.isLt
+  have hb : b.toNat ≤ radix - 1 := Nat.le_pred_of_lt b.val.isLt
+  have hproduct : a.toNat * b.toNat ≤ (radix - 1) * (radix - 1) :=
+    Nat.mul_le_mul ha hb
+  have hpredPos : 0 < radix - 1 := Nat.sub_pos_of_lt radix_gt_one
+  by_contra hnot
+  have hhigh : radix - 1 ≤ (fullMul256 a b).hi.toNat :=
+    Nat.le_of_not_gt hnot
+  have hscaled : radix * (radix - 1) ≤
+      radix * (fullMul256 a b).hi.toNat := Nat.mul_le_mul_left radix hhigh
+  have htoProduct : radix * (radix - 1) ≤ a.toNat * b.toNat := by
+    calc
+      radix * (radix - 1) ≤ radix * (fullMul256 a b).hi.toNat := hscaled
+      _ ≤ (fullMul256 a b).lo.toNat +
+          radix * (fullMul256 a b).hi.toNat := Nat.le_add_left _ _
+      _ = a.toNat * b.toNat := hvalue
+  have hstrict : (radix - 1) * (radix - 1) < radix * (radix - 1) :=
+    (Nat.mul_lt_mul_right hpredPos).2 (Nat.sub_lt radix_pos (by omega))
+  exact (Nat.not_lt_of_ge (htoProduct.trans hproduct)) hstrict
 
 /-- The source-style shift/splice schedule reconstructs exact doubling when
 the mathematical result fits in two EVM words. -/
