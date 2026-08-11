@@ -1,6 +1,7 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryLawful
 import Mathlib.Data.Nat.Bits
 import Mathlib.Data.Nat.Size
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Ring
 
 set_option warningAsError true
 

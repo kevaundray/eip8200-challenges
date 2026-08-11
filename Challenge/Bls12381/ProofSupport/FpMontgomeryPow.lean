@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.FpMontgomeryPowSourceBits
+import Challenge.Bls12381.ProofSupport.FpMontgomeryLawful
 
 set_option warningAsError true
 
