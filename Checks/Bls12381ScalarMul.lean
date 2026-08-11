@@ -29,6 +29,9 @@ info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_map_nsmul' depends on ax
 example (point : P) : ScalarMul.binary zero add double 0 point = zero :=
   ScalarMul.binary_zero zero add double point
 
+example (point : P) : ScalarMul.binary zero add double 1 point = point :=
+  ScalarMul.binary_one zero add double point
+
 example (scalar : Nat) (point : P) :
     ScalarMul.binary zero add double (2 * scalar) point =
       ScalarMul.binary zero add double scalar (double point) :=
@@ -36,8 +39,32 @@ example (scalar : Nat) (point : P) :
 
 example (scalar : Nat) (point : P) :
     ScalarMul.binary zero add double (2 * scalar + 1) point =
-      add (ScalarMul.binary zero add double scalar (double point)) point :=
+      if scalar = 0 then point
+      else add (ScalarMul.binary zero add double scalar (double point)) point :=
   ScalarMul.binary_odd zero add double scalar point
+
+example (scalar : Nat) (point : P) (hscalar : scalar ≠ 0) :
+    ScalarMul.binary zero add double scalar point =
+      if scalar = 1 then point
+      else if scalar % 2 = 1 then
+          add (ScalarMul.binary zero add double (scalar / 2) (double point)) point
+        else ScalarMul.binary zero add double (scalar / 2) (double point) :=
+  ScalarMul.binary_step zero add double scalar point hscalar
+
+private structure AuditPoint where
+  value : Nat
+  events : List String
+deriving BEq
+
+private def auditAdd (left right : AuditPoint) : AuditPoint :=
+  { value := left.value + right.value, events := "add" :: left.events ++ right.events }
+
+private def auditDouble (point : AuditPoint) : AuditPoint :=
+  { value := 2 * point.value, events := "double" :: point.events }
+
+/- The scalar-one terminal branch performs neither addition nor doubling. -/
+#guard ScalarMul.binary { value := 0, events := [] } auditAdd auditDouble 1
+    { value := 7, events := [] } == { value := 7, events := [] }
 
 /--
 info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_zero' depends on axioms: [propext, Quot.sound]
@@ -46,13 +73,19 @@ info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_zero' depends on axioms:
 #print axioms ScalarMul.binary_zero
 
 /--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_one' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.binary_one
+
+/--
 info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_step' depends on axioms: [propext, Quot.sound]
 -/
 #guard_msgs in
 #print axioms ScalarMul.binary_step
 
 /--
-info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_even' depends on axioms: [propext, Quot.sound]
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_even' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
 #print axioms ScalarMul.binary_even

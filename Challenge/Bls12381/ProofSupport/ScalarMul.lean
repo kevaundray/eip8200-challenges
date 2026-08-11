@@ -44,6 +44,7 @@ pinned inverse-dependent curve scalar multiplication is claimed. -/
 def binary {Point : Type} (zero : Point) (add : Point → Point → Point)
     (double : Point → Point) (scalar : Nat) (point : Point) : Point :=
   if hzero : scalar = 0 then zero
+  else if scalar = 1 then point
   else
     let rest := binary zero add double (scalar / 2) (double point)
     if scalar % 2 = 1 then add rest point else rest
@@ -57,13 +58,20 @@ decreasing_by
   rw [binary]
   simp
 
+@[simp] theorem binary_one {Point : Type} (zero : Point)
+    (add : Point → Point → Point) (double : Point → Point) (point : Point) :
+    binary zero add double 1 point = point := by
+  rw [binary]
+  simp
+
 theorem binary_step {Point : Type} (zero : Point)
     (add : Point → Point → Point) (double : Point → Point)
     (scalar : Nat) (point : Point) (hscalar : scalar ≠ 0) :
     binary zero add double scalar point =
-      if scalar % 2 = 1 then
-        add (binary zero add double (scalar / 2) (double point)) point
-      else binary zero add double (scalar / 2) (double point) := by
+      if scalar = 1 then point
+      else if scalar % 2 = 1 then
+          add (binary zero add double (scalar / 2) (double point)) point
+        else binary zero add double (scalar / 2) (double point) := by
   rw [binary]
   simp [hscalar]
 
@@ -83,11 +91,16 @@ theorem binary_odd {Point : Type} (zero : Point)
     (add : Point → Point → Point) (double : Point → Point)
     (scalar : Nat) (point : Point) :
     binary zero add double (2 * scalar + 1) point =
-      add (binary zero add double scalar (double point)) point := by
-  rw [binary_step]
-  · rw [show (2 * scalar + 1) / 2 = scalar by omega]
-    norm_num
-  · omega
+      if scalar = 0 then point
+      else add (binary zero add double scalar (double point)) point := by
+  cases scalar with
+  | zero => simp
+  | succ scalar =>
+      rw [binary_step]
+      · rw [show (2 * (scalar + 1) + 1) ≠ 1 by omega |> if_neg]
+        rw [show (2 * (scalar + 1) + 1) / 2 = scalar + 1 by omega]
+        norm_num
+      · omega
 
 /-- Binary scalar multiplication preserves any invariant preserved by the
 identity, addition, and doubling operations. -/
@@ -104,7 +117,10 @@ theorem binary_preserves {Point : Type} (zero : Point)
       by_cases hscalar : scalar = 0
       · subst scalar
         simpa using hzero
-      · rw [binary_step zero add double scalar point hscalar]
+      · by_cases hone : scalar = 1
+        · subst scalar
+          simpa using hpoint
+        rw [binary_step zero add double scalar point hscalar, if_neg hone]
         have hhalf : scalar / 2 < scalar :=
           Nat.div_lt_self (Nat.zero_lt_of_ne_zero hscalar) (by omega)
         have hrest :
@@ -137,8 +153,12 @@ theorem binary_lift_val {Point : Type} (zero : Point)
       by_cases hscalar : scalar = 0
       · subst scalar
         simp
-      · rw [binary_step _ _ _ scalar _ hscalar,
-          binary_step zero add double scalar point hscalar]
+      · by_cases hone : scalar = 1
+        · subst scalar
+          simp
+        rw [binary_step _ _ _ scalar _ hscalar,
+          binary_step zero add double scalar point hscalar,
+          if_neg hone, if_neg hone]
         have hhalf : scalar / 2 < scalar :=
           Nat.div_lt_self (Nat.zero_lt_of_ne_zero hscalar) (by omega)
         by_cases hodd : scalar % 2 = 1
@@ -171,7 +191,10 @@ theorem binary_map_nsmul {Point Target : Type} [AddCommMonoid Target]
       by_cases hscalar : scalar = 0
       · subst scalar
         simpa using hzero
-      · rw [binary_step zero add double scalar point hscalar]
+      · by_cases hone : scalar = 1
+        · subst scalar
+          simp
+        rw [binary_step zero add double scalar point hscalar, if_neg hone]
         have hhalf : scalar / 2 < scalar :=
           Nat.div_lt_self (Nat.zero_lt_of_ne_zero hscalar) (by omega)
         by_cases hodd : scalar % 2 = 1
@@ -277,12 +300,10 @@ def g2Eip (scalar : Scalar256) (point : G2Affine.Point) : G2Affine.Point :=
     g2 0 point = G2Affine.infinity := binary_zero _ _ _ point
 
 @[simp] theorem g1_one (point : G1Affine.Point) : g1 1 point = point := by
-  simpa [g1, G1Affine.add] using
-    binary_odd G1Affine.infinity G1Affine.add G1Affine.double 0 point
+  simp [g1]
 
 @[simp] theorem g2_one (point : G2Affine.Point) : g2 1 point = point := by
-  simpa [g2, G2Affine.add] using
-    binary_odd G2Affine.infinity G2Affine.add G2Affine.double 0 point
+  simp [g2]
 
 theorem g1_even (scalar : Nat) (point : G1Affine.Point) :
     g1 (2 * scalar) point = g1 scalar (G1Affine.double point) :=
@@ -294,13 +315,21 @@ theorem g2_even (scalar : Nat) (point : G2Affine.Point) :
 
 theorem g1_odd (scalar : Nat) (point : G1Affine.Point) :
     g1 (2 * scalar + 1) point =
-      G1Affine.add (g1 scalar (G1Affine.double point)) point :=
-  binary_odd _ _ _ scalar point
+      G1Affine.add (g1 scalar (G1Affine.double point)) point := by
+  by_cases hscalar : scalar = 0
+  · subst scalar
+    simp [G1Affine.add]
+  · simpa [g1, hscalar] using
+      binary_odd G1Affine.infinity G1Affine.add G1Affine.double scalar point
 
 theorem g2_odd (scalar : Nat) (point : G2Affine.Point) :
     g2 (2 * scalar + 1) point =
-      G2Affine.add (g2 scalar (G2Affine.double point)) point :=
-  binary_odd _ _ _ scalar point
+      G2Affine.add (g2 scalar (G2Affine.double point)) point := by
+  by_cases hscalar : scalar = 0
+  · subst scalar
+    simp [G2Affine.add]
+  · simpa [g2, hscalar] using
+      binary_odd G2Affine.infinity G2Affine.add G2Affine.double scalar point
 
 theorem g1_onCurve (scalar : Nat) (point : G1Affine.Point)
     (hpoint : G1Affine.OnCurve point) :
