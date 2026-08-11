@@ -82,4 +82,57 @@ theorem copyReturn {ymem : Nat → UInt8} {memory : ByteArray}
       exact h address
 
 end MemMatch
+
+/-- Inside the copied prefix, source call-return memory is exactly the
+corresponding return-data byte. -/
+theorem copyReturn_inside (memory : Nat → UInt8) (dst size : Nat)
+    (data : List UInt8) (i : Nat) (hsize : i < size)
+    (hdata : i < data.length) :
+    YulSemantics.EVM.copyReturn memory dst size data (dst + i) =
+      YulSemantics.EVM.byteFrom data i := by
+  unfold YulSemantics.EVM.copyReturn
+  rw [if_pos]
+  · simp only [Nat.add_sub_cancel_left]
+  · omega
+
+/-- A full word wholly inside a return-copy window is the corresponding
+zero-padded word of the returned byte list. -/
+theorem loadWord_copyReturn (memory : Nat → UInt8) (dst size : Nat)
+    (data : List UInt8) (start : Nat) (hsize : start + 32 ≤ size)
+    (hdata : start + 32 ≤ data.length) :
+    YulSemantics.EVM.loadWord
+        (YulSemantics.EVM.copyReturn memory dst size data) (dst + start) =
+      YulSemantics.EVM.wordFrom data start := by
+  unfold YulSemantics.EVM.loadWord YulSemantics.EVM.wordFrom
+  have hfold : ∀ (indices : List Nat) (acc : BitVec 256),
+      (∀ i ∈ indices, i < 32) →
+      indices.foldl (fun (acc : BitVec 256) i =>
+          (acc <<< (8 : Nat)) |||
+            BitVec.ofNat 256
+              (YulSemantics.EVM.copyReturn memory dst size data
+                (dst + start + i)).toNat) acc =
+        indices.foldl (fun (acc : BitVec 256) i =>
+          (acc <<< (8 : Nat)) |||
+            BitVec.ofNat 256
+              (YulSemantics.EVM.byteFrom data (start + i)).toNat) acc := by
+    intro indices
+    induction indices with
+    | nil => intro acc _; rfl
+    | cons i rest ih =>
+        intro acc hall
+        rw [List.foldl_cons, List.foldl_cons]
+        have hi : i < 32 := hall i (by simp)
+        have hbyte :
+            YulSemantics.EVM.copyReturn memory dst size data
+                (dst + start + i) =
+              YulSemantics.EVM.byteFrom data (start + i) := by
+          rw [show dst + start + i = dst + (start + i) by omega]
+          exact copyReturn_inside memory dst size data (start + i)
+            (by omega) (by omega)
+        rw [hbyte]
+        exact ih _ (fun j hj => hall j (by simp [hj]))
+  exact hfold (List.range 32) 0 (by
+    intro i hi
+    simpa using hi)
+
 end Challenge.EvmProof
