@@ -1,5 +1,6 @@
 import Challenge.Bls12381.ProofSupport.Fp2Source
 import Challenge.Bls12381.ProofSupport.FpAddSubLawful
+import Challenge.Bls12381.ProofSupport.FpInv
 
 set_option warningAsError true
 
@@ -201,5 +202,68 @@ theorem toLawful_sqrSource {a : Repr} (ha : Canonical a) :
   · simp [toLawful, LawfulFp2.ofWire, toField,
       toField_sqrC1Source ha, map_add, map_mul]
     ring
+
+theorem toLawful_invNormSource {a : Repr} (ha : Canonical a) :
+    PrimeField.finEquiv (Fp.toField (invNormSource a)) =
+      QuadraticAlgebra.norm (toLawful a) := by
+  have hs0 := Fp.canonical_squareCanonical ha.c0.proof
+  have hs1 := Fp.canonical_squareCanonical ha.c1.proof
+  rw [show invNormSource a = Fp.addSource
+      (Fp.squareCanonical a.c0) (Fp.squareCanonical a.c1) by rfl]
+  rw [Fp.toLawful_addSource hs0 hs1,
+    Fp.toField_squareCanonical ha.c0.proof,
+    Fp.toField_squareCanonical ha.c1.proof,
+    map_pow, map_pow]
+  simp [toLawful, LawfulFp2.ofWire, toField,
+    QuadraticAlgebra.norm_def, pow_two]
+
+theorem toLawful_invNormInvSource {a : Repr} (ha : Canonical a) :
+    PrimeField.finEquiv
+        (Fp.toField (Fp.invCanonical (invNormSource a))) =
+      (QuadraticAlgebra.norm (toLawful a))⁻¹ := by
+  rw [Fp.toLawful_invCanonical (canonical_invNormSource ha).proof,
+    toLawful_invNormSource ha]
+
+theorem toLawful_invC0Source {a : Repr} (ha : Canonical a) :
+    PrimeField.finEquiv (Fp.toField (invC0Source a)) =
+      (toLawful a).re * (QuadraticAlgebra.norm (toLawful a))⁻¹ := by
+  rw [show invC0Source a = Fp.mulCanonical a.c0
+      (Fp.invCanonical (invNormSource a)) by rfl]
+  rw [Fp.toField_mulCanonical ha.c0.proof
+      (Fp.canonical_invCanonical (canonical_invNormSource ha).proof),
+    map_mul, toLawful_invNormInvSource ha]
+  rfl
+
+theorem toLawful_invC1Source {a : Repr} (ha : Canonical a) :
+    PrimeField.finEquiv (Fp.toField (invC1Source a)) =
+      -(toLawful a).im * (QuadraticAlgebra.norm (toLawful a))⁻¹ := by
+  rw [show invC1Source a = Fp.mulCanonical (Fp.negSource a.c1)
+      (Fp.invCanonical (invNormSource a)) by rfl]
+  rw [Fp.toField_mulCanonical (Fp.canonical_negSource ha.c1.proof)
+      (Fp.canonical_invCanonical (canonical_invNormSource ha).proof),
+    map_mul, Fp.toField_negSource ha.c1.proof, map_neg,
+    toLawful_invNormInvSource ha]
+  rfl
+
+/-- The source inversion schedule refines the lawful quadratic-field inverse.
+No equality to the pinned opaque `FF.modInv` is assumed or required. -/
+theorem toLawful_invSource {a : Repr} (ha : Canonical a) :
+    toLawful (invSource a) = (toLawful a)⁻¹ := by
+  rw [invSource_eq, toLawful_mkRepr]
+  apply QuadraticAlgebra.ext
+  · simp [toLawful_invC0Source ha, QuadraticAlgebra.inv_def,
+      QuadraticAlgebra.norm_def, mul_comm]
+  · simp [toLawful_invC1Source ha, QuadraticAlgebra.inv_def,
+      QuadraticAlgebra.norm_def, mul_comm]
+
+theorem toLawful_invSource_zero {a : Repr} (ha : Canonical a)
+    (hzero : toLawful a = 0) : toLawful (invSource a) = 0 := by
+  rw [toLawful_invSource ha, hzero, inv_zero]
+
+theorem toLawful_mul_invSource {a : Repr} (ha : Canonical a)
+    (hne : toLawful a ≠ 0) :
+    toLawful a * toLawful (invSource a) = 1 := by
+  rw [toLawful_invSource ha]
+  exact LawfulFp2.mul_inv_cancel (toLawful a) hne
 
 end Challenge.Bls12381.ProofSupport.Fp2
