@@ -64,6 +64,26 @@ def toMathlib (curve : LawfulAffine.Curve F)
       WeierstrassCurve.Affine.Point.mk (equation_of_onCurve curve hpoint)
 
 omit [DecidableEq F] in
+/-- The proof-only bridge retains the complete local affine point. -/
+theorem toMathlib_injective (curve : LawfulAffine.Curve F)
+    [WeierstrassCurve.IsElliptic (mathCurve curve)] :
+    Function.Injective (toMathlib curve) := by
+  rintro ⟨left, hleft⟩ ⟨right, hright⟩ heq
+  apply Subtype.ext
+  cases left with
+  | infinity =>
+      cases right with
+      | infinity => rfl
+      | affine x y => simp [toMathlib, WeierstrassCurve.Affine.Point.mk] at heq
+  | affine x₁ y₁ =>
+      cases right with
+      | infinity => simp [toMathlib, WeierstrassCurve.Affine.Point.mk] at heq
+      | affine x₂ y₂ =>
+          simp only [toMathlib, WeierstrassCurve.Affine.Point.mk] at heq
+          injection heq with hx hy
+          simp [hx, hy]
+
+omit [DecidableEq F] in
 @[simp] theorem toMathlib_infinity (curve : LawfulAffine.Curve F)
     [WeierstrassCurve.IsElliptic (mathCurve curve)] :
     toMathlib curve (infinity curve) = 0 := rfl

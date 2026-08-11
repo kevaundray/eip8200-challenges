@@ -34,6 +34,17 @@ example (point : AffineGroup.Point curve) :
       AffineGroup.toMathlib curve point + AffineGroup.toMathlib curve point :=
   AffineGroup.toMathlib_double curve h2 point
 
+example : Function.Injective (AffineGroup.toMathlib curve) :=
+  AffineGroup.toMathlib_injective curve
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.AffineGroup.toMathlib_injective' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms AffineGroup.toMathlib_injective
+
 /--
 info: 'Challenge.Bls12381.ProofSupport.AffineGroup.equation_of_onCurve' depends on axioms: [propext,
  Classical.choice,
