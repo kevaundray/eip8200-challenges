@@ -12,6 +12,13 @@ example (a : EvmSemantics.Crypto.Bls12381.Fp6) :
 
 #print axioms LawfulFp6.toWire_ofWire
 
+example (a b : Fp6.Repr) :
+    Fp6.toLawful (Challenge.Bls12381.ProofSupport.Fp6.mul a b) =
+      LawfulFp6.mul (Fp6.toLawful a) (Fp6.toLawful b) :=
+  Fp6.toLawful_mul a b
+
+#print axioms Fp6.toLawful_mul
+
 example : Challenge.Bls12381.ProofSupport.Fp6.toField
     Challenge.Bls12381.ProofSupport.Fp6.zero = 0 :=
   Challenge.Bls12381.ProofSupport.Fp6.toField_zero

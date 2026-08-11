@@ -167,6 +167,26 @@ theorem toLawful_invWith (invert : Fp.Limbs → Fp.Limbs) (a : Repr)
   · simp [toLawful, LawfulFp2.ofWire, toField, invWith, norm,
       QuadraticAlgebra.inv_def, QuadraticAlgebra.norm_def, hinvert, mul_comm]
 
+@[simp] theorem toLawful_add (a b : Repr) :
+    toLawful (add a b) = toLawful a + toLawful b := by
+  apply QuadraticAlgebra.ext <;>
+    simp [toLawful, LawfulFp2.ofWire, toField, add]
+
+@[simp] theorem toLawful_sub (a b : Repr) :
+    toLawful (sub a b) = toLawful a - toLawful b := by
+  apply QuadraticAlgebra.ext <;>
+    simp [toLawful, LawfulFp2.ofWire, toField, sub]
+
+@[simp] theorem toLawful_mul (a b : Repr) :
+    toLawful (mul a b) = toLawful a * toLawful b := by
+  apply QuadraticAlgebra.ext <;>
+    simp [toLawful, LawfulFp2.ofWire, toField, mul] <;> ring
+
+@[simp] theorem toLawful_neg (a : Repr) :
+    toLawful (neg a) = -toLawful a := by
+  apply QuadraticAlgebra.ext <;>
+    simp [toLawful, LawfulFp2.ofWire, toField, neg]
+
 theorem refines_invSpecRepr (a : Repr) :
     Refines (invSpecRepr a) (toField a)⁻¹ := refines_ofField _
 

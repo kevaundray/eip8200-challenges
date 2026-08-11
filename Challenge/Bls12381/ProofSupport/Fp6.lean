@@ -16,6 +16,12 @@ deriving DecidableEq
 def toField (a : Repr) : EvmSemantics.Crypto.Bls12381.Fp6 :=
   { c0 := Fp2.toField a.c0, c1 := Fp2.toField a.c1, c2 := Fp2.toField a.c2 }
 
+/-- Lawful algebraic interpretation of the executable cubic carrier. -/
+def toLawful (a : Repr) : LawfulFp6.Carrier :=
+  { c0 := Fp2.toLawful a.c0
+    c1 := Fp2.toLawful a.c1
+    c2 := Fp2.toLawful a.c2 }
+
 def ofField (a : EvmSemantics.Crypto.Bls12381.Fp6) : Repr :=
   { c0 := Fp2.ofField a.c0, c1 := Fp2.ofField a.c1, c2 := Fp2.ofField a.c2 }
 
@@ -67,6 +73,23 @@ def mul (a b : Repr) : Repr :=
   { c0 := Fp2.add v0 (mulByXi (Fp2.sub (Fp2.sub t0 v1) v2))
     c1 := Fp2.add (Fp2.sub (Fp2.sub t1 v0) v1) (mulByXi v2)
     c2 := Fp2.sub (Fp2.sub (Fp2.add t2 v1) v0) v2 }
+
+@[simp] theorem toLawful_mulByXi (a : Fp2.Repr) :
+    Fp2.toLawful (mulByXi a) = LawfulFp6.xi * Fp2.toLawful a := by
+  apply QuadraticAlgebra.ext <;>
+    simp [mulByXi, LawfulFp6.xi, Fp2.toLawful, LawfulFp2.ofWire,
+      Fp2.toField] <;> ring
+
+theorem toLawful_mul (a b : Repr) :
+    toLawful (mul a b) = LawfulFp6.mul (toLawful a) (toLawful b) := by
+  apply LawfulFp6.Carrier.ext
+  · simp [mul, toLawful, LawfulFp6.mul]
+    ring_nf
+    simp
+  · simp [mul, toLawful, LawfulFp6.mul]
+    ring
+  · simp [mul, toLawful, LawfulFp6.mul]
+    ring
 
 def square (a : Repr) : Repr :=
   let s0 := Fp2.square a.c0

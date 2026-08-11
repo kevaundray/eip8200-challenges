@@ -6,11 +6,20 @@ set_option warningAsError true
 
 namespace Challenge.Bls12381.ProofSupport.LawfulFp6
 
-structure Carrier where
+@[ext] structure Carrier where
   c0 : LawfulFp2.Carrier
   c1 : LawfulFp2.Carrier
   c2 : LawfulFp2.Carrier
 deriving DecidableEq
+
+/-- The sextic non-residue `1 + u` in the lawful quadratic field. -/
+def xi : LawfulFp2.Carrier := ⟨1, 1⟩
+
+/-- Cubic-extension multiplication reduced by `v³ = 1 + u`. -/
+def mul (a b : Carrier) : Carrier :=
+  { c0 := a.c0 * b.c0 + xi * (a.c1 * b.c2 + a.c2 * b.c1)
+    c1 := a.c0 * b.c1 + a.c1 * b.c0 + xi * (a.c2 * b.c2)
+    c2 := a.c0 * b.c2 + a.c1 * b.c1 + a.c2 * b.c0 }
 
 /-- Inverse-free adapter from the pinned three-component wire carrier. -/
 def ofWire (a : EvmSemantics.Crypto.Bls12381.Fp6) : Carrier :=
