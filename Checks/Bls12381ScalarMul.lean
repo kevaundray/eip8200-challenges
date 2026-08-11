@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.ScalarMul
+import Challenge.Bls12381.ProofSupport.ScalarMulSemantics
 
 set_option warningAsError true
 

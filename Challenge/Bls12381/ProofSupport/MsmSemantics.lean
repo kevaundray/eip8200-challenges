@@ -1,5 +1,6 @@
 import Challenge.Bls12381.ProofSupport.Msm
 import Challenge.Bls12381.ProofSupport.AffineGroupBls
+import Challenge.Bls12381.ProofSupport.ScalarMulSemantics
 
 set_option warningAsError true
 
