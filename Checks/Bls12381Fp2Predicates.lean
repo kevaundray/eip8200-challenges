@@ -54,6 +54,16 @@ example (a b : Fp2.Repr) (ha : Fp2.Canonical a)
 #guard_msgs in
 #print axioms Fp2.eqSource_eq_true
 
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.eq_of_eqSource_true' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.eq_of_eqSource_true
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.eq_zero_of_isZeroSource_true' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.eq_zero_of_isZeroSource_true
+
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp2.isZeroSource_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp2.isZeroSource_iff
@@ -61,5 +71,9 @@ example (a b : Fp2.Repr) (ha : Fp2.Canonical a)
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp2.eqSource_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp2.eqSource_iff
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.eq_of_lawful_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.eq_of_lawful_eq
 
 end Checks.Bls12381Fp2Predicates

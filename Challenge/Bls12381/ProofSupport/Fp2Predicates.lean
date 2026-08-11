@@ -43,6 +43,23 @@ theorem eqSource_eq_true (a b : Repr) :
         Fp.value a.c1 = Fp.value b.c1 := by
   simp [eqSource]
 
+theorem eq_of_eqSource_true {a b : Repr} (heq : eqSource a b = true) :
+    a = b := by
+  rw [eqSource_eq_true] at heq
+  cases a
+  cases b
+  rw [Repr.mk.injEq]
+  exact ⟨Fp.limbs_ext_of_value_eq heq.1,
+    Fp.limbs_ext_of_value_eq heq.2⟩
+
+theorem eq_zero_of_isZeroSource_true {a : Repr}
+    (hzero : isZeroSource a = true) : a = zero := by
+  rw [isZeroSource_eq_true] at hzero
+  cases a
+  rw [Repr.mk.injEq]
+  exact ⟨Fp.limbs_ext_of_value_eq (by simpa [zero] using hzero.1),
+    Fp.limbs_ext_of_value_eq (by simpa [zero] using hzero.2)⟩
+
 theorem isZeroSource_iff {a : Repr} (ha : Canonical a) :
     isZeroSource a = true ↔ toLawful a = 0 := by
   rw [isZeroSource_eq_true]
@@ -87,5 +104,9 @@ theorem eqSource_iff {a b : Repr} (ha : Canonical a) (hb : Canonical b) :
       (Fp.value b.c1 : PrimeField.LawfulFp) at him
     exact ⟨Fp.value_eq_of_lawful_eq ha.c0.proof hb.c0.proof hre,
       Fp.value_eq_of_lawful_eq ha.c1.proof hb.c1.proof him⟩
+
+theorem eq_of_lawful_eq {a b : Repr} (ha : Canonical a) (hb : Canonical b)
+    (heq : toLawful a = toLawful b) : a = b :=
+  eq_of_eqSource_true ((eqSource_iff ha hb).2 heq)
 
 end Challenge.Bls12381.ProofSupport.Fp2
