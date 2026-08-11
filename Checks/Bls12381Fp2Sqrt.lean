@@ -35,10 +35,6 @@ example : (Fp2.sqrtSource Fp2.negativeOne).exists_ = true :=
 #guard_msgs in
 #print axioms Fp2.sqrtSource_success
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.toLawful_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Fp2.toLawful_zero
-
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp2.sqrSource_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp2.sqrSource_zero

@@ -25,14 +25,9 @@ theorem canonical_sqrtSource {a : Repr} (ha : Canonical a) :
     (fun _ => Fp.canonical_invCanonical)
     canonical_invTwo a ⟨ha.c0.proof, ha.c1.proof⟩
 
-@[simp] theorem toLawful_zero : toLawful zero = 0 := by
-  unfold toLawful
-  rw [toField_zero]
-  rfl
-
 theorem sqrSource_zero : sqrSource zero = zero := by
   apply eq_of_lawful_eq (canonical_sqrSource canonical_zero) canonical_zero
-  rw [toLawful_sqrSource canonical_zero, toLawful_zero]
+  rw [toLawful_sqrSource canonical_zero, toLawful_zero_repr]
   norm_num
 
 theorem sqrtSource_success {a : Repr} (_ha : Canonical a)
