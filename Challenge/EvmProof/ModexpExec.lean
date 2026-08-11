@@ -1,3 +1,4 @@
+import Challenge.EvmProof.ExecSound
 import Challenge.EvmProof.ModexpCalls
 import YulSemantics.Adequacy
 
@@ -80,5 +81,13 @@ theorem modexpBuiltinFn_sound {op args st result}
         next => contradiction
       next => contradiction
   all_goals simp [modexpBuiltinFn] at h
+
+/-- Interpreter success for the deterministic MODEXP evaluator is sound for
+the open successful-MODEXP source relation used by the compiler proof. -/
+theorem modexpExec_run_sound {fuel program st0 V' st' outcome}
+    (h : Interp.run modexpExec fuel program st0 = .ok (V', st', outcome)) :
+    Run modexpExec.toDialect program st0 V' st' outcome :=
+  Interp.run_sound_of (fun _ _ _ _ hbuiltin =>
+    modexpBuiltinFn_sound hbuiltin) h
 
 end Challenge.EvmProof
