@@ -17,6 +17,16 @@ example (u : Field) : Codec.ValidG1 (G1Affine.toWire (map u)) :=
 #guard Vectors.mapFpToG1OfficialVectors.length = 5
 #guard Vectors.mapFpToG1OfficialVectors.all fun vector =>
   run vector.input = some vector.expected
+
+example (u : Field) :
+    AffineGroup.toMathlib G1Affine.curve ⟨map u, map_onCurve u⟩ =
+      hEff • AffineGroup.toMathlib G1Affine.curve
+        ⟨mapBeforeCofactor u, mapBeforeCofactor_onCurve u⟩ :=
+  map_nsmul u
+
+/-- info: 'Challenge.Bls12381.ProofSupport.MapToG1.map_nsmul' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms map_nsmul
 #guard Vectors.mapFpToG1FailureInputs.length = 5
 #guard Vectors.mapFpToG1FailureInputs.all fun input => run input = none
 
