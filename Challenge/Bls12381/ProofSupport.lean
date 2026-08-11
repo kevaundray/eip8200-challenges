@@ -5,6 +5,7 @@ import Challenge.Bls12381.ProofSupport.CodecScalar
 import Challenge.Bls12381.ProofSupport.CodecG1
 import Challenge.Bls12381.ProofSupport.CodecG2
 import Challenge.Bls12381.ProofSupport.CodecRepresentation
+import Challenge.Bls12381.ProofSupport.CodecSubgroup
 import Challenge.Bls12381.ProofSupport.Fp
 import Challenge.Bls12381.ProofSupport.FpRepresentation
 import Challenge.Bls12381.ProofSupport.FpPredicates

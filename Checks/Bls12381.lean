@@ -5,6 +5,7 @@ import Checks.Bls12381CodecScalar
 import Checks.Bls12381CodecG1
 import Checks.Bls12381CodecG2
 import Checks.Bls12381CodecRepresentation
+import Checks.Bls12381CodecSubgroup
 import Checks.Bls12381FpRepresentation
 import Checks.Bls12381FpPredicates
 import Checks.Bls12381FpWordBridge
