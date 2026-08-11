@@ -41,8 +41,8 @@ import Checks.Bls12381Fp2SqrtRefinement
 import Checks.Bls12381Fp2SqrtLawful
 import Checks.Bls12381Fp2Sqrt
 import Checks.Bls12381LawfulAffine
-import Checks.Bls12381LawfulG1Affine
-import Checks.Bls12381LawfulG2Affine
+import Checks.Bls12381G1Affine
+import Checks.Bls12381G2Affine
 import Checks.Bls12381LawfulAffineConformance
 
 set_option warningAsError true

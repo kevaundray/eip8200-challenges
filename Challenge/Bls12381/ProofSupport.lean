@@ -52,8 +52,8 @@ import Challenge.Bls12381.ProofSupport.LawfulFp12
 import Challenge.Bls12381.ProofSupport.LawfulFp12Norm
 import Challenge.Bls12381.ProofSupport.Fp12
 import Challenge.Bls12381.ProofSupport.LawfulAffine
-import Challenge.Bls12381.ProofSupport.LawfulG1Affine
-import Challenge.Bls12381.ProofSupport.LawfulG2Affine
+import Challenge.Bls12381.ProofSupport.G1Affine
+import Challenge.Bls12381.ProofSupport.G2Affine
 import Challenge.Bls12381.ProofSupport.G1Projective
 import Challenge.Bls12381.ProofSupport.G2Projective
 import Challenge.Bls12381.ProofSupport.ScalarMul

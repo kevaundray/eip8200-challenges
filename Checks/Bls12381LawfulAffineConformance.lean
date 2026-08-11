@@ -1,8 +1,8 @@
 import Challenge.Bls12381.Vectors
 import Challenge.Bls12381.ProofSupport.CodecG1
 import Challenge.Bls12381.ProofSupport.CodecG2
-import Challenge.Bls12381.ProofSupport.LawfulG1Affine
-import Challenge.Bls12381.ProofSupport.LawfulG2Affine
+import Challenge.Bls12381.ProofSupport.G1Affine
+import Challenge.Bls12381.ProofSupport.G2Affine
 
 set_option warningAsError true
 

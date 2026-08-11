@@ -1,8 +1,8 @@
-import Challenge.Bls12381.ProofSupport.LawfulG1Affine
+import Challenge.Bls12381.ProofSupport.G1Affine
 
 set_option warningAsError true
 
-namespace Checks.Bls12381LawfulG1Affine
+namespace Checks.Bls12381G1Affine
 
 open Challenge.Bls12381.ProofSupport
 
@@ -72,4 +72,4 @@ info: 'Challenge.Bls12381.ProofSupport.G1Affine.two_ne_zero' depends on axioms: 
 #guard_msgs in
 #print axioms G1Affine.two_ne_zero
 
-end Checks.Bls12381LawfulG1Affine
+end Checks.Bls12381G1Affine
