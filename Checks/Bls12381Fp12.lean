@@ -29,6 +29,20 @@ example (invert : Fp6.Repr → Fp6.Repr) (a : Fp12.Repr)
 
 #print axioms Fp12.toLawful_invWith
 
+example (a : LawfulFp12.Carrier)
+    (hnorm : LawfulFp6.norm (LawfulFp12.norm a) ≠ 0) :
+    LawfulFp12.mul a (LawfulFp12.inv a) = LawfulFp12.one :=
+  LawfulFp12.mul_inv_of_norm_ne_zero a hnorm
+
+#print axioms LawfulFp12.mul_inv_of_norm_ne_zero
+
+example (a : LawfulFp12.Carrier)
+    (hnorm : LawfulFp6.norm (LawfulFp12.norm a) ≠ 0) :
+    LawfulFp12.mul (LawfulFp12.inv a) a = LawfulFp12.one :=
+  LawfulFp12.inv_mul_of_norm_ne_zero a hnorm
+
+#print axioms LawfulFp12.inv_mul_of_norm_ne_zero
+
 example : Challenge.Bls12381.ProofSupport.Fp12.toField
     Challenge.Bls12381.ProofSupport.Fp12.zero = 0 :=
   Challenge.Bls12381.ProofSupport.Fp12.toField_zero

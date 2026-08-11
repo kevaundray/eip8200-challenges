@@ -34,6 +34,38 @@ def inv (a : Carrier) : Carrier :=
   { c0 := LawfulFp6.mul a.c0 normInv
     c1 := LawfulFp6.neg (LawfulFp6.mul a.c1 normInv) }
 
+/-- The lawful component formula is a right inverse whenever the Fp2
+determinant underlying its Fp6 norm is nonzero. -/
+theorem mul_inv_of_norm_ne_zero (a : Carrier)
+    (hnorm : LawfulFp6.norm (norm a) ≠ 0) :
+    mul a (inv a) = one := by
+  unfold inv mul
+  dsimp only
+  apply Carrier.ext
+  · calc
+      _ = LawfulFp6.mul (norm a) (LawfulFp6.inv (norm a)) := by
+        apply LawfulFp6.Carrier.ext <;>
+          simp [norm, LawfulFp6.mul, LawfulFp6.add, LawfulFp6.sub,
+            LawfulFp6.neg, LawfulFp6.mulByV] <;> ring
+      _ = LawfulFp6.one := LawfulFp6.mul_inv_of_norm_ne_zero (norm a) hnorm
+  · apply LawfulFp6.Carrier.ext <;>
+      simp [one, LawfulFp6.zero, LawfulFp6.mul, LawfulFp6.add,
+        LawfulFp6.sub, LawfulFp6.neg] <;> ring
+
+theorem mul_comm (a b : Carrier) : mul a b = mul b a := by
+  apply Carrier.ext <;>
+    apply LawfulFp6.Carrier.ext <;>
+      simp [mul, LawfulFp6.mul, LawfulFp6.add, LawfulFp6.sub,
+        LawfulFp6.mulByV] <;> ring
+
+/-- The lawful component formula is also a left inverse under the same
+determinant nonzero boundary. -/
+theorem inv_mul_of_norm_ne_zero (a : Carrier)
+    (hnorm : LawfulFp6.norm (norm a) ≠ 0) :
+    mul (inv a) a = one := by
+  rw [mul_comm]
+  exact mul_inv_of_norm_ne_zero a hnorm
+
 def ofWire (a : EvmSemantics.Crypto.Bls12381.Fp12) : Carrier :=
   { c0 := LawfulFp6.ofWire a.c0
     c1 := LawfulFp6.ofWire a.c1 }
