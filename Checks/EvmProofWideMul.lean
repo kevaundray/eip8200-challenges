@@ -7,6 +7,10 @@ namespace Checks.EvmProofWideMul
 open EvmSemantics
 open Challenge.EvmProof
 
+example (a b : UInt256) :
+    (a * b).toNat = (a.toNat * b.toNat) % 2 ^ 256 :=
+  Word.word_toNat_mul a b
+
 example (base x y z : Nat) :
     Nat.ofDigits base [x, y, z] = x + base * y + base ^ 2 * z :=
   Limbs.ofDigits_three base x y z
@@ -38,6 +42,11 @@ example (a b : Limbs.WideProduct) :
       if b.value ≤ a.value then a.value - b.value
       else Limbs.radix ^ 2 + a.value - b.value :=
   Limbs.subWide256_value a b
+
+example (a b : Limbs.WideProduct) :
+    (Limbs.mulWideLow256 a b).value =
+      (a.value * b.value) % Limbs.radix ^ 2 :=
+  Limbs.mulWideLow256_value a b
 
 example (x y z : UInt256) :
     (Limbs.addThree256 x y z).value = x.toNat + y.toNat + z.toNat :=
@@ -105,5 +114,13 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.subWide256_value' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Limbs.subWide256_value
+
+/-- info: 'Challenge.EvmProof.Word.word_toNat_mul' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Word.word_toNat_mul
+
+/-- info: 'Challenge.EvmProof.Limbs.mulWideLow256_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.mulWideLow256_value
 
 end Checks.EvmProofWideMul

@@ -160,6 +160,12 @@ def subWide256 (a b : WideProduct) : WideProduct :=
   let borrow := UInt256.lt a.lo b.lo
   { hi := a.hi - b.hi - borrow, lo := a.lo - b.lo }
 
+/-- Low two words of the schoolbook product of two two-word values.  Terms at
+word position two and above are deliberately discarded. -/
+def mulWideLow256 (a b : WideProduct) : WideProduct :=
+  let low := fullMul256 a.lo b.lo
+  { hi := low.hi + a.lo * b.hi + a.hi * b.lo, lo := low.lo }
+
 /-- Reconstructing the exact two-word EVM subtraction gives ordinary
 subtraction when it does not underflow, and the radix-squared wrapped value
 otherwise. -/
@@ -516,6 +522,55 @@ theorem fullMul256_value (a b : UInt256) :
     rw [hhigh]
     simpa [joinAt, mulSplit, splitAt] using
       join_mulSplit (base := radix) radix_pos a.toNat b.toNat
+
+/-- The source-style low product reconstructs multiplication modulo two EVM
+words. -/
+theorem mulWideLow256_value (a b : WideProduct) :
+    (mulWideLow256 a b).value = (a.value * b.value) % radix ^ 2 := by
+  let low := fullMul256 a.lo b.lo
+  let cross := low.hi.toNat + a.lo.toNat * b.hi.toNat +
+    a.hi.toNat * b.lo.toNat
+  have hlow := fullMul256_value a.lo b.lo
+  change low.value = a.lo.toNat * b.lo.toNat at hlow
+  have hhi : (low.hi + a.lo * b.hi + a.hi * b.lo).toNat =
+      cross % radix := by
+    dsimp only [cross]
+    simp only [Challenge.EvmProof.Word.word_toNat_add,
+      Challenge.EvmProof.Word.word_toNat_mul,
+      show 2 ^ 256 = radix by rfl]
+    simp [Nat.add_mod, Nat.mul_mod]
+  have hcrossSplit : cross % radix + radix * (cross / radix) = cross :=
+    Nat.mod_add_div cross radix
+  have hresultLt : low.lo.toNat + radix * (cross % radix) < radix ^ 2 := by
+    have hlo := low.lo.val.isLt
+    have hcross := Nat.mod_lt cross radix_pos
+    change low.lo.toNat < radix at hlo
+    nlinarith
+  have hdecomp : a.value * b.value =
+      (low.lo.toNat + radix * (cross % radix)) +
+        radix ^ 2 * (cross / radix + a.hi.toNat * b.hi.toNat) := by
+    calc
+      a.value * b.value =
+          a.lo.toNat * b.lo.toNat + radix *
+            (a.lo.toNat * b.hi.toNat + a.hi.toNat * b.lo.toNat) +
+            radix ^ 2 * (a.hi.toNat * b.hi.toNat) := by
+              unfold WideProduct.value
+              ring
+      _ = low.lo.toNat + radix * cross +
+          radix ^ 2 * (a.hi.toNat * b.hi.toNat) := by
+            unfold WideProduct.value at hlow
+            rw [← hlow]
+            dsimp only [cross]
+            ring
+      _ = (low.lo.toNat + radix * (cross % radix)) +
+          radix ^ 2 * (cross / radix + a.hi.toNat * b.hi.toNat) := by
+            nlinarith [hcrossSplit]
+  unfold mulWideLow256
+  change low.lo.toNat + radix *
+      (low.hi + a.lo * b.hi + a.hi * b.lo).toNat =
+        (a.value * b.value) % radix ^ 2
+  rw [hhi, hdecomp, Nat.add_mul_mod_self_left,
+    Nat.mod_eq_of_lt hresultLt]
 
 theorem masked_sum_mod_eq_cond_sub {x y take modulus : Nat}
     (hx : x < modulus) (hy : y < modulus) (htake : take ≤ 1) :

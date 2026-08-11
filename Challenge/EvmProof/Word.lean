@@ -43,6 +43,12 @@ theorem word_toNat_add (a b : EvmSemantics.UInt256) :
   rw [Fin.val_add]
   rfl
 
+theorem word_toNat_mul (a b : EvmSemantics.UInt256) :
+    (a * b).toNat = (a.toNat * b.toNat) % 2 ^ 256 := by
+  change (a.val * b.val).val = _
+  rw [Fin.val_mul]
+  rfl
+
 theorem word_toNat_sub (a b : EvmSemantics.UInt256) :
     (a - b).toNat = (2 ^ 256 + a.toNat - b.toNat) % 2 ^ 256 := by
   change (a.val - b.val).val = _
