@@ -16,6 +16,23 @@ namespace YulSemantics.Interp
 
 variable {E : ExecDialect} [DecidableEq E.toDialect.Value]
 
+/-- Evaluate a function call from already-checked argument, lookup, arity,
+and normally completed body stages.  This keeps large concrete function
+environments opaque while their bodies are proved one statement at a time. -/
+theorem evalExpr_call_normal
+    {n funs V st fn args argvals st1 decl cenv Vend st2}
+    (hargs : evalArgs E n funs V st args = .ok (.vals argvals st1))
+    (hlookup : lookupFun funs fn = some (decl, cenv))
+    (hlen : argvals.length = decl.params.length)
+    (hbody : execStmt E n cenv
+      (decl.params.zip argvals ++ bindZeros E.toDialect decl.rets)
+      st1 (.block decl.body) = .ok (Vend, st2, .normal)) :
+    evalExpr E (n + 1) funs V st (.call fn args) =
+      .ok (.vals
+        (decl.rets.map (fun r => (VEnv.get Vend r).getD E.toDialect.zero))
+        st2) := by
+  simp [evalExpr, hargs, hlookup, hlen, hbody]
+
 theorem sound_all_of
     (hE : ∀ op args st result, E.builtinFn op args st = some result →
       E.toDialect.Builtin op args st result) : ∀ n : Nat,
