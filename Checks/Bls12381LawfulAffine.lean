@@ -73,4 +73,52 @@ info: 'Challenge.Bls12381.ProofSupport.LawfulAffine.add_of_x_ne' depends on axio
 #guard_msgs in
 #print axioms add_of_x_ne
 
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulAffine.infinity_add' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms infinity_add
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulAffine.add_infinity' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms add_infinity
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulAffine.double_infinity' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms double_infinity
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulAffine.double_y_zero' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms double_y_zero
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulAffine.neg_infinity' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms neg_infinity
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulAffine.neg_affine' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms neg_affine
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulAffine.add_opposite' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms add_opposite
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulAffine.onCurve_infinity' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms onCurve_infinity
+
 end Checks.Bls12381LawfulAffine
