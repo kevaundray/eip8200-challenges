@@ -14,6 +14,16 @@ variable (h2 : (2 : F) ≠ 0)
 example : AffineGroup.toMathlib curve (AffineGroup.infinity curve) = 0 :=
   AffineGroup.toMathlib_infinity curve
 
+example : (AffineGroup.mathCurve curve).toAffine.Δ =
+    -16 * (4 * curve.a ^ 3 + 27 * curve.b ^ 2) :=
+  AffineGroup.mathCurve_discriminant curve
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.AffineGroup.mathCurve_discriminant' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms AffineGroup.mathCurve_discriminant
+
 example (left right : AffineGroup.Point curve) :
     AffineGroup.toMathlib curve (AffineGroup.add curve h2 left right) =
       AffineGroup.toMathlib curve left + AffineGroup.toMathlib curve right :=

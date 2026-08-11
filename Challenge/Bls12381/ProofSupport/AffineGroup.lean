@@ -19,6 +19,14 @@ variable {F : Type} [Field F] [DecidableEq F]
 def mathCurve (curve : LawfulAffine.Curve F) : WeierstrassCurve F :=
   { a₁ := 0, a₂ := 0, a₃ := 0, a₄ := curve.a, a₆ := curve.b }
 
+omit [DecidableEq F] in
+theorem mathCurve_discriminant (curve : LawfulAffine.Curve F) :
+    (mathCurve curve).toAffine.Δ =
+      -16 * (4 * curve.a ^ 3 + 27 * curve.b ^ 2) := by
+  simp only [mathCurve, WeierstrassCurve.Δ, WeierstrassCurve.b₂,
+    WeierstrassCurve.b₄, WeierstrassCurve.b₆, WeierstrassCurve.b₈]
+  ring
+
 /-- A local affine point paired with its curve-membership proof. -/
 abbrev Point (curve : LawfulAffine.Curve F) :=
   { point : LawfulAffine.Point F // LawfulAffine.OnCurve curve point }
