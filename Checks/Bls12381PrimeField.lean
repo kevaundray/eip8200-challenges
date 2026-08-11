@@ -11,6 +11,8 @@ example (hp : Nat.Prime EvmSemantics.Crypto.Bls12381.p)
   lawful_mul_inv_cancel hp a ha
 
 #print axioms prime_of_lucas_factors
+#print axioms natCast_modPow_eq_pow
+#print axioms prime_of_modPow_lucas_factors
 #print axioms lawful_mul_inv_cancel
 
 end Checks.Bls12381PrimeField
