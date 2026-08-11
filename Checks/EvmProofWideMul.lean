@@ -32,6 +32,16 @@ example (x y z : UInt256) :
     (Limbs.addThree256 x y z).carry.toNat < 3 :=
   Limbs.addThree256_carry_lt_three x y z
 
+example (sum : Limbs.WordSum) (term : UInt256)
+    (hcarry : sum.carry.toNat + 1 < Limbs.radix) :
+    (sum.add term).value = sum.value + term.toNat :=
+  Limbs.WordSum.value_add sum term hcarry
+
+example (sum : Limbs.WordSum) (term : UInt256)
+    (hcarry : sum.carry.toNat + 1 < Limbs.radix) :
+    (sum.add term).carry.toNat ≤ sum.carry.toNat + 1 :=
+  Limbs.WordSum.carry_add_le sum term hcarry
+
 example (a b : UInt256) :
     (Limbs.fullMul256 a b).lo.toNat < Limbs.radix ∧
       (Limbs.fullMul256 a b).hi.toNat < Limbs.radix :=
@@ -60,5 +70,13 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.addThree256_carry_lt_three' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Limbs.addThree256_carry_lt_three
+
+/-- info: 'Challenge.EvmProof.Limbs.WordSum.value_add' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.WordSum.value_add
+
+/-- info: 'Challenge.EvmProof.Limbs.WordSum.carry_add_le' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.WordSum.carry_add_le
 
 end Checks.EvmProofWideMul

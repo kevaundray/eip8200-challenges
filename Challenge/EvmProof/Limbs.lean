@@ -86,6 +86,12 @@ namespace WordSum
 def value (sum : WordSum) : Nat :=
   sum.word.toNat + radix * sum.carry.toNat
 
+/-- Append one source-style wrapped addition to an existing word/carry state. -/
+def add (sum : WordSum) (term : UInt256) : WordSum :=
+  let result := sum.word + term
+  let overflow := UInt256.lt result sum.word
+  { word := result, carry := sum.carry + overflow }
+
 end WordSum
 
 /-- Add three EVM words exactly as the source does: two wrapped `ADD`s and the
@@ -329,6 +335,41 @@ theorem addThree256_carry_lt_three (x y z : UInt256) :
   simp only [Challenge.EvmProof.Word.word_toNat_add,
     Challenge.EvmProof.Word.word_toNat_lt]
   split_ifs <;> norm_num
+
+theorem WordSum.value_add (sum : WordSum) (term : UInt256)
+    (hcarry : sum.carry.toNat + 1 < radix) :
+    (sum.add term).value = sum.value + term.toNat := by
+  unfold WordSum.add WordSum.value
+  dsimp only
+  simp only [Challenge.EvmProof.Word.word_toNat_add,
+    Challenge.EvmProof.Word.word_toNat_lt]
+  rw [show 2 ^ 256 = radix by rfl]
+  have hsumWord := sum.word.val.isLt
+  have hterm := term.val.isLt
+  change sum.word.toNat < radix at hsumWord
+  change term.toNat < radix at hterm
+  have hword : sum.word.toNat + term.toNat < 2 * radix := by
+    omega
+  rw [mod_eq_cond_sub hword]
+  by_cases hoverflow : sum.word.toNat + term.toNat < radix
+  · rw [if_pos hoverflow, if_neg (by omega), Nat.add_zero,
+      Nat.mod_eq_of_lt (by omega)]
+    omega
+  · rw [if_neg hoverflow, if_pos (by omega),
+      Nat.mod_eq_of_lt hcarry]
+    rw [Nat.mul_add, Nat.mul_one]
+    omega
+
+theorem WordSum.carry_add_le (sum : WordSum) (term : UInt256)
+    (hcarry : sum.carry.toNat + 1 < radix) :
+    (sum.add term).carry.toNat ≤ sum.carry.toNat + 1 := by
+  unfold WordSum.add
+  dsimp only
+  simp only [Challenge.EvmProof.Word.word_toNat_add,
+    Challenge.EvmProof.Word.word_toNat_lt]
+  rw [show 2 ^ 256 = radix by rfl]
+  split_ifs <;> rw [Nat.mod_eq_of_lt (by omega)]
+  omega
 
 /-- The high-word identity behind the EVM `mul`/`mulmod (base - 1)` trick.
 The conditional subtraction is exactly the pair of wrapped `SUB`s used by the
