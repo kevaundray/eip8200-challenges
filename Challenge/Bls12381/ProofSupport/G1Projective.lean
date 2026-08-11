@@ -1,5 +1,4 @@
-import Challenge.Bls12381.ProofSupport.Fp
-import Mathlib.Tactic.NormNum
+import Challenge.Bls12381.ProofSupport.PrimeCertificate
 
 set_option warningAsError true
 
@@ -10,33 +9,43 @@ namespace Challenge.Bls12381.ProofSupport.G1Projective
 open EvmSemantics.Crypto.Bls12381
 
 structure Point where
-  x : EvmSemantics.Crypto.Bls12381.Fp
-  y : EvmSemantics.Crypto.Bls12381.Fp
-  z : EvmSemantics.Crypto.Bls12381.Fp
+  x : PrimeField.LawfulFp
+  y : PrimeField.LawfulFp
+  z : PrimeField.LawfulFp
 deriving DecidableEq, Repr
 
 def infinity : Point := { x := 0, y := 1, z := 0 }
 
-def affine : EvmSemantics.Crypto.Bls12381.Point → Point
+/-- Embed the pinned affine `Fin p` wire carrier into lawful Jacobian
+coordinates. -/
+def ofWire : EvmSemantics.Crypto.Bls12381.Point → Point
   | .infinity => infinity
-  | .affine x y => { x, y, z := 1 }
+  | .affine x y =>
+      { x := PrimeField.finEquiv x, y := PrimeField.finEquiv y, z := 1 }
 
-def toAffine (point : Point) : EvmSemantics.Crypto.Bls12381.Point :=
+/-- Convert lawful Jacobian coordinates back to the pinned affine wire
+carrier.  Inversion is the certified `ZMod p` field inverse. -/
+def toWire (point : Point) : EvmSemantics.Crypto.Bls12381.Point :=
   if point.z = 0 then .infinity
-  else if point.z = 1 then .affine point.x point.y
+  else if point.z = 1 then
+    .affine (PrimeField.finEquiv.symm point.x) (PrimeField.finEquiv.symm point.y)
   else
     let zInv := point.z⁻¹
-    .affine (point.x * zInv ^ 2) (point.y * zInv ^ 3)
+    .affine (PrimeField.finEquiv.symm (point.x * zInv ^ 2))
+      (PrimeField.finEquiv.symm (point.y * zInv ^ 3))
+
+abbrev affine := ofWire
+abbrev toAffine := toWire
 
 @[simp] theorem infinity_toAffine : toAffine infinity = .infinity := by
-  simp [toAffine, infinity]
+  simp [toAffine, toWire, infinity]
 
 @[simp] theorem affine_toAffine (point : EvmSemantics.Crypto.Bls12381.Point) :
     toAffine (affine point) = point := by
-  have hp : EvmSemantics.Crypto.Bls12381.p ≠ 1 := by
-    norm_num [EvmSemantics.Crypto.Bls12381.p,
-      EvmSemantics.Crypto.Bls12381.absU]
-  cases point <;> simp [affine, toAffine, infinity, hp]
+  cases point <;> simp [affine, toAffine, ofWire, toWire, infinity]
+
+@[simp] theorem toWire_ofWire (point : EvmSemantics.Crypto.Bls12381.Point) :
+    toWire (ofWire point) = point := affine_toAffine point
 
 /-- Jacobian doubling for the `a = 0` BLS12-381 G1 curve.  The `y = 0`
 branch is the vertical tangent and therefore returns infinity explicitly. -/
@@ -99,11 +108,5 @@ def add (left right : Point) : Point :=
 @[simp] theorem add_infinity_of_z_eq_zero (point : Point) (hz : point.z = 0) :
     add point infinity = infinity := by
   simp [add, infinity, hz]
-
-/-- The affine semantic bridge requires a cancellation theorem for the pinned
-`Fin p` inverse.  Keeping that dependency explicit prevents the projective
-algorithm from silently calling the semantic affine operation. -/
-def InverseLaw : Prop :=
-  ∀ a : EvmSemantics.Crypto.Bls12381.Fp, a ≠ 0 → a * a⁻¹ = 1
 
 end Challenge.Bls12381.ProofSupport.G1Projective

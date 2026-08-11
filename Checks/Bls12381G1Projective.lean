@@ -6,6 +6,11 @@ namespace Checks.Bls12381G1Projective
 
 open Challenge.Bls12381.ProofSupport.G1Projective
 
+example (point : EvmSemantics.Crypto.Bls12381.Point) :
+    toWire (ofWire point) = point := toWire_ofWire point
+
+#print axioms toWire_ofWire
+
 example (point : Point) : add infinity point = point := infinity_add point
 example (point : Point) (hz : point.z ≠ 0) : add point infinity = point :=
   add_infinity_of_z_ne_zero point hz
