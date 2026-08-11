@@ -1,6 +1,7 @@
 import Challenge.Bls12381G1Add.ProofSupport.Yul
 import Challenge.Bls12381G1Add.Reference.Bytecode
 import Challenge.Bls12381G1Add.Reference.Proofs.FrozenBlock
+import Challenge.Bls12381G1Add.Reference.Proofs.FrozenAssembly
 import YulEvmCompiler.Optimizer.Implementation.Pipeline
 
 set_option warningAsError true
@@ -52,5 +53,47 @@ def referenceAssembly : List Asm :=
 theorem referenceCompiled_compileProgram :
     compileProgram referenceCompiledBlock = some referenceAssembly := by
   exact Option.eq_some_of_isSome referenceCompileProgramSucceeded
+
+/-- Assembly computed from the frozen normalized block, retained for the
+source/compiler regression check. -/
+def referenceComputedOptimizedAssembly : List Asm :=
+  optimizeAsm referenceAssembly
+
+/-- Exact peephole-optimized labeled assembly used by byte-level lowering. -/
+def referenceOptimizedAssembly : List Asm := frozenReferenceAssembly
+
+/-- Kernel-checked equality from the frozen normalized source block through
+the transparent source compiler and peephole pass to the explicit assembly. -/
+theorem referenceComputedOptimizedAssembly_eq :
+    referenceComputedOptimizedAssembly = referenceOptimizedAssembly := by
+  set_option maxRecDepth 20000 in
+    with_unfolding_all decide
+
+/-- Compact, proof-facing form of a stack-layout certificate entry.  Program
+suffixes are reconstructed from their length instead of being duplicated in
+the frozen data. -/
+abbrev CompactStackEntry := Nat × FLayout × Nat × FLayout
+
+/-- Stable numeric encoding used only to keep the frozen certificate compact. -/
+def encodeStackSlot : FSlot → Nat
+  | .word => 0
+  | .ret => 1
+  | .retTo l => l + 2
+
+def decodeStackSlot : Nat → FSlot
+  | 0 => .word
+  | 1 => .ret
+  | n + 2 => .retTo n
+
+abbrev FrozenStackEntry := Nat × List Nat × Nat × List Nat
+
+def thawStackEntry (e : FrozenStackEntry) : CompactStackEntry :=
+  (e.1, e.2.1.map decodeStackSlot, e.2.2.1,
+    e.2.2.2.map decodeStackSlot)
+
+def materializeStackCertificate (prog : List Asm)
+    (entries : List CompactStackEntry) : CertData where
+  entries := entries.map fun e =>
+    (e.1, prog.drop (prog.length - e.1), e.2.1, e.2.2.1, e.2.2.2)
 
 end Challenge.Bls12381G1Add.Reference.Proofs.Compilation
