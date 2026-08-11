@@ -75,6 +75,35 @@ example (hi lo : U256) :
 #guard_msgs in
 #print axioms Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpZeroValue
 
+example (ahi alo bhi blo : U256) (yst : EvmState) :
+    Interp.evalExpr Challenge.EvmProof.modexpExec 64
+      [hoist Challenge.EvmProof.modexpExec.toDialect
+        Challenge.Bls12381G1Add.Reference.Proofs.Compilation.referenceCompiledBlock]
+      [("ahi", ahi), ("alo", alo), ("bhi", bhi), ("blo", blo)] yst
+      (.call "\x003" [.var "ahi", .var "alo", .var "bhi", .var "blo"]) =
+    .ok (.vals [Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpEqValue
+      ahi alo bhi blo] yst) :=
+  Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpEq
+    ahi alo bhi blo yst
+
+example (ahi alo bhi blo : U256) :
+    YulEvmCompiler.conv
+      (Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpEqValue
+        ahi alo bhi blo) =
+    EvmSemantics.UInt256.land
+      (EvmSemantics.UInt256.eq (YulEvmCompiler.conv ahi) (YulEvmCompiler.conv bhi))
+      (EvmSemantics.UInt256.eq (YulEvmCompiler.conv alo) (YulEvmCompiler.conv blo)) :=
+  Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpEqValue
+    ahi alo bhi blo
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpEq' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpEq
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpEqValue' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpEqValue
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpGeModulus' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpGeModulus

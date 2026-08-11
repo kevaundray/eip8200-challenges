@@ -39,6 +39,10 @@ def fpValidValue (hi lo : U256) : U256 :=
 def fpZeroValue (hi lo : U256) : U256 :=
   b2w (hi = 0) &&& b2w (lo = 0)
 
+/-- Source-word equality test over two pairs of decoded field limbs. -/
+def fpEqValue (ahi alo bhi blo : U256) : U256 :=
+  b2w (ahi = bhi) &&& b2w (alo = blo)
+
 theorem conv_fpGeModulusValue (hi lo : U256) :
     YulEvmCompiler.conv (fpGeModulusValue hi lo) =
     Challenge.Bls12381.ProofSupport.Fp.addNeedsCorrection
@@ -74,6 +78,14 @@ theorem conv_fpZeroValue (hi lo : U256) :
   unfold fpZeroValue
   rw [YulEvmCompiler.conv_and, YulEvmCompiler.conv_iszero,
     YulEvmCompiler.conv_iszero]
+
+theorem conv_fpEqValue (ahi alo bhi blo : U256) :
+    YulEvmCompiler.conv (fpEqValue ahi alo bhi blo) =
+    UInt256.land (UInt256.eq (YulEvmCompiler.conv ahi) (YulEvmCompiler.conv bhi))
+      (UInt256.eq (YulEvmCompiler.conv alo) (YulEvmCompiler.conv blo)) := by
+  unfold fpEqValue
+  rw [YulEvmCompiler.conv_and, YulEvmCompiler.conv_eq,
+    YulEvmCompiler.conv_eq]
 
 private def isFunctionDefinition {Op : Type} : Stmt Op → Bool
   | .funDef .. => true
@@ -175,6 +187,16 @@ theorem eval_fpZero (hi lo : U256) (yst : EvmState) :
       [("hi", hi), ("lo", lo)] yst
       (.call "\x002" [.var "hi", .var "lo"]) =
     .ok (.vals [fpZeroValue hi lo] yst) := by
+  rw [Interp.evalExpr]
+  rfl
+
+/-- The fourth frozen helper compares both decoded field limbs. -/
+theorem eval_fpEq (ahi alo bhi blo : U256) (yst : EvmState) :
+    Interp.evalExpr modexpExec 64
+      [hoist modexpExec.toDialect referenceCompiledBlock]
+      [("ahi", ahi), ("alo", alo), ("bhi", bhi), ("blo", blo)] yst
+      (.call "\x003" [.var "ahi", .var "alo", .var "bhi", .var "blo"]) =
+    .ok (.vals [fpEqValue ahi alo bhi blo] yst) := by
   rw [Interp.evalExpr]
   rfl
 
