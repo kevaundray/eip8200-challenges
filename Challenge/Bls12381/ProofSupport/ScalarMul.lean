@@ -113,6 +113,42 @@ theorem binary_preserves {Point : Type} (zero : Point)
         · rw [if_neg hodd]
           exact hrest
 
+/-- Lifting an invariant-preserving binary recursion to the subtype of valid
+points does not change its underlying executable point value. -/
+theorem binary_lift_val {Point : Type} (zero : Point)
+    (add : Point → Point → Point) (double : Point → Point)
+    (Valid : Point → Prop)
+    (hzero : Valid zero)
+    (hadd : ∀ left right, Valid left → Valid right → Valid (add left right))
+    (hdouble : ∀ point, Valid point → Valid (double point))
+    (scalar : Nat) (point : Point) (hpoint : Valid point) :
+    (binary (⟨zero, hzero⟩ : { point // Valid point })
+      (fun (left right : { point // Valid point }) =>
+        ⟨add left.1 right.1, hadd left.1 right.1 left.2 right.2⟩)
+      (fun (lifted : { point // Valid point }) =>
+        ⟨double lifted.1, hdouble lifted.1 lifted.2⟩)
+      scalar (⟨point, hpoint⟩ : { point // Valid point })).1 =
+      binary zero add double scalar point := by
+  induction scalar using Nat.strong_induction_on generalizing point with
+  | h scalar ih =>
+      by_cases hscalar : scalar = 0
+      · subst scalar
+        simp
+      · rw [binary_step _ _ _ scalar _ hscalar,
+          binary_step zero add double scalar point hscalar]
+        have hhalf : scalar / 2 < scalar :=
+          Nat.div_lt_self (Nat.zero_lt_of_ne_zero hscalar) (by omega)
+        by_cases hodd : scalar % 2 = 1
+        · rw [if_pos hodd, if_pos hodd]
+          change add
+              (binary _ _ _ (scalar / 2)
+                (⟨double point, hdouble point hpoint⟩ :
+                  { point // Valid point })).1 point =
+            add (binary zero add double (scalar / 2) (double point)) point
+          rw [ih (scalar / 2) hhalf (double point) (hdouble point hpoint)]
+        · rw [if_neg hodd, if_neg hodd]
+          exact ih (scalar / 2) hhalf (double point) (hdouble point hpoint)
+
 /-- Map the transparent binary recursion into the independent `nsmul`
 semantics of any additive monoid.  The hypotheses deliberately describe the
 map boundary rather than assuming group laws for the executable point type. -/

@@ -71,6 +71,27 @@ example (Valid : P → Prop)
     Valid (ScalarMul.binary zero add double scalar point) :=
   ScalarMul.binary_preserves zero add double Valid hzero hadd hdouble scalar point hpoint
 
+example (Valid : P → Prop)
+    (hzero : Valid zero)
+    (hadd : ∀ left right, Valid left → Valid right → Valid (add left right))
+    (hdouble : ∀ point, Valid point → Valid (double point))
+    (scalar : Nat) (point : P) (hpoint : Valid point) :
+    (ScalarMul.binary (⟨zero, hzero⟩ : { point // Valid point })
+      (fun (left right : { point // Valid point }) => ⟨add left.1 right.1,
+        hadd left.1 right.1 left.2 right.2⟩)
+      (fun (lifted : { point // Valid point }) =>
+        ⟨double lifted.1, hdouble lifted.1 lifted.2⟩)
+      scalar (⟨point, hpoint⟩ : { point // Valid point })).1 =
+      ScalarMul.binary zero add double scalar point :=
+  ScalarMul.binary_lift_val zero add double Valid hzero hadd hdouble
+    scalar point hpoint
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_lift_val' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.binary_lift_val
+
 /--
 info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_preserves' depends on axioms: [propext, Quot.sound]
 -/
