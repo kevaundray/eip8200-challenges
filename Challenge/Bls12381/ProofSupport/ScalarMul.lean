@@ -6,7 +6,16 @@ import Challenge.Bls12381.ProofSupport.CodecG2Core
 
 set_option warningAsError true
 
-/-! Shared inversion-free scalar multiplication algorithms. -/
+/-!
+# Shared naive scalar multiplication
+
+The trusted semantic theorem in this module is binary recursion by definition:
+`binary_even` and `binary_odd` universally characterize the implemented
+double-and-add operation.  This slice does not claim a connection to a
+separately defined repeated-addition/group action, because the local affine
+boundary currently proves curve preservation rather than the full group laws.
+It also makes no equality claim about the pinned opaque-inverse scalar code.
+-/
 
 namespace Challenge.Bls12381.ProofSupport.ScalarMul
 
@@ -106,11 +115,11 @@ theorem binary_preserves {Point : Type} (zero : Point)
 
 /-! ## BLS12-381 curve instantiations -/
 
-/-- Local EIP-correct G1 scalar multiplication. -/
+/-- Local binary G1 scalar operation used by the EIP adapter. -/
 def g1 (scalar : Nat) (point : G1Affine.Point) : G1Affine.Point :=
   binary G1Affine.infinity G1Affine.add G1Affine.double scalar point
 
-/-- Local EIP-correct G2 scalar multiplication. -/
+/-- Local binary G2 scalar operation used by the EIP adapter. -/
 def g2 (scalar : Nat) (point : G2Affine.Point) : G2Affine.Point :=
   binary G2Affine.infinity G2Affine.add G2Affine.double scalar point
 
@@ -121,6 +130,16 @@ def g1Eip (scalar : Scalar256) (point : G1Affine.Point) : G1Affine.Point :=
 /-- Restrict G2 scalar multiplication to an exact EIP 256-bit scalar. -/
 def g2Eip (scalar : Scalar256) (point : G2Affine.Point) : G2Affine.Point :=
   g2 scalar.val point
+
+@[simp] theorem g1Eip_of_decode {input : ByteArray} {offset scalar : Nat}
+    (hdecode : Codec.decodeScalar input offset = some scalar)
+    (point : G1Affine.Point) :
+    g1Eip (scalar256OfDecode hdecode) point = g1 scalar point := rfl
+
+@[simp] theorem g2Eip_of_decode {input : ByteArray} {offset scalar : Nat}
+    (hdecode : Codec.decodeScalar input offset = some scalar)
+    (point : G2Affine.Point) :
+    g2Eip (scalar256OfDecode hdecode) point = g2 scalar point := rfl
 
 @[simp] theorem g1_zero (point : G1Affine.Point) :
     g1 0 point = G1Affine.infinity := binary_zero _ _ _ point

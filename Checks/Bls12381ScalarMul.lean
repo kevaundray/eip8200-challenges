@@ -64,6 +64,20 @@ example {input : ByteArray} {offset scalar : Nat}
     (ScalarMul.scalar256OfDecode hdecode).val = scalar :=
   ScalarMul.scalar256OfDecode_val hdecode
 
+example {input : ByteArray} {offset scalar : Nat}
+    (hdecode : Codec.decodeScalar input offset = some scalar)
+    (point : G1Affine.Point) :
+    ScalarMul.g1Eip (ScalarMul.scalar256OfDecode hdecode) point =
+      ScalarMul.g1 scalar point :=
+  ScalarMul.g1Eip_of_decode hdecode point
+
+example {input : ByteArray} {offset scalar : Nat}
+    (hdecode : Codec.decodeScalar input offset = some scalar)
+    (point : G2Affine.Point) :
+    ScalarMul.g2Eip (ScalarMul.scalar256OfDecode hdecode) point =
+      ScalarMul.g2 scalar point :=
+  ScalarMul.g2Eip_of_decode hdecode point
+
 example (point : G1Affine.Point) :
     ScalarMul.g1 0 point = G1Affine.infinity := ScalarMul.g1_zero point
 example (point : G1Affine.Point) : ScalarMul.g1 1 point = point :=
@@ -222,5 +236,17 @@ info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g2Wire_valid' depends on axioms
 -/
 #guard_msgs in
 #print axioms ScalarMul.g2Wire_valid
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g1Eip_of_decode' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g1Eip_of_decode
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g2Eip_of_decode' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g2Eip_of_decode
 
 end Checks.Bls12381ScalarMul
