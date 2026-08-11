@@ -704,4 +704,104 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.toField_montgomeryDecode_encode' depen
 #guard_msgs in
 #print axioms Fp.montgomeryDecode_encode
 
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryN0Inv_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.montgomeryN0Inv_value
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryR2Lo_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.montgomeryR2Lo_value
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryR2Hi_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.montgomeryR2Hi_value
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryAccumulateZeroTop_lt' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryAccumulateZeroTop_lt
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryAccumulateZero_top_value' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryAccumulateZero_top_value
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReductionMultiplier_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.montgomeryReductionMultiplier_value
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReductionLowProduct_lo_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.montgomeryReductionLowProduct_lo_value
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReductionCarry_scaled' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryReductionCarry_scaled
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReduction_reconstruct_numerator' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryReduction_reconstruct_numerator
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReduceStep_t1_value_of_top_lt' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.montgomeryReduceStep_t1_value_of_top_lt
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReduceStep_t1_value' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryReduceStep_t1_value
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryInitial_t2_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.montgomeryInitial_t2_le
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryTopConstant_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.montgomeryTopConstant_lt
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryNextTopConstant_lt' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryNextTopConstant_lt
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomerySecondTopConstant_lt' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomerySecondTopConstant_lt
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_montMul2_words' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.value_montMul2_words
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_montgomeryR2' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.value_montgomeryR2
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_montgomeryOneInput' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.value_montgomeryOneInput
+
 end Checks.Bls12381FpMontgomery
