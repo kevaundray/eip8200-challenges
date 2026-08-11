@@ -16,6 +16,18 @@ example (a : LawfulFp2.Carrier) (ha : a ≠ 0) : a * a⁻¹ = 1 :=
 #print axioms LawfulFp2.toWire_ofWire
 #print axioms LawfulFp2.mul_inv_cancel
 
+example
+    (invert : Fp.Limbs → Fp.Limbs)
+    (a : Fp2.Repr)
+    (hinvert : PrimeField.finEquiv (Fp.toField (invert
+      (Challenge.Bls12381.ProofSupport.Fp2.norm a))) =
+      (PrimeField.finEquiv (Fp.toField
+        (Challenge.Bls12381.ProofSupport.Fp2.norm a)))⁻¹) :
+    Fp2.toLawful (Fp2.invWith invert a) = (Fp2.toLawful a)⁻¹ :=
+  Fp2.toLawful_invWith invert a hinvert
+
+#print axioms Fp2.toLawful_invWith
+
 example : Challenge.Bls12381.ProofSupport.Fp2.toField
     Challenge.Bls12381.ProofSupport.Fp2.zero = 0 :=
   Challenge.Bls12381.ProofSupport.Fp2.toField_zero

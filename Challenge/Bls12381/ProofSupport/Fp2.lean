@@ -15,6 +15,10 @@ deriving DecidableEq
 def toField (a : Repr) : EvmSemantics.Crypto.Bls12381.Fp2 :=
   { c0 := Fp.toField a.c0, c1 := Fp.toField a.c1 }
 
+/-- Lawful algebraic interpretation of the executable two-limb carrier. -/
+def toLawful (a : Repr) : LawfulFp2.Carrier :=
+  LawfulFp2.ofWire (toField a)
+
 def ofField (a : EvmSemantics.Crypto.Bls12381.Fp2) : Repr :=
   { c0 := Fp.ofField a.c0, c1 := Fp.ofField a.c1 }
 
@@ -148,6 +152,20 @@ theorem refines_invWith (invert : Fp.Limbs → Fp.Limbs) (a : Repr)
       EvmSemantics.Crypto.Bls12381.Fp2) = _root_.Fp2.inv (toField a)
   simp [hinvert, toField_norm, toField, _root_.Fp2.inv,
     _root_.Fp2.norm]
+
+/-- The component inversion algorithm refines the lawful quadratic-field
+inverse.  Its only premise is the base-field inversion algorithm's lawful
+refinement, never equality to the pinned opaque `FF.modInv`. -/
+theorem toLawful_invWith (invert : Fp.Limbs → Fp.Limbs) (a : Repr)
+    (hinvert : PrimeField.finEquiv (Fp.toField (invert (norm a))) =
+      (PrimeField.finEquiv (Fp.toField (norm a)))⁻¹) :
+    toLawful (invWith invert a) = (toLawful a)⁻¹ := by
+  simp [norm] at hinvert
+  apply QuadraticAlgebra.ext
+  · simp [toLawful, LawfulFp2.ofWire, toField, invWith, norm,
+      QuadraticAlgebra.inv_def, QuadraticAlgebra.norm_def, hinvert, mul_comm]
+  · simp [toLawful, LawfulFp2.ofWire, toField, invWith, norm,
+      QuadraticAlgebra.inv_def, QuadraticAlgebra.norm_def, hinvert, mul_comm]
 
 theorem refines_invSpecRepr (a : Repr) :
     Refines (invSpecRepr a) (toField a)⁻¹ := refines_ofField _
