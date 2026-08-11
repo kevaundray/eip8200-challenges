@@ -67,6 +67,10 @@ import Challenge.Bls12381.ProofSupport.MsmSubgroup
 import Challenge.Bls12381.ProofSupport.MapToG1
 import Challenge.Bls12381.ProofSupport.MapToG1SqrtRatio
 import Challenge.Bls12381.ProofSupport.MapToG1Sswu
+import Challenge.Bls12381.ProofSupport.MapToG1Isogeny
+import Challenge.Bls12381.ProofSupport.MapToG1IsogenyIdentity
+import Challenge.Bls12381.ProofSupport.MapToG1IsogenyLawful
+import Challenge.Bls12381.ProofSupport.MapToG1Map
 import Challenge.Bls12381.ProofSupport.PrimeField
 import Challenge.Bls12381.ProofSupport.PrimeCertificate
 import Challenge.Bls12381.ProofSupport.Subgroup

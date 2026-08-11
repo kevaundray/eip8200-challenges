@@ -36,4 +36,45 @@ theorem map_toWire_valid (u : Field) :
   | affine x y =>
       exact G1Affine.onCurve_toWire (by simpa [hpoint] using hcurve)
 
+/-- Exact shared EIP-2537 decoded-value adapter. The outer size check is
+deliberate: the field codec is framed and therefore also accepts a valid
+64-byte window inside a larger byte array, whereas the precompile input must
+be exactly one 64-byte field element. -/
+def run (input : ByteArray) : Option ByteArray := do
+  if input.size ≠ Codec.fpBytes then none
+  let u ← Codec.decodeFp input 0
+  pure (Codec.encodeG1 (G1Affine.toWire (map (PrimeField.finEquiv u))))
+
+theorem run_eq_some_iff (input output : ByteArray) :
+    run input = some output ↔
+      ∃ u, input.size = Codec.fpBytes ∧ Codec.decodeFp input 0 = some u ∧
+        output = Codec.encodeG1 (G1Affine.toWire (map (PrimeField.finEquiv u))) := by
+  simp [run]
+  intro _
+  cases hdecode : Codec.decodeFp input 0 with
+  | none => simp
+  | some u => simp [eq_comm]
+
+theorem run_eq_none_of_wrong_length {input : ByteArray}
+    (hsize : input.size ≠ Codec.fpBytes) : run input = none := by
+  have hsize' : input.size ≠ 64 := by simpa [Codec.fpBytes] using hsize
+  simp [run, Codec.fpBytes, hsize']
+
+theorem run_eq_none_of_padding_nonzero {input : ByteArray} {i : Nat}
+    (hsize : input.size = Codec.fpBytes) (hi : i < 16)
+    (hnonzero : input[i]! ≠ 0) : run input = none := by
+  have hdecode : Codec.decodeFp input 0 = none :=
+    Codec.decodeFp_eq_none_of_padding_nonzero
+      (offset := 0) (by simp [hsize]) hi (by simpa using hnonzero)
+  simp [run, hsize, hdecode]
+
+theorem run_eq_none_of_value_ge {input : ByteArray}
+    (hsize : input.size = Codec.fpBytes)
+    (hvalue : EvmSemantics.Crypto.Bls12381.p ≤ Codec.fpWindowValue input 0) :
+    run input = none := by
+  have hdecode : Codec.decodeFp input 0 = none :=
+    Codec.decodeFp_eq_none_of_value_ge
+      (offset := 0) (by simp [hsize]) hvalue
+  simp [run, hsize, hdecode]
+
 end Challenge.Bls12381.ProofSupport.MapToG1
