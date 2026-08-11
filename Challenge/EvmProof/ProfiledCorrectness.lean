@@ -23,14 +23,21 @@ open YulEvmCompiler
 variable [model : ExternalModel]
 local notation "yulD" => evmWithExternal model.calls model.creates
 
-/-- End-to-end compiler correctness for a model whose successful calls carry
-and preserve the target caller profile. -/
-theorem profiled_compile_correct {config : PrecompileConfig}
+/-! ### Correctness from explicit compiler certificates -/
+
+/-- End-to-end correctness from the transparent source compiler, explicit
+lowering evidence, and an independently checked stack bound.  Unlike
+`profiled_compile_correct`, this theorem does not ask the pinned partial
+`stackOK2` analyzer to compute. -/
+theorem profiled_compiledAssembly_correct {config : PrecompileConfig}
     (hcalls : ProfiledCallsRealized model.calls config)
     (hcreates : model.creates = YulSemantics.EVM.ExternalCreates.none)
-    {prog : YulSemantics.Block Op} {is : List Instr}
-    (hcomp : compile prog = some is)
+    {prog : YulSemantics.Block Op} {asm : List Asm} {is : List Instr}
+    (hcompile : compileProgram prog = some asm)
+    (hlow : lowerProg (optimizeAsm asm) = some is)
     {yst0 : EvmState} {V' : VEnv yulD} {yst' : EvmState} {o : Outcome}
+    (hbound : ∀ mid, ASteps (optimizeAsm asm)
+      ⟨optimizeAsm asm, [], yst0⟩ mid → mid.stk.length ≤ 1023)
     (hrun : YulSemantics.Run yulD prog yst0 V' yst' o) :
     ∃ b : Nat, ∀ s0 : State,
       FrameOK (assemble is) s0 → StateMatch yst0 s0 →
@@ -39,17 +46,8 @@ theorem profiled_compile_correct {config : PrecompileConfig}
       ∃ s', Steps s0 s' ∧ s'.callStack = [] ∧ StateMatch yst' s' ∧
         ((o = .normal ∧ s'.halt = .Success ∧ s'.hReturn = .empty) ∨
          (o = .halt ∧ HaltedMatch yst' s')) := by
-  rcases hpa : compileProgram prog with _ | asm
-  · simp [compile, hpa] at hcomp
-  · simp only [compile, hpa, bind, Option.bind] at hcomp
-    obtain ⟨hstk, hcomp⟩ :
-        stackOK2 (optimizeAsm asm) = true ∧
-          lowerProg (optimizeAsm asm) = some is := by
-      split at hcomp
-      · next h => exact ⟨h, hcomp⟩
-      · exact absurd hcomp (by simp)
     obtain ⟨scope, n0, Γ', n', hh, hnd, hcs, hwf⟩ :=
-      compileProgramAsm_inv hpa
+      compileProgramAsm_inv hcompile
     have hnodup : (labelDefs asm).Nodup := (wfCheck_iff.mp hwf).nodup
     cases hrun with
     | block hbody =>
@@ -59,7 +57,7 @@ theorem profiled_compile_correct {config : PrecompileConfig}
           (YulSemantics.hoist yulD prog :: []) [scope] :=
         SimA.hoist_ok SimA.FEnvOK.nil hh hnd hcs (List.infix_refl asm)
       have hlen : (assembleBytes is).length = codeSize (optimizeAsm asm) :=
-        lowerFrag_length hcomp
+        lowerFrag_length hlow
       have hsmallO : codeSize (optimizeAsm asm) < 256 ^ labelWidth := by
         have hopt := codeSize_optimizeAsm_le asm
         have hsmall := (wfCheck_iff.mp hwf).small
@@ -70,9 +68,9 @@ theorem profiled_compile_correct {config : PrecompileConfig}
         have hsteps0 := (hsimS hΦ0) [] [] [] (by simp)
         simp only [List.append_nil] at hsteps0
         have hstepsO := Peephole.optimizeAsm_asteps hnodup hsteps0
-        obtain ⟨bnd, Hb⟩ := profiled_asteps_sim hcalls hcreates hcomp hsmallO
+        obtain ⟨bnd, Hb⟩ := profiled_asteps_sim hcalls hcreates hlow hsmallO
           hstepsO (List.suffix_refl (optimizeAsm asm))
-          (stackOK2_run_bound hstk yst0)
+          hbound
         refine ⟨bnd, ?_⟩
         intro s0 hf hm hprofile hpc hstk0 hgas
         have hcm0 : ConfMatch (optimizeAsm asm) is
@@ -89,7 +87,7 @@ theorem profiled_compile_correct {config : PrecompileConfig}
         obtain ⟨s2, hstep2, hsm2, hcs2, hhalt2, hret2⟩ :=
           stopStep (is := is) hframe1 hcm1.smatch
             (assemble_eq_mkCode is) hpc1 (by
-              have hb := stackOK2_run_bound hstk yst0 _ hstepsO
+              have hb := hbound _ hstepsO
               have hp : Operation.pushArity Operation.STOP = 0 := rfl
               have hq : Operation.popArity Operation.STOP = 0 := rfl
               dsimp only at hb
@@ -104,12 +102,12 @@ theorem profiled_compile_correct {config : PrecompileConfig}
         simp only [List.append_nil] at hsteps0
         obtain ⟨confO, hstepsO, hhaltO⟩ :=
           Peephole.optimizeAsm_ahalt hnodup hsteps0 hhalt0
-        obtain ⟨b1, H1⟩ := profiled_asteps_sim hcalls hcreates hcomp
+        obtain ⟨b1, H1⟩ := profiled_asteps_sim hcalls hcreates hlow
           hsmallO hstepsO (List.suffix_refl (optimizeAsm asm))
-          (stackOK2_run_bound hstk yst0)
-        obtain ⟨b2, H2⟩ := ahalt_sim hcomp hhaltO
+          hbound
+        obtain ⟨b2, H2⟩ := ahalt_sim hlow hhaltO
           (hstepsO.suffix (List.suffix_refl (optimizeAsm asm)))
-          (stackOK2_run_bound hstk yst0 confO hstepsO)
+          (hbound confO hstepsO)
         refine ⟨b1 + b2, ?_⟩
         intro s0 hf hm hprofile hpc hstk0 hgas
         have hcm0 : ConfMatch (optimizeAsm asm) is
@@ -131,5 +129,33 @@ theorem profiled_compile_correct {config : PrecompileConfig}
       | leave =>
           rcases hout with ⟨fc, hfc, -⟩
           exact absurd hfc (by simp)
+
+/-- End-to-end compiler correctness for a model whose successful calls carry
+and preserve the target caller profile. -/
+theorem profiled_compile_correct {config : PrecompileConfig}
+    (hcalls : ProfiledCallsRealized model.calls config)
+    (hcreates : model.creates = YulSemantics.EVM.ExternalCreates.none)
+    {prog : YulSemantics.Block Op} {is : List Instr}
+    (hcomp : compile prog = some is)
+    {yst0 : EvmState} {V' : VEnv yulD} {yst' : EvmState} {o : Outcome}
+    (hrun : YulSemantics.Run yulD prog yst0 V' yst' o) :
+    ∃ b : Nat, ∀ s0 : State,
+      FrameOK (assemble is) s0 → StateMatch yst0 s0 →
+      CallerProfile config s0 →
+      s0.pc = UInt256.ofNat 0 → s0.stack = [] → b ≤ s0.gasAvailable →
+      ∃ s', Steps s0 s' ∧ s'.callStack = [] ∧ StateMatch yst' s' ∧
+        ((o = .normal ∧ s'.halt = .Success ∧ s'.hReturn = .empty) ∨
+         (o = .halt ∧ HaltedMatch yst' s')) := by
+  rcases hcompile : compileProgram prog with _ | asm
+  · simp [compile, hcompile] at hcomp
+  · simp only [compile, hcompile, bind, Option.bind] at hcomp
+    obtain ⟨hstk, hlow⟩ :
+        stackOK2 (optimizeAsm asm) = true ∧
+          lowerProg (optimizeAsm asm) = some is := by
+      split at hcomp
+      · next h => exact ⟨h, hcomp⟩
+      · exact absurd hcomp (by simp)
+    exact profiled_compiledAssembly_correct hcalls hcreates hcompile hlow
+      (stackOK2_run_bound hstk yst0) hrun
 
 end Challenge.EvmProof
