@@ -19,6 +19,16 @@ example (a b : Fp12.Repr) :
 
 #print axioms Fp12.toLawful_mul
 
+example (invert : Fp6.Repr → Fp6.Repr) (a : Fp12.Repr)
+    (hinvert : Fp6.toLawful (invert
+      (Challenge.Bls12381.ProofSupport.Fp12.invNorm a)) =
+      LawfulFp6.inv (Fp6.toLawful
+        (Challenge.Bls12381.ProofSupport.Fp12.invNorm a))) :
+    Fp12.toLawful (Fp12.invWith invert a) = LawfulFp12.inv (Fp12.toLawful a) :=
+  Fp12.toLawful_invWith invert a hinvert
+
+#print axioms Fp12.toLawful_invWith
+
 example : Challenge.Bls12381.ProofSupport.Fp12.toField
     Challenge.Bls12381.ProofSupport.Fp12.zero = 0 :=
   Challenge.Bls12381.ProofSupport.Fp12.toField_zero

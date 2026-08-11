@@ -80,6 +80,19 @@ def invWith (invert : Fp6.Repr → Fp6.Repr) (a : Repr) : Repr :=
   { c0 := Fp6.mul a.c0 normInv
     c1 := Fp6.neg (Fp6.mul a.c1 normInv) }
 
+@[simp] theorem toLawful_invNorm (a : Repr) :
+    Fp6.toLawful (invNorm a) = LawfulFp12.norm (toLawful a) := by
+  simp [invNorm, LawfulFp12.norm, toLawful]
+
+/-- The executable Fp12 inverse formula refines the lawful component inverse
+when its supplied Fp6 inversion primitive refines the lawful Fp6 formula. -/
+theorem toLawful_invWith (invert : Fp6.Repr → Fp6.Repr) (a : Repr)
+    (hinvert : Fp6.toLawful (invert (invNorm a)) =
+      LawfulFp6.inv (Fp6.toLawful (invNorm a))) :
+    toLawful (invWith invert a) = LawfulFp12.inv (toLawful a) := by
+  apply LawfulFp12.Carrier.ext <;>
+    simp [toLawful, invWith, LawfulFp12.inv, hinvert]
+
 /-- Specification adapter; not an executable implementation boundary. -/
 def invSpecRepr (a : Repr) : Repr := ofField (_root_.Fp12.inv (toField a))
 

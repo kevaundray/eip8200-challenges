@@ -20,6 +20,20 @@ def mul (a b : Carrier) : Carrier :=
   { c0 := LawfulFp6.add v0 (LawfulFp6.mulByV v1)
     c1 := LawfulFp6.sub (LawfulFp6.sub t v0) v1 }
 
+def one : Carrier := { c0 := LawfulFp6.one, c1 := LawfulFp6.zero }
+
+/-- Quadratic norm `c0² - v·c1²` used by the lawful component inverse. -/
+def norm (a : Carrier) : LawfulFp6.Carrier :=
+  LawfulFp6.sub (LawfulFp6.mul a.c0 a.c0)
+    (LawfulFp6.mulByV (LawfulFp6.mul a.c1 a.c1))
+
+/-- Lawful quadratic-extension inverse formula, expressed only through the
+component arithmetic of the local field tower. -/
+def inv (a : Carrier) : Carrier :=
+  let normInv := LawfulFp6.inv (norm a)
+  { c0 := LawfulFp6.mul a.c0 normInv
+    c1 := LawfulFp6.neg (LawfulFp6.mul a.c1 normInv) }
+
 def ofWire (a : EvmSemantics.Crypto.Bls12381.Fp12) : Carrier :=
   { c0 := LawfulFp6.ofWire a.c0
     c1 := LawfulFp6.ofWire a.c1 }

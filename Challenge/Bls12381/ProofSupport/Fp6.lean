@@ -117,6 +117,17 @@ def square (a : Repr) : Repr :=
     c1 := Fp2.add (Fp2.add s1 s1) (mulByXi s5)
     c2 := Fp2.add (Fp2.add s4 s4) s3 }
 
+@[simp] theorem toLawful_square (a : Repr) :
+    toLawful (square a) = LawfulFp6.mul (toLawful a) (toLawful a) := by
+  apply LawfulFp6.Carrier.ext
+  · simp [square, toLawful, LawfulFp6.mul]
+    ring_nf
+    simp
+  · simp [square, toLawful, LawfulFp6.mul]
+    ring
+  · simp [square, toLawful, LawfulFp6.mul]
+    ring
+
 /-- Multiplication by the cubic generator `v`. -/
 def mulByV (a : Repr) : Repr :=
   { c0 := mulByXi a.c2, c1 := a.c0, c2 := a.c1 }
