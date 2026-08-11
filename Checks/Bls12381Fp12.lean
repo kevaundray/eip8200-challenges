@@ -6,6 +6,12 @@ namespace Checks.Bls12381Fp12
 
 open Challenge.Bls12381.ProofSupport
 
+example (a : EvmSemantics.Crypto.Bls12381.Fp12) :
+    LawfulFp12.toWire (LawfulFp12.ofWire a) = a :=
+  LawfulFp12.toWire_ofWire a
+
+#print axioms LawfulFp12.toWire_ofWire
+
 example : Challenge.Bls12381.ProofSupport.Fp12.toField
     Challenge.Bls12381.ProofSupport.Fp12.zero = 0 :=
   Challenge.Bls12381.ProofSupport.Fp12.toField_zero
