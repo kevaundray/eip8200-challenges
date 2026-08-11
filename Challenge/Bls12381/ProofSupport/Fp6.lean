@@ -81,6 +81,13 @@ def mulByV (a : Repr) : Repr :=
 def mulByFp2 (a : Repr) (k : Fp2.Repr) : Repr :=
   { c0 := Fp2.mul a.c0 k, c1 := Fp2.mul a.c1 k, c2 := Fp2.mul a.c2 k }
 
+/-- Component Frobenius map for the cubic extension, parameterized by the two
+gamma constants selected by the requested Frobenius power. -/
+def frobenius (gammaV gammaV2 : Fp2.Repr) (a : Repr) : Repr :=
+  { c0 := Fp2.conj a.c0
+    c1 := Fp2.mul gammaV (Fp2.conj a.c1)
+    c2 := Fp2.mul gammaV2 (Fp2.conj a.c2) }
+
 /-- Sparse multiplication by `(b0 + b1·v)`. -/
 def mulBy01 (a : Repr) (b0 b1 : Fp2.Repr) : Repr :=
   let aa := Fp2.mul a.c0 b0
@@ -228,6 +235,12 @@ theorem refines_invSpecRepr (a : Repr) :
 @[simp] theorem toField_mulByFp2 (a : Repr) (k : Fp2.Repr) :
     toField (mulByFp2 a k) = _root_.Fp6.mulByFp2 (toField a) (Fp2.toField k) := by
   simp [mulByFp2, toField, _root_.Fp6.mulByFp2]
+@[simp] theorem toField_frobenius (gammaV gammaV2 : Fp2.Repr) (a : Repr) :
+    toField (frobenius gammaV gammaV2 a) =
+      { c0 := _root_.Fp2.conj (Fp2.toField a.c0)
+        c1 := Fp2.toField gammaV * _root_.Fp2.conj (Fp2.toField a.c1)
+        c2 := Fp2.toField gammaV2 * _root_.Fp2.conj (Fp2.toField a.c2) } := by
+  simp [frobenius, toField]
 @[simp] theorem toField_mulBy01 (a : Repr) (b0 b1 : Fp2.Repr) :
     toField (mulBy01 a b0 b1) =
       _root_.Fp6.mulBy01 (toField a) (Fp2.toField b0) (Fp2.toField b1) :=

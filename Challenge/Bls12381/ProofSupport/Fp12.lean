@@ -72,12 +72,8 @@ def invSpecRepr (a : Repr) : Repr := ofField (_root_.Fp12.inv (toField a))
 
 /-- Component Frobenius formula parameterized by the BLS12-381 gamma constants. -/
 def frobenius (gammaW gammaV gammaV2 : Fp2.Repr) (a : Repr) : Repr :=
-  let frob6 (x : Fp6.Repr) : Fp6.Repr :=
-    { c0 := Fp2.conj x.c0
-      c1 := Fp2.mul gammaV (Fp2.conj x.c1)
-      c2 := Fp2.mul gammaV2 (Fp2.conj x.c2) }
-  { c0 := frob6 a.c0
-    c1 := Fp6.mulByFp2 (frob6 a.c1) gammaW }
+  { c0 := Fp6.frobenius gammaV gammaV2 a.c0
+    c1 := Fp6.mulByFp2 (Fp6.frobenius gammaV gammaV2 a.c1) gammaW }
 
 /-- Sparse multiplication by a Miller-loop line element. -/
 def mulBy014 (a : Repr) (b0 b1 b4 : Fp2.Repr) : Repr :=
@@ -121,18 +117,9 @@ theorem refines_frobenius (gammaW gammaV gammaV2 : Fp2.Repr) (a : Repr) :
     Refines (frobenius gammaW gammaV gammaV2 a)
       (_root_.Fp12.frobenius (Fp2.toField gammaW) (Fp2.toField gammaV)
         (Fp2.toField gammaV2) (toField a)) := by
-  let frob6 (x : Fp6.Repr) : Fp6.Repr :=
-    { c0 := Fp2.conj x.c0
-      c1 := Fp2.mul gammaV (Fp2.conj x.c1)
-      c2 := Fp2.mul gammaV2 (Fp2.conj x.c2) }
-  have hfrob6 (x : Fp6.Repr) : Fp6.toField (frob6 x) =
-      { c0 := _root_.Fp2.conj (Fp2.toField x.c0)
-        c1 := Fp2.toField gammaV * _root_.Fp2.conj (Fp2.toField x.c1)
-        c2 := Fp2.toField gammaV2 * _root_.Fp2.conj (Fp2.toField x.c2) } := by
-    simp [frob6, Fp6.toField]
   change toField (frobenius gammaW gammaV gammaV2 a) = _
   simp only [frobenius, toField, _root_.Fp12.frobenius]
-  rw [hfrob6 a.c0, Fp6.toField_mulByFp2, hfrob6 a.c1]
+  rw [Fp6.toField_frobenius, Fp6.toField_mulByFp2, Fp6.toField_frobenius]
   rfl
 theorem refines_mulBy014 (a : Repr) (b0 b1 b4 : Fp2.Repr) :
     Refines (mulBy014 a b0 b1 b4)
