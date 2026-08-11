@@ -1,3 +1,4 @@
+import Challenge.Bls12381.ProofSupport.Fp2SourceSchedule
 import Challenge.Bls12381.ProofSupport.Fp2Source
 
 set_option warningAsError true
@@ -27,27 +28,25 @@ example (a : Fp2.Repr) :
 
 example (a b : Fp2.Repr) :
     Fp2.mulSource a b =
-      let v0 := Fp.mulCanonical a.c0 b.c0
-      let v1 := Fp.mulCanonical a.c1 b.c1
-      let c1 := Fp.subSource
-        (Fp.mulCanonical
-          (Fp.addSource a.c0 a.c1) (Fp.addSource b.c0 b.c1))
-        (Fp.addSource v0 v1)
-      { c0 := Fp.subSource v0 v1, c1 } := rfl
+      let v0 := Fp2.mulV0Source a b
+      let v1 := Fp2.mulV1Source a b
+      let c1 := Fp2.mulImaginarySource a b v0 v1
+      Fp2.mkRepr (Fp2.mulRealSource v0 v1) c1 :=
+  Fp2.mulSource_eq a b
+
+example : Fp2.mulSourceDag =
+    [.mul .a0 .b0 .v0,
+     .mul .a1 .b1 .v1,
+     .add .a0 .a1 .aSum,
+     .add .b0 .b1 .bSum,
+     .mul .aSum .bSum .cross,
+     .add .v0 .v1 .vSum,
+     .sub .cross .vSum .c1,
+     .sub .v0 .v1 .c0] := rfl
 
 example (a b : Fp2.Repr) :
-    Fp2.runMulSource a b =
-      let v0 := Fp.mulCanonical a.c0 b.c0
-      let v1 := Fp.mulCanonical a.c1 b.c1
-      let aSum := Fp.addSource a.c0 a.c1
-      let bSum := Fp.addSource b.c0 b.c1
-      let cross := Fp.mulCanonical aSum bSum
-      let vSum := Fp.addSource v0 v1
-      let c1 := Fp.subSource cross vSum
-      let c0 := Fp.subSource v0 v1
-      { v0, v1, aSum, bSum, cross, vSum, c1
-        result := Fp2.mkRepr c0 c1 } :=
-  Fp2.runMulSource_eq a b
+    (Fp2.runMulSource a b).events = Fp2.mulSourceDag :=
+  Fp2.runMulSource_events a b
 
 example (a : Fp2.Repr) :
     Fp2.sqrSource a =
@@ -64,24 +63,36 @@ example (a : Fp2.Repr) :
 
 example (a : Fp2.Repr) :
     Fp2.invSource a =
-      let norm := Fp.addSource
-        (Fp.squareCanonical a.c0) (Fp.squareCanonical a.c1)
-      let normInv := Fp.invCanonical norm
-      { c0 := Fp.mulCanonical a.c0 normInv
-        c1 := Fp.mulCanonical (Fp.negSource a.c1) normInv } := rfl
-
-example (a : Fp2.Repr) :
-    Fp2.runInvSource a =
       let norm := Fp2.invNormSource a
       let normInv := Fp.invCanonical norm
-      let c0 := Fp2.invRealSource a.c0 normInv
-      let c1 := Fp2.invImaginarySource a.c1 normInv
-      { norm, normInv, c0, c1, result := Fp2.mkRepr c0 c1 } :=
-  Fp2.runInvSource_eq a
+      Fp2.mkRepr (Fp2.invRealSource a.c0 normInv)
+        (Fp2.invImaginarySource a.c1 normInv) :=
+  Fp2.invSource_eq a
+
+example : Fp2.invSourceDag =
+    [.square .a0 .a0Square,
+     .square .a1 .a1Square,
+     .add .a0Square .a1Square .norm,
+     .inv .norm .normInv,
+     .mul .a0 .normInv .c0,
+     .neg .a1 .negA1,
+     .mul .negA1 .normInv .c1] := rfl
+
+example (a : Fp2.Repr) :
+    (Fp2.runInvSource a).events = Fp2.invSourceDag :=
+  Fp2.runInvSource_events a
 
 example (a : Fp2.Repr) (s : Fp.Limbs) :
     Fp2.mulFpSource a s =
       { c0 := Fp.mulCanonical a.c0 s
         c1 := Fp.mulCanonical a.c1 s } := rfl
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.runMulSource_events' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp2.runMulSource_events
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.runInvSource_events' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp2.runInvSource_events
 
 end Checks.Bls12381Fp2SourceSchedule

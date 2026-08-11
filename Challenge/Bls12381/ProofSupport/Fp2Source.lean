@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.Fp2SourceDefs
+import Challenge.Bls12381.ProofSupport.Fp2SourceSchedule
 
 set_option warningAsError true
 
