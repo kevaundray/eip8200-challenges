@@ -8,7 +8,8 @@ namespace Challenge.Bls12381G2Add
 
 open EvmSemantics
 
-/-- Frozen output of `lake exe yulc Challenge/Bls12381G2Add/Reference/reference.yul`. -/
+/-- Frozen output of the proof-friendly direct compiler over the exact
+normalized `reference.yul` block. -/
 def referenceHex : String := (include_str "reference.hex").trimAscii.copy
 
 /-- Source-hex decoding retained as an executable artifact regression. -/
@@ -17,7 +18,6 @@ def decodedReferenceBytecode : ByteArray := Hex.hexToBytes referenceHex
 /-- Concrete runtime scored and proved by the G2ADD challenge. -/
 def referenceBytecode : ByteArray := ByteArray.mk frozenReferenceBytes.toArray
 
-def referenceBytecodeSize : Nat := 3339
+def referenceBytecodeSize : Nat := 2788
 
 end Challenge.Bls12381G2Add
-
