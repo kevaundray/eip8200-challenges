@@ -210,6 +210,18 @@ namespace WideProduct
 def value (product : WideProduct) : Nat :=
   product.lo.toNat + radix * product.hi.toNat
 
+/-- Every low/high EVM-word pair reconstructs below the two-word radix. -/
+theorem value_lt (product : WideProduct) : value product < radix ^ 2 := by
+  rw [show value product = Nat.ofDigits radix
+      [product.lo.toNat, product.hi.toNat] by
+    simp [value, Nat.ofDigits_cons]]
+  apply Nat.ofDigits_lt_base_pow_length (by norm_num [radix])
+  simp only [List.mem_cons, List.not_mem_nil, or_false]
+  intro digit hdigit
+  rcases hdigit with rfl | rfl
+  · exact product.lo.val.isLt
+  · exact product.hi.val.isLt
+
 end WideProduct
 
 /-- The exact EVM full-multiply idiom used by `Fp.sol`: the low word comes

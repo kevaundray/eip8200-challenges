@@ -20,6 +20,10 @@ example (x y z : UInt256) :
       Limbs.radix ^ 3 :=
   Limbs.threeWords_lt x y z
 
+example (words : Limbs.WideProduct) :
+    words.value < Limbs.radix ^ 2 :=
+  Limbs.WideProduct.value_lt words
+
 example (base value : Nat) (hbase : 0 < base) :
     Limbs.joinAt base (Limbs.splitAt base value) = value :=
   Limbs.join_splitAt hbase value
@@ -193,6 +197,10 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.threeWords_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Limbs.threeWords_lt
+
+/-- info: 'Challenge.EvmProof.Limbs.WideProduct.value_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.WideProduct.value_lt
 
 /-- info: 'Challenge.EvmProof.Limbs.subWide256_value' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
