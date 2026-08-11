@@ -14,6 +14,14 @@ example {ymem : Nat → UInt8} {memory output : ByteArray}
       (State.writeReturn memory output dst size) :=
   Challenge.EvmProof.MemMatch.copyReturn h dst size output
 
+example (output : ByteArray) :
+    MemMatch (YulSemantics.EVM.byteFrom output.toList) output :=
+  Challenge.EvmProof.MemMatch.byteFrom_toList output
+
 /-- info: 'Challenge.EvmProof.MemMatch.copyReturn' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Challenge.EvmProof.MemMatch.copyReturn
+
+/-- info: 'Challenge.EvmProof.MemMatch.byteFrom_toList' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.EvmProof.MemMatch.byteFrom_toList

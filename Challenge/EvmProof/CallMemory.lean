@@ -16,6 +16,24 @@ open YulEvmCompiler
 
 namespace MemMatch
 
+/-- A byte array matches the total zero-padded view of its own byte list. -/
+theorem byteFrom_toList (output : ByteArray) :
+    YulEvmCompiler.MemMatch
+      (YulSemantics.EVM.byteFrom output.toList) output := by
+  intro address
+  unfold YulSemantics.EVM.byteFrom
+  rw [List.getD_eq_getElem?_getD, ByteArray.toList_eq_data,
+    Array.getElem?_toList, getElem?_def]
+  split
+  · rename_i haddress
+    rw [Option.getD_some]
+    rw [dif_pos (show address < output.size from haddress)]
+    rw [ByteArray.getElem_eq_getElem_data]
+    rfl
+  · rename_i haddress
+    rw [Option.getD_none]
+    rw [dif_neg (show ¬address < output.size from haddress)]
+
 /-- Source `copyReturn` agrees with target `State.writeReturn`, including the
 empty-copy case that deliberately avoids extending target memory. -/
 theorem copyReturn {ymem : Nat → UInt8} {memory : ByteArray}
