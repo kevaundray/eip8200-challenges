@@ -182,6 +182,11 @@ theorem toLawful_invWith (invert : Fp.Limbs → Fp.Limbs) (a : Repr)
   apply QuadraticAlgebra.ext <;>
     simp [toLawful, LawfulFp2.ofWire, toField, mul] <;> ring
 
+@[simp] theorem toLawful_square (a : Repr) :
+    toLawful (square a) = toLawful a * toLawful a := by
+  apply QuadraticAlgebra.ext <;>
+    simp [toLawful, LawfulFp2.ofWire, toField, square] <;> ring
+
 @[simp] theorem toLawful_neg (a : Repr) :
     toLawful (neg a) = -toLawful a := by
   apply QuadraticAlgebra.ext <;>

@@ -150,6 +150,42 @@ def invWith (invert : Fp2.Repr → Fp2.Repr) (a : Repr) : Repr :=
     c1 := Fp2.mul adj.c1 normInv
     c2 := Fp2.mul adj.c2 normInv }
 
+@[simp] theorem toLawful_invAdjugate (a : Repr) :
+    toLawful (invAdjugate a) = LawfulFp6.adjugate (toLawful a) := by
+  apply LawfulFp6.Carrier.ext
+  · simp [toLawful, invAdjugate, LawfulFp6.adjugate]
+    ring
+  · simp [toLawful, invAdjugate, LawfulFp6.adjugate]
+    ring_nf
+    simp
+  · simp [toLawful, invAdjugate, LawfulFp6.adjugate]
+    ring
+
+@[simp] theorem toLawful_invNorm (a : Repr) :
+    Fp2.toLawful (invNorm a) = LawfulFp6.norm (toLawful a) := by
+  simp only [invNorm, Fp2.toLawful_add, Fp2.toLawful_mul,
+    toLawful_mulByXi]
+  change (toLawful a).c0 * (toLawful (invAdjugate a)).c0 +
+      LawfulFp6.xi * ((toLawful a).c2 * (toLawful (invAdjugate a)).c1 +
+        (toLawful a).c1 * (toLawful (invAdjugate a)).c2) =
+    LawfulFp6.norm (toLawful a)
+  rw [toLawful_invAdjugate]
+  rfl
+
+/-- The executable Fp6 adjugate algorithm refines the lawful component
+inverse under an Fp2 determinant-inversion refinement premise. -/
+theorem toLawful_invWith (invert : Fp2.Repr → Fp2.Repr) (a : Repr)
+    (hinvert : Fp2.toLawful (invert (invNorm a)) =
+      (Fp2.toLawful (invNorm a))⁻¹) :
+    toLawful (invWith invert a) = LawfulFp6.inv (toLawful a) := by
+  have hscale : toLawful (invWith invert a) =
+      LawfulFp6.scale (toLawful (invAdjugate a))
+        (Fp2.toLawful (invert (invNorm a))) := by
+    apply LawfulFp6.Carrier.ext <;>
+      simp [toLawful, invWith, LawfulFp6.scale]
+  rw [hscale, toLawful_invAdjugate, hinvert, toLawful_invNorm]
+  rfl
+
 def invSpecRepr (a : Repr) : Repr := ofField (_root_.Fp6.inv (toField a))
 
 theorem mul_components (a b : Repr) :

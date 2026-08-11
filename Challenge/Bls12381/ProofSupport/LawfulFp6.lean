@@ -21,6 +21,55 @@ def mul (a b : Carrier) : Carrier :=
     c1 := a.c0 * b.c1 + a.c1 * b.c0 + xi * (a.c2 * b.c2)
     c2 := a.c0 * b.c2 + a.c1 * b.c1 + a.c2 * b.c0 }
 
+def one : Carrier := { c0 := 1, c1 := 0, c2 := 0 }
+
+/-- Cubic adjugate used by inversion. -/
+def adjugate (a : Carrier) : Carrier :=
+  { c0 := a.c0 ^ 2 - xi * (a.c1 * a.c2)
+    c1 := xi * (a.c2 ^ 2) - a.c0 * a.c1
+    c2 := a.c1 ^ 2 - a.c0 * a.c2 }
+
+/-- Determinant of multiplication by a cubic-extension element. -/
+def norm (a : Carrier) : LawfulFp2.Carrier :=
+  let adj := adjugate a
+  a.c0 * adj.c0 + xi * (a.c2 * adj.c1 + a.c1 * adj.c2)
+
+def scale (a : Carrier) (k : LawfulFp2.Carrier) : Carrier :=
+  { c0 := a.c0 * k, c1 := a.c1 * k, c2 := a.c2 * k }
+
+/-- Lawful component inversion formula.  This is executable field arithmetic,
+not a call to the pinned semantic inverse. -/
+def inv (a : Carrier) : Carrier := scale (adjugate a) (norm a)⁻¹
+
+/-- The component formula is a multiplicative inverse whenever its Fp2
+determinant is nonzero. -/
+theorem mul_inv_of_norm_ne_zero (a : Carrier) (hnorm : norm a ≠ 0) :
+    mul a (inv a) = one := by
+  have hcancel : norm a * (norm a)⁻¹ = 1 := by
+    simpa [mul_comm] using inv_mul_cancel₀ hnorm
+  apply Carrier.ext
+  · change
+      a.c0 * ((adjugate a).c0 * (norm a)⁻¹) +
+          xi * (a.c1 * ((adjugate a).c2 * (norm a)⁻¹) +
+            a.c2 * ((adjugate a).c1 * (norm a)⁻¹)) = 1
+    calc
+      _ = norm a * (norm a)⁻¹ := by
+        simp [norm]
+        ring
+      _ = 1 := hcancel
+  · change
+      a.c0 * ((adjugate a).c1 * (norm a)⁻¹) +
+          a.c1 * ((adjugate a).c0 * (norm a)⁻¹) +
+          xi * (a.c2 * ((adjugate a).c2 * (norm a)⁻¹)) = 0
+    simp [adjugate]
+    ring
+  · change
+      a.c0 * ((adjugate a).c2 * (norm a)⁻¹) +
+          a.c1 * ((adjugate a).c1 * (norm a)⁻¹) +
+          a.c2 * ((adjugate a).c0 * (norm a)⁻¹) = 0
+    simp [adjugate]
+    ring
+
 /-- Inverse-free adapter from the pinned three-component wire carrier. -/
 def ofWire (a : EvmSemantics.Crypto.Bls12381.Fp6) : Carrier :=
   { c0 := LawfulFp2.ofWire a.c0
