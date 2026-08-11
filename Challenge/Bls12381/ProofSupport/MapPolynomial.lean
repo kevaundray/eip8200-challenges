@@ -14,6 +14,14 @@ def eval : List R → R → R
   | coefficient :: coefficients, x =>
       coefficient + x * eval coefficients x
 
+/-- Homogeneous evaluation of a constant-first polynomial at `N / D`.
+The result is the numerator after clearing `D ^ degree`. -/
+def evalHom : List R → R → R → R
+  | [], _, _ => 0
+  | coefficient :: coefficients, numerator, denominator =>
+      coefficient * denominator ^ coefficients.length +
+        numerator * evalHom coefficients numerator denominator
+
 /-- Coefficientwise addition, padding the shorter list with zeroes. -/
 def add : List R → List R → List R
   | [], right => right

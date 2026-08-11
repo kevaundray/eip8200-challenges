@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.G1Affine
+import Challenge.Bls12381.ProofSupport.MapPolynomial
 import Challenge.Bls12381.ProofSupport.MapToG1
 import EvmSemantics.Crypto.Bls12381.MapFpToG1
 
@@ -58,14 +59,6 @@ theorem kXDen_length : kXDen.length = 11 := by rfl
 theorem kYNum_length : kYNum.length = 16 := by rfl
 theorem kYDen_length : kYDen.length = 16 := by rfl
 
-/-- Homogeneous evaluation of a constant-first polynomial at `N/D`.
-The result is the numerator after clearing `D^(degree polynomial)`. -/
-def evalHom : List Field → Field → Field → Field
-  | [], _, _ => 0
-  | coefficient :: coefficients, numerator, denominator =>
-      coefficient * denominator ^ coefficients.length +
-        numerator * evalHom coefficients numerator denominator
-
 /-- Four homogeneous polynomial values used by the source 11-isogeny. -/
 structure Iso11Components where
   xNum : Field
@@ -75,10 +68,10 @@ structure Iso11Components where
 
 /-- Exact homogeneous polynomial-evaluation boundary of `_iso11Projective`. -/
 def iso11Components (numerator denominator : Field) : Iso11Components :=
-  { xNum := evalHom kXNum numerator denominator
-    xDen := evalHom kXDen numerator denominator
-    yNum := evalHom kYNum numerator denominator
-    yDen := evalHom kYDen numerator denominator }
+  { xNum := MapPolynomial.evalHom kXNum numerator denominator
+    xDen := MapPolynomial.evalHom kXDen numerator denominator
+    yNum := MapPolynomial.evalHom kYNum numerator denominator
+    yDen := MapPolynomial.evalHom kYDen numerator denominator }
 
 /-- Lawful affine interpretation of the source homogeneous 11-isogeny.
 Either rational-function pole maps to infinity explicitly. -/

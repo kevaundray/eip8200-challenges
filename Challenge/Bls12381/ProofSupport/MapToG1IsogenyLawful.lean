@@ -14,17 +14,17 @@ by the expected denominator power. -/
 theorem evalHom_eq_scaled_eval (coefficients : List Field)
     (numerator denominator : Field) (hcoefficients : coefficients ≠ [])
     (hdenominator : denominator ≠ 0) :
-    evalHom coefficients numerator denominator =
+    MapPolynomial.evalHom coefficients numerator denominator =
       denominator ^ (coefficients.length - 1) *
         MapPolynomial.eval coefficients (numerator / denominator) := by
   induction coefficients with
   | nil => exact (hcoefficients rfl).elim
   | cons coefficient coefficients ih =>
       cases coefficients with
-      | nil => simp [evalHom, MapPolynomial.eval]
+      | nil => simp [MapPolynomial.evalHom, MapPolynomial.eval]
       | cons next rest =>
           generalize hx : numerator / denominator = x at ih ⊢
-          rw [evalHom]
+          rw [MapPolynomial.evalHom]
           rw [ih (by simp)]
           simp only [List.length_cons, Nat.add_sub_cancel, MapPolynomial.eval]
           have hnumerator : denominator * x = numerator := by

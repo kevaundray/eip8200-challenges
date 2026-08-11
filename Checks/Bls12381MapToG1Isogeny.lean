@@ -15,9 +15,9 @@ example : kYNumSourceOrder = kYNum.reverse := rfl
 example : kYDenSourceOrder = kYDen.reverse.tail := rfl
 
 example (c0 c1 numerator denominator : Field) :
-    evalHom [c0, c1] numerator denominator =
+    MapPolynomial.evalHom [c0, c1] numerator denominator =
       c0 * denominator + numerator * c1 := by
-  simp [evalHom]
+  simp [MapPolynomial.evalHom]
 
 example (numerator denominator y : Field)
     (hpole :
