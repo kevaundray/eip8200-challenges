@@ -47,6 +47,7 @@ import Checks.Bls12381G2Affine
 import Checks.Bls12381LawfulAffineConformance
 import Checks.Bls12381ScalarMul
 import Checks.Bls12381ScalarMulConformance
+import Checks.Bls12381Msm
 
 set_option warningAsError true
 
@@ -72,5 +73,3 @@ challenge correctness theorems have their own axiom-footprint checks.
 #print axioms Challenge.Bls12381.ProofSupport.G2Projective.affine_toAffine
 #print axioms Challenge.Bls12381.ProofSupport.ScalarMul.g1_onCurve
 #print axioms Challenge.Bls12381.ProofSupport.ScalarMul.g2_onCurve
-#print axioms Challenge.Bls12381.ProofSupport.Msm.foldG1_append
-#print axioms Challenge.Bls12381.ProofSupport.Msm.foldG2_append
