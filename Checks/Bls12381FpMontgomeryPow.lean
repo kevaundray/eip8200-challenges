@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.FpMontgomeryPowLawful
+import Challenge.Bls12381.ProofSupport.FpMontgomeryPowSourceBits
 
 set_option warningAsError true
 
@@ -18,6 +19,29 @@ example : Fp.scanExponent [0, 5, 2] = some
     (UInt8.ofNat 5,
       [false, true, false, false, false, false, false, false, true, false]) :=
   rfl
+
+/-! Universal bridge from the source's SHR/AND/decrement loops to the compact
+bit-list model used by the arithmetic invariant. -/
+
+example : Fp.sourceByteBit (UInt8.ofNat 5) 2 = true := rfl
+example : Fp.sourceByteBit (UInt8.ofNat 5) 1 = false := rfl
+example : Fp.sourceTopBit (UInt8.ofNat 128) = 7 := rfl
+example : Fp.sourceTopBit (UInt8.ofNat 5) = 2 := rfl
+
+example (byte : UInt8) (hnonzero : byte.toNat ≠ 0) :
+    Fp.sourceTopBit byte = Fp.highestSetBit byte :=
+  Fp.sourceTopBit_eq_highestSetBit byte hnonzero
+
+example (byte : UInt8) :
+    Fp.sourceFirstRemainingBits byte = (Fp.significantByteBits byte).tail :=
+  Fp.sourceFirstRemainingBits_eq byte
+
+example (byte : UInt8) : Fp.sourceLaterByteBits byte = Fp.byteBits byte :=
+  Fp.sourceLaterByteBits_eq byte
+
+example (bytes : List UInt8) :
+    Fp.sourceScanExponent bytes = Fp.scanExponent bytes :=
+  Fp.sourceScanExponent_eq bytes
 
 example (byte : UInt8) : (Fp.byteBits byte).length = 8 :=
   Fp.length_byteBits byte
@@ -343,5 +367,29 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_montgomeryPowDecodedBytes' depe
 -/
 #guard_msgs in
 #print axioms Fp.lawful_montgomeryPowDecodedBytes
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.sourceTopBit_eq_highestSetBit' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.sourceTopBit_eq_highestSetBit
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.sourceFirstRemainingBits_eq' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.sourceFirstRemainingBits_eq
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.sourceLaterByteBits_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.sourceLaterByteBits_eq
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.sourceScanExponent_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.sourceScanExponent_eq
 
 end Checks.Bls12381FpMontgomeryPow
