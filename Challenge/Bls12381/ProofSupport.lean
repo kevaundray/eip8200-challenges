@@ -18,6 +18,7 @@ import Challenge.Bls12381.ProofSupport.FpInvConstants
 import Challenge.Bls12381.ProofSupport.FpInv
 import Challenge.Bls12381.ProofSupport.FpSqrtConstants
 import Challenge.Bls12381.ProofSupport.FpSqrt
+import Challenge.Bls12381.ProofSupport.FpParity
 import Challenge.Bls12381.ProofSupport.LawfulFp2
 import Challenge.Bls12381.ProofSupport.Fp2
 import Challenge.Bls12381.ProofSupport.Fp2Representation
@@ -27,6 +28,13 @@ import Challenge.Bls12381.ProofSupport.Fp2SourcePrimitives
 import Challenge.Bls12381.ProofSupport.Fp2SourceSchedule
 import Challenge.Bls12381.ProofSupport.Fp2Source
 import Challenge.Bls12381.ProofSupport.Fp2SourceLawful
+import Challenge.Bls12381.ProofSupport.Fp2Predicates
+import Challenge.Bls12381.ProofSupport.Fp2SqrtConstants
+import Challenge.Bls12381.ProofSupport.Fp2SqrtProgram
+import Challenge.Bls12381.ProofSupport.Fp2SqrtDefs
+import Challenge.Bls12381.ProofSupport.Fp2SqrtRefinement
+import Challenge.Bls12381.ProofSupport.Fp2SqrtLawful
+import Challenge.Bls12381.ProofSupport.Fp2Sqrt
 import Challenge.Bls12381.ProofSupport.LawfulFp6
 import Challenge.Bls12381.ProofSupport.LawfulFp6Norm
 import Challenge.Bls12381.ProofSupport.Fp6

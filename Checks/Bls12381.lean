@@ -22,6 +22,12 @@ import Checks.Bls12381Fp2SourceCanonical
 import Checks.Bls12381Fp2SourceLawful
 import Checks.Bls12381Fp2SourceMul
 import Checks.Bls12381Fp2SourceInv
+import Checks.Bls12381Fp2Predicates
+import Checks.Bls12381Fp2SqrtConstants
+import Checks.Bls12381Fp2SqrtProgram
+import Checks.Bls12381Fp2SqrtRefinement
+import Checks.Bls12381Fp2SqrtLawful
+import Checks.Bls12381Fp2Sqrt
 
 set_option warningAsError true
 
