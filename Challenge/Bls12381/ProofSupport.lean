@@ -1,5 +1,11 @@
 import Challenge.Bls12381.ProofSupport.Codec
 import Challenge.Bls12381.ProofSupport.Fp
+import Challenge.Bls12381.ProofSupport.FpSchoolbook
+import Challenge.Bls12381.ProofSupport.FpBarrettSchedule
+import Challenge.Bls12381.ProofSupport.FpBarrett
+import Challenge.Bls12381.ProofSupport.FpBarrettSubtract
+import Challenge.Bls12381.ProofSupport.FpBarrettReduce
+import Challenge.Bls12381.ProofSupport.FpMul
 import Challenge.Bls12381.ProofSupport.FpSquare
 import Challenge.Bls12381.ProofSupport.LawfulFp2
 import Challenge.Bls12381.ProofSupport.Fp2
