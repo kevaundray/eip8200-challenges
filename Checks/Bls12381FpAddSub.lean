@@ -6,6 +6,14 @@ namespace Checks.Bls12381FpAddSub
 
 open Challenge.Bls12381.ProofSupport
 
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.asWide_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.asWide_value
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.modulusWide_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.modulusWide_value
+
 example {a b : Fp.Limbs} (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
     Fp.value (Fp.addSource a b) = (Fp.value a + Fp.value b) %
       EvmSemantics.Crypto.Bls12381.p := Fp.value_addSource ha hb
