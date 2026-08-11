@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.Fp
+import Challenge.Bls12381.ProofSupport.FpConstants
 
 set_option warningAsError true
 
@@ -55,12 +55,6 @@ def schoolbookTop (a b : Limbs) : Nat :=
 
 /-! ## Fixed Barrett constants from `Fp.sol` -/
 
-def modulusLo : UInt256 := UInt256.ofNat
-  0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
-
-def modulusHi : UInt256 := UInt256.ofNat
-  0x1a0111ea397fe69a4b1ba7b6434bacd7
-
 def barrettMu0 : UInt256 := UInt256.ofNat
   0xad397b918f6ff20d533b6c08511c60e2757079ace6bd401859778ceb4dabc4f8
 
@@ -73,11 +67,6 @@ def barrettMu2 : UInt256 := UInt256.ofNat
 def barrettMu : Nat :=
   barrettMu0.toNat + Challenge.EvmProof.Limbs.radix * barrettMu1.toNat +
     Challenge.EvmProof.Limbs.radix ^ 2 * barrettMu2.toNat
-
-theorem modulus_words :
-    modulusLo.toNat + Challenge.EvmProof.Limbs.radix * modulusHi.toNat = p := by
-  norm_num [modulusLo, modulusHi, Challenge.EvmProof.Word.word_toNat_ofNat,
-    Challenge.EvmProof.Limbs.radix, p, absU]
 
 theorem barrettMu_words :
     barrettMu = barrettMu0.toNat +
