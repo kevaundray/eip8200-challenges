@@ -15,7 +15,8 @@ theorem sswuSource_onCurve (u : Field) :
   generalize hdenominator : sswuDenominator u = denominator
   have hdenominator' : denominator ≠ 0 := by
     rw [← hdenominator]
-    simpa [sswuDenominator] using sswuDenominator_ne_zero u
+    simpa only [sswuDenominator] using
+      SswuCore.denominator_ne_zero suite isoA_ne_zero isoZ_ne_zero u
   have hvalid : SqrtRatioValid numerator denominator
       (sqrtRatioSource numerator denominator) :=
     sqrtRatioSource_valid numerator denominator hdenominator'

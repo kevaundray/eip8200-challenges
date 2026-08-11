@@ -82,7 +82,8 @@ theorem sqrtRatioSource_valid (u v : Field) (hv : v ≠ 0) :
   let first := Fp2.SqrtProgram.run Fp2.lawfulSqrtOps quotient
   by_cases hfirst : first.exists_ = true
   · have hroot := Fp2.lawfulSqrtRun_success (a := quotient) hfirst
-    unfold sqrtRatioSource SqrtRatioValid
+    unfold sqrtRatioSource SqrtRatioValid SswuCore.SqrtRatioValid
+    dsimp only [suite]
     simp only [quotient, first, hfirst, if_true]
     rw [show first.root ^ 2 = quotient by simpa [pow_two] using hroot]
     dsimp only [quotient]
@@ -100,15 +101,16 @@ theorem sqrtRatioSource_valid (u v : Field) (hv : v ≠ 0) :
     change SqrtRatioValid u v
       (if first.exists_ then (true, first.root) else (false, second.root))
     rw [if_neg hfirst]
-    unfold SqrtRatioValid
+    unfold SqrtRatioValid SswuCore.SqrtRatioValid
+    dsimp only [suite]
     simp only [Bool.false_eq_true, if_false]
     constructor
     · rw [show second.root ^ 2 = isoZ * quotient by
           simpa [second, pow_two] using hroot]
       dsimp only [quotient]
       field_simp
-    · rw [isSquareRatio_iff_isSquare_div u v hv]
-      exact hquotient
+    · intro hsquare
+      exact hquotient ((isSquareRatio_iff_isSquare_div u v hv).mp hsquare)
 
 /-- The concrete source square-root-ratio makes projective G2 SSWU total. -/
 theorem sswuSource_onCurve (u : Field) :

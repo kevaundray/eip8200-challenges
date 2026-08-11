@@ -66,6 +66,8 @@ import Challenge.Bls12381.ProofSupport.MsmSemantics
 import Challenge.Bls12381.ProofSupport.MsmSubgroup
 import Challenge.Bls12381.ProofSupport.MapPolynomial
 import Challenge.Bls12381.ProofSupport.MapPolynomialLawful
+import Challenge.Bls12381.ProofSupport.SswuCore
+import Challenge.Bls12381.ProofSupport.SswuCoreLawful
 import Challenge.Bls12381.ProofSupport.MapToG1
 import Challenge.Bls12381.ProofSupport.MapToG1SqrtRatio
 import Challenge.Bls12381.ProofSupport.MapToG1Sswu

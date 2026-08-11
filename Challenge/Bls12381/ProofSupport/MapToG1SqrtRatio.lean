@@ -97,7 +97,8 @@ theorem sqrtRatioSource_valid (u v : Field) (hv : v ≠ 0) :
   rw [hy1Def] at hy1
   unfold sqrtRatioSource
   rw [hy1Def]
-  unfold SqrtRatioValid
+  unfold SqrtRatioValid SswuCore.SqrtRatioValid
+  dsimp only [suite]
   by_cases hcheck : y1 ^ 2 * v = u
   · simp only [hcheck, decide_true, if_true]
   · have hu : u ≠ 0 := by
