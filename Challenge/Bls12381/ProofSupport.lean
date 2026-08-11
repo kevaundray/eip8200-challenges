@@ -2,6 +2,7 @@ import Challenge.Bls12381.ProofSupport.Codec
 import Challenge.Bls12381.ProofSupport.Fp
 import Challenge.Bls12381.ProofSupport.LawfulFp2
 import Challenge.Bls12381.ProofSupport.Fp2
+import Challenge.Bls12381.ProofSupport.LawfulFp6
 import Challenge.Bls12381.ProofSupport.Fp6
 import Challenge.Bls12381.ProofSupport.Fp12
 import Challenge.Bls12381.ProofSupport.G1Projective
