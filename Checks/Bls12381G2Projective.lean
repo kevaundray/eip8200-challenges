@@ -9,6 +9,10 @@ open Challenge.Bls12381.ProofSupport.G2Projective
 example (point : EvmSemantics.Crypto.Bls12381.G2Point) :
     toWire (ofWire point) = point := toWire_ofWire point
 
+/--
+info: 'Challenge.Bls12381.ProofSupport.G2Projective.toWire_ofWire' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms toWire_ofWire
 
 example (point : Point) : add infinity point = point := infinity_add point

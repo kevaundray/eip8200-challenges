@@ -48,6 +48,10 @@ example (a : LawfulFp12.Carrier) (ha : a ≠ LawfulFp12.zero) :
     LawfulFp12.norm a ≠ LawfulFp6.zero :=
   LawfulFp12.norm_ne_zero a ha
 
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulFp12.norm_ne_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms LawfulFp12.norm_ne_zero
 
 example (a : LawfulFp12.Carrier) (ha : a ≠ LawfulFp12.zero) :
@@ -58,7 +62,16 @@ example (a : LawfulFp12.Carrier) (ha : a ≠ LawfulFp12.zero) :
     LawfulFp12.mul (LawfulFp12.inv a) a = LawfulFp12.one :=
   LawfulFp12.inv_mul_cancel a ha
 
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulFp12.mul_inv_cancel' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms LawfulFp12.mul_inv_cancel
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulFp12.inv_mul_cancel' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms LawfulFp12.inv_mul_cancel
 
 example : Challenge.Bls12381.ProofSupport.Fp12.toField

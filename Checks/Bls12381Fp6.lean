@@ -43,6 +43,10 @@ example (a : LawfulFp6.Carrier) (hnorm : LawfulFp6.norm a ≠ 0) :
 example (a : LawfulFp6.Carrier) (ha : a ≠ LawfulFp6.zero) :
     LawfulFp6.norm a ≠ 0 := LawfulFp6.norm_ne_zero a ha
 
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulFp6.norm_ne_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms LawfulFp6.norm_ne_zero
 
 example (a : LawfulFp6.Carrier) (ha : a ≠ LawfulFp6.zero) :
@@ -53,7 +57,16 @@ example (a : LawfulFp6.Carrier) (ha : a ≠ LawfulFp6.zero) :
     LawfulFp6.mul (LawfulFp6.inv a) a = LawfulFp6.one :=
   LawfulFp6.inv_mul_cancel a ha
 
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulFp6.mul_inv_cancel' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms LawfulFp6.mul_inv_cancel
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulFp6.inv_mul_cancel' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms LawfulFp6.inv_mul_cancel
 
 example (a b : LawfulFp6.Carrier) :
@@ -61,6 +74,10 @@ example (a b : LawfulFp6.Carrier) :
       a = LawfulFp6.zero ∨ b = LawfulFp6.zero :=
   LawfulFp6.mul_eq_zero a b
 
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulFp6.mul_eq_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms LawfulFp6.mul_eq_zero
 
 example : Challenge.Bls12381.ProofSupport.Fp6.toField
