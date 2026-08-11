@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryFinal
+import Challenge.Bls12381.ProofSupport.FpMontgomeryRelation
 
 set_option warningAsError true
 
@@ -187,6 +187,21 @@ example (x y : Fp.Limbs) :
     Fp.montgomerySecondAccumulate x y =
       Fp.montgomeryAccumulateNext (Fp.montgomeryFirstReduce x.lo y) x.hi y :=
   rfl
+
+example (x y : Fp.Limbs) :
+    Fp.montgomeryCorrectionFactor x y <
+      Challenge.EvmProof.Limbs.radix ^ 2 :=
+  Fp.montgomeryCorrectionFactor_lt x y
+
+example (x : Fp.Limbs) {y : Fp.Limbs} (hy : Fp.Canonical y) :
+    Challenge.EvmProof.Limbs.radix * Challenge.EvmProof.Limbs.radix *
+        (Fp.montgomeryResultWords x y).value =
+      Fp.value x * Fp.value y + Fp.montgomeryCorrectionFactor x y * p :=
+  Fp.montgomeryTwoStep_reconstruct x hy
+
+example {x y : Fp.Limbs} (hx : Fp.Canonical x) (hy : Fp.Canonical y) :
+    (Fp.montgomeryResultWords x y).value < 2 * p :=
+  Fp.montgomeryResultWords_lt_two_modulus hx hy
 
 example (x : Fp.Limbs) {y : Fp.Limbs} (hy : Fp.Canonical y) :
     Fp.montgomeryReductionTopNat (Fp.montgomerySecondAccumulate x y) <
@@ -481,5 +496,33 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryFinalCorrect_value' depends 
 -/
 #guard_msgs in
 #print axioms Fp.montgomeryFinalCorrect_value
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryCorrectionFactor_lt' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryCorrectionFactor_lt
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryResultWords_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.montgomeryResultWords_value
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryTwoStep_reconstruct' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryTwoStep_reconstruct
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryResultWords_lt_two_modulus' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryResultWords_lt_two_modulus
 
 end Checks.Bls12381FpMontgomery
