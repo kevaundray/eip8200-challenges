@@ -63,7 +63,7 @@ abbrev fpInvInputLimbs :=
   Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpInvInputLimbs
 
 export Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
-  (fpMulInput_runModexp_raw)
+  (fpMulInput_runModexp_raw fpInvInput_runModexp)
 
 def fpMulFuns : FunEnv Challenge.EvmProof.modexpExec.toDialect :=
   [hoist Challenge.EvmProof.modexpExec.toDialect
