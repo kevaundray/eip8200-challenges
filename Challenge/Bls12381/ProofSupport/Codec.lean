@@ -182,6 +182,17 @@ theorem decodeFp_eq_none_of_short {input : ByteArray} {offset : Nat}
   rw [if_pos (by
     simpa [EvmSemantics.Crypto.Bls12381Codec.fpBytes] using hshort)]
 
+/-- A nonzero first padding byte is rejected.  This is the most common
+non-canonical wire failure and exposes the EIP-2537 padding boundary without
+requiring callers to unfold the decoder's byte loop. -/
+theorem decodeFp_eq_none_of_first_padding_nonzero {input : ByteArray} {offset : Nat}
+    (hsize : offset + fpBytes ≤ input.size) (hnonzero : input[offset]! ≠ 0) :
+    decodeFp input offset = none := by
+  unfold decodeFp EvmSemantics.Crypto.Bls12381Codec.decodeFp
+  rw [if_neg (by simpa [EvmSemantics.Crypto.Bls12381Codec.fpBytes] using hsize)]
+  simp only [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size]
+  norm_num [List.range', hnonzero]
+
 /-- Any successful base-field decode is canonical by construction: the result
 is a member of `Fin p`, rather than an unreduced natural. -/
 theorem decodeFp_some_isCanonical {input : ByteArray} {offset : Nat} {a : Fp}

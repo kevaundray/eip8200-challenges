@@ -36,6 +36,12 @@ example (input : ByteArray) (offset : Nat)
   Codec.decodeFp_eq_none_of_short hshort
 
 example (input : ByteArray) (offset : Nat)
+    (hsize : offset + Codec.fpBytes ≤ input.size)
+    (hnonzero : input[offset]! ≠ 0) :
+    Codec.decodeFp input offset = none :=
+  Codec.decodeFp_eq_none_of_first_padding_nonzero hsize hnonzero
+
+example (input : ByteArray) (offset : Nat)
     (hshort : input.size < offset + Codec.fp2Bytes) :
     Codec.decodeFp2 input offset = none :=
   Codec.decodeFp2_eq_none_of_short hshort
@@ -53,6 +59,7 @@ example (input : ByteArray) (offset : Nat)
 #print axioms Codec.decodeFp2_encodeFp2
 #print axioms Codec.decodeG1_encodeG1
 #print axioms Codec.decodeG2_encodeG2
+#print axioms Codec.decodeFp_eq_none_of_first_padding_nonzero
 #print axioms Codec.decodeG1_eq_none_of_short
 #print axioms Codec.decodeG2_eq_none_of_short
 
