@@ -113,6 +113,46 @@ theorem binary_preserves {Point : Type} (zero : Point)
         · rw [if_neg hodd]
           exact hrest
 
+/-- Map the transparent binary recursion into the independent `nsmul`
+semantics of any additive monoid.  The hypotheses deliberately describe the
+map boundary rather than assuming group laws for the executable point type. -/
+theorem binary_map_nsmul {Point Target : Type} [AddCommMonoid Target]
+    (zero : Point) (add : Point → Point → Point) (double : Point → Point)
+    (mapPoint : Point → Target)
+    (hzero : mapPoint zero = 0)
+    (hadd : ∀ left right, mapPoint (add left right) =
+      mapPoint left + mapPoint right)
+    (hdouble : ∀ point, mapPoint (double point) =
+      mapPoint point + mapPoint point)
+    (scalar : Nat) (point : Point) :
+    mapPoint (binary zero add double scalar point) =
+      scalar • mapPoint point := by
+  induction scalar using Nat.strong_induction_on generalizing point with
+  | h scalar ih =>
+      by_cases hscalar : scalar = 0
+      · subst scalar
+        simpa using hzero
+      · rw [binary_step zero add double scalar point hscalar]
+        have hhalf : scalar / 2 < scalar :=
+          Nat.div_lt_self (Nat.zero_lt_of_ne_zero hscalar) (by omega)
+        by_cases hodd : scalar % 2 = 1
+        · rw [if_pos hodd, hadd, ih (scalar / 2) hhalf (double point),
+            hdouble]
+          have hscalarOdd : scalar = 2 * (scalar / 2) + 1 := by omega
+          calc
+            (scalar / 2) • (mapPoint point + mapPoint point) + mapPoint point =
+                (2 * (scalar / 2) + 1) • mapPoint point := by
+              simp only [nsmul_add, add_nsmul, one_nsmul, two_mul]
+            _ = scalar • mapPoint point := by rw [← hscalarOdd]
+        · have heven : scalar % 2 = 0 := by omega
+          rw [if_neg hodd, ih (scalar / 2) hhalf (double point), hdouble]
+          have hscalarEven : scalar = 2 * (scalar / 2) := by omega
+          calc
+            (scalar / 2) • (mapPoint point + mapPoint point) =
+                (2 * (scalar / 2)) • mapPoint point := by
+              simp only [nsmul_add, two_mul, add_nsmul]
+            _ = scalar • mapPoint point := by rw [← hscalarEven]
+
 /-! ## BLS12-381 curve instantiations -/
 
 /-- Local binary G1 scalar operation used by the EIP adapter. -/

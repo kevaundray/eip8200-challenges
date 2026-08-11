@@ -8,6 +8,24 @@ open Challenge.Bls12381.ProofSupport
 
 variable {P : Type} (zero : P) (add : P → P → P) (double : P → P)
 
+example {Q : Type} [AddCommMonoid Q] (mapPoint : P → Q)
+    (hzero : mapPoint zero = 0)
+    (hadd : ∀ left right, mapPoint (add left right) =
+      mapPoint left + mapPoint right)
+    (hdouble : ∀ point, mapPoint (double point) =
+      mapPoint point + mapPoint point)
+    (scalar : Nat) (point : P) :
+    mapPoint (ScalarMul.binary zero add double scalar point) =
+      scalar • mapPoint point :=
+  ScalarMul.binary_map_nsmul zero add double mapPoint
+    hzero hadd hdouble scalar point
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_map_nsmul' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.binary_map_nsmul
+
 example (point : P) : ScalarMul.binary zero add double 0 point = zero :=
   ScalarMul.binary_zero zero add double point
 
