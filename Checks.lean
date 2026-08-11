@@ -1,4 +1,5 @@
 import Checks.EvmProof
+import Checks.EvmProofModPow
 import Checks.Blake2f
 import Checks.Bls12381Codec
 import Checks.Bls12381Conformance
