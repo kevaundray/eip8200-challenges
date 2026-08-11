@@ -74,6 +74,10 @@ example (x y : UInt256) :
     (Limbs.addTwo256 x y).value = x.toNat + y.toNat :=
   Limbs.addTwo256_value x y
 
+example (x y : UInt256) (hzero : x.toNat + y.toNat ≡ 0 [MOD Limbs.radix]) :
+    (Limbs.addTwo256 x y).word = UInt256.ofNat 0 :=
+  Limbs.addTwo256_word_eq_zero_of_modEq x y hzero
+
 example (x y z : UInt256) :
     (Limbs.addThree256 x y z).carry.toNat < 3 :=
   Limbs.addThree256_carry_lt_three x y z
@@ -176,6 +180,10 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.addTwo256_value' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Limbs.addTwo256_value
+
+/-- info: 'Challenge.EvmProof.Limbs.addTwo256_word_eq_zero_of_modEq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Limbs.addTwo256_word_eq_zero_of_modEq
 
 /-- info: 'Challenge.EvmProof.Limbs.join_splitAt' depends on axioms: [propext] -/
 #guard_msgs in

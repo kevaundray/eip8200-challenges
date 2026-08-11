@@ -513,6 +513,18 @@ theorem addTwo256_value (x y : UInt256) :
     exact Nat.sub_add_cancel (by
       simpa [radix] using (Nat.le_of_not_gt hoverflow))
 
+/-- If the mathematical sum is zero modulo one word, the exact wrapped source
+`ADD` result is the zero word. -/
+theorem addTwo256_word_eq_zero_of_modEq (x y : UInt256)
+    (hzero : x.toNat + y.toNat ≡ 0 [MOD radix]) :
+    (addTwo256 x y).word = UInt256.ofNat 0 := by
+  apply congrArg UInt256.mk
+  apply Fin.ext
+  change (x + y).toNat = (UInt256.ofNat 0).toNat
+  rw [Challenge.EvmProof.Word.word_toNat_add,
+    Challenge.EvmProof.Word.word_toNat_ofNat]
+  exact hzero
+
 theorem addThree256_carry_lt_three (x y z : UInt256) :
     (addThree256 x y z).carry.toNat < 3 := by
   unfold addThree256
