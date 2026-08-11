@@ -1,4 +1,9 @@
 import Challenge.Bls12381
+import Checks.Bls12381FpBarrettSchedule
+import Checks.Bls12381FpBarrett
+import Checks.Bls12381FpBarrettSubtract
+import Checks.Bls12381FpBarrettReduce
+import Checks.Bls12381FpMul
 
 set_option warningAsError true
 

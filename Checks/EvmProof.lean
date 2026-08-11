@@ -1,4 +1,5 @@
 import Challenge.EvmProof
+import Checks.EvmProofWideMul
 set_option warningAsError true
 /-!
 # Shared EVM proof checks
