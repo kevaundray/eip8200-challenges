@@ -36,9 +36,18 @@ example (a b : Fp2.Repr) :
       { c0 := Fp.subSource v0 v1, c1 } := rfl
 
 example (a b : Fp2.Repr) :
-    Fp2.mulSource a b =
-      Fp2.mkRepr (Fp2.mulC0Source a b) (Fp2.mulC1Source a b) :=
-  Fp2.mulSource_eq a b
+    Fp2.runMulSource a b =
+      let v0 := Fp.mulCanonical a.c0 b.c0
+      let v1 := Fp.mulCanonical a.c1 b.c1
+      let aSum := Fp.addSource a.c0 a.c1
+      let bSum := Fp.addSource b.c0 b.c1
+      let cross := Fp.mulCanonical aSum bSum
+      let vSum := Fp.addSource v0 v1
+      let c1 := Fp.subSource cross vSum
+      let c0 := Fp.subSource v0 v1
+      { v0, v1, aSum, bSum, cross, vSum, c1
+        result := Fp2.mkRepr c0 c1 } :=
+  Fp2.runMulSource_eq a b
 
 example (a : Fp2.Repr) :
     Fp2.sqrSource a =
@@ -62,9 +71,13 @@ example (a : Fp2.Repr) :
         c1 := Fp.mulCanonical (Fp.negSource a.c1) normInv } := rfl
 
 example (a : Fp2.Repr) :
-    Fp2.invSource a =
-      Fp2.mkRepr (Fp2.invC0Source a) (Fp2.invC1Source a) :=
-  Fp2.invSource_eq a
+    Fp2.runInvSource a =
+      let norm := Fp2.invNormSource a
+      let normInv := Fp.invCanonical norm
+      let c0 := Fp2.invRealSource a.c0 normInv
+      let c1 := Fp2.invImaginarySource a.c1 normInv
+      { norm, normInv, c0, c1, result := Fp2.mkRepr c0 c1 } :=
+  Fp2.runInvSource_eq a
 
 example (a : Fp2.Repr) (s : Fp.Limbs) :
     Fp2.mulFpSource a s =

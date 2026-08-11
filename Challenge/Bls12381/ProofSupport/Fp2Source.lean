@@ -48,20 +48,30 @@ theorem canonical_mulImaginarySource {a b : Repr} {v0 v1 : Fp.Limbs}
   exact ⟨Fp.canonical_subSource hcross hvSum⟩
 
 theorem canonical_mulC0Source {a b : Repr} (ha : Canonical a)
-    (hb : Canonical b) : ComponentCanonical (mulC0Source a b) := by
-  exact canonical_mulRealSource
-    ⟨Fp.canonical_mulCanonical ha.c0.proof hb.c0.proof⟩
-    ⟨Fp.canonical_mulCanonical ha.c1.proof hb.c1.proof⟩
+    (hb : Canonical b) :
+    ComponentCanonical
+      (mulRealSource (mulV0Source a b) (mulV1Source a b)) :=
+  canonical_mulRealSource (canonical_mulV0Source ha hb)
+    (canonical_mulV1Source ha hb)
 
 theorem canonical_mulC1Source {a b : Repr} (ha : Canonical a)
-    (hb : Canonical b) : ComponentCanonical (mulC1Source a b) := by
-  exact canonical_mulImaginarySource ha hb
-    ⟨Fp.canonical_mulCanonical ha.c0.proof hb.c0.proof⟩
-    ⟨Fp.canonical_mulCanonical ha.c1.proof hb.c1.proof⟩
+    (hb : Canonical b) :
+    ComponentCanonical
+      (mulImaginarySource a b (mulV0Source a b) (mulV1Source a b)) :=
+  canonical_mulImaginarySource ha hb (canonical_mulV0Source ha hb)
+    (canonical_mulV1Source ha hb)
 
 theorem canonical_mulSource {a b : Repr} (ha : Canonical a)
-    (hb : Canonical b) : Canonical (mulSource a b) :=
-  canonical_mkRepr (canonical_mulC0Source ha hb) (canonical_mulC1Source ha hb)
+    (hb : Canonical b) : Canonical (mulSource a b) := by
+  have hresult : Canonical
+      (let v0 := mulV0Source a b
+       let v1 := mulV1Source a b
+       let c1 := mulImaginarySource a b v0 v1
+       mkRepr (mulRealSource v0 v1) c1) := by
+    dsimp only
+    exact canonical_mkRepr (canonical_mulC0Source ha hb)
+      (canonical_mulC1Source ha hb)
+  exact (congrArg Canonical (mulSource_eq a b)).symm.mp hresult
 
 theorem canonical_sqrRealSource {a : Repr} (ha : Canonical a) :
     ComponentCanonical (sqrRealSource a) :=
@@ -107,20 +117,30 @@ theorem canonical_invImaginarySource {a1 normInv : Fp.Limbs}
     hnormInv.proof⟩
 
 theorem canonical_invC0Source {a : Repr} (ha : Canonical a) :
-    ComponentCanonical (invC0Source a) := by
+    ComponentCanonical
+      (invRealSource a.c0 (Fp.invCanonical (invNormSource a))) := by
   have hnorm := canonical_invNormSource ha
   exact canonical_invRealSource ha.c0
     ⟨Fp.canonical_invCanonical hnorm.proof⟩
 
 theorem canonical_invC1Source {a : Repr} (ha : Canonical a) :
-    ComponentCanonical (invC1Source a) := by
+    ComponentCanonical
+      (invImaginarySource a.c1 (Fp.invCanonical (invNormSource a))) := by
   have hnorm := canonical_invNormSource ha
   exact canonical_invImaginarySource ha.c1
     ⟨Fp.canonical_invCanonical hnorm.proof⟩
 
 theorem canonical_invSource {a : Repr} (ha : Canonical a) :
-    Canonical (invSource a) :=
-  canonical_mkRepr (canonical_invC0Source ha) (canonical_invC1Source ha)
+    Canonical (invSource a) := by
+  have hresult : Canonical
+      (let norm := invNormSource a
+       let normInv := Fp.invCanonical norm
+       mkRepr (invRealSource a.c0 normInv)
+         (invImaginarySource a.c1 normInv)) := by
+    dsimp only
+    exact canonical_mkRepr (canonical_invC0Source ha)
+      (canonical_invC1Source ha)
+  exact (congrArg Canonical (invSource_eq a)).symm.mp hresult
 
 theorem canonical_mulFpSource {a : Repr} {s : Fp.Limbs}
     (ha : Canonical a) (hs : Fp.Canonical s) :

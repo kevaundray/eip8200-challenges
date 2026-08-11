@@ -92,12 +92,12 @@ theorem toLawful_mulFpSource {a : Repr} {s : Fp.Limbs}
 
 theorem toField_mulC0Source {a b : Repr} (ha : Canonical a)
     (hb : Canonical b) :
-    Fp.toField (mulC0Source a b) =
+    Fp.toField (mulRealSource (mulV0Source a b) (mulV1Source a b)) =
       Fp.toField a.c0 * Fp.toField b.c0 -
         Fp.toField a.c1 * Fp.toField b.c1 := by
   have hv0 := (canonical_mulV0Source ha hb).proof
   have hv1 := (canonical_mulV1Source ha hb).proof
-  rw [show mulC0Source a b =
+  rw [show mulRealSource (mulV0Source a b) (mulV1Source a b) =
       Fp.subSource (mulV0Source a b) (mulV1Source a b) by rfl]
   rw [Fp.toField_subSource hv0 hv1]
   rw [show Fp.toField (mulV0Source a b) =
@@ -109,7 +109,8 @@ theorem toField_mulC0Source {a b : Repr} (ha : Canonical a)
 
 theorem toField_mulC1Source {a b : Repr} (ha : Canonical a)
     (hb : Canonical b) :
-    Fp.toField (mulC1Source a b) =
+    Fp.toField
+      (mulImaginarySource a b (mulV0Source a b) (mulV1Source a b)) =
       (Fp.toField a.c0 + Fp.toField a.c1) *
           (Fp.toField b.c0 + Fp.toField b.c1) -
         Fp.toField a.c0 * Fp.toField b.c0 -
@@ -120,10 +121,11 @@ theorem toField_mulC1Source {a b : Repr} (ha : Canonical a)
   have hv1 := (canonical_mulV1Source ha hb).proof
   have hcross := Fp.canonical_mulCanonical haSum hbSum
   have hvSum := Fp.canonical_addSource hv0 hv1
-  rw [show mulC1Source a b = Fp.subSource
-      (Fp.mulCanonical (Fp.addSource a.c0 a.c1)
-        (Fp.addSource b.c0 b.c1))
-      (Fp.addSource (mulV0Source a b) (mulV1Source a b)) by rfl]
+  rw [show mulImaginarySource a b (mulV0Source a b) (mulV1Source a b) =
+      Fp.subSource
+        (Fp.mulCanonical (Fp.addSource a.c0 a.c1)
+          (Fp.addSource b.c0 b.c1))
+        (Fp.addSource (mulV0Source a b) (mulV1Source a b)) by rfl]
   rw [Fp.toField_subSource hcross hvSum,
     Fp.toField_mulCanonical haSum hbSum,
     Fp.toField_addSource ha.c0.proof ha.c1.proof,
@@ -225,20 +227,23 @@ theorem toLawful_invNormInvSource {a : Repr} (ha : Canonical a) :
     toLawful_invNormSource ha]
 
 theorem toLawful_invC0Source {a : Repr} (ha : Canonical a) :
-    PrimeField.finEquiv (Fp.toField (invC0Source a)) =
+    PrimeField.finEquiv (Fp.toField
+      (invRealSource a.c0 (Fp.invCanonical (invNormSource a)))) =
       (toLawful a).re * (QuadraticAlgebra.norm (toLawful a))⁻¹ := by
-  rw [show invC0Source a = Fp.mulCanonical a.c0
-      (Fp.invCanonical (invNormSource a)) by rfl]
+  rw [show invRealSource a.c0 (Fp.invCanonical (invNormSource a)) =
+      Fp.mulCanonical a.c0 (Fp.invCanonical (invNormSource a)) by rfl]
   rw [Fp.toField_mulCanonical ha.c0.proof
       (Fp.canonical_invCanonical (canonical_invNormSource ha).proof),
     map_mul, toLawful_invNormInvSource ha]
   rfl
 
 theorem toLawful_invC1Source {a : Repr} (ha : Canonical a) :
-    PrimeField.finEquiv (Fp.toField (invC1Source a)) =
+    PrimeField.finEquiv (Fp.toField
+      (invImaginarySource a.c1 (Fp.invCanonical (invNormSource a)))) =
       -(toLawful a).im * (QuadraticAlgebra.norm (toLawful a))⁻¹ := by
-  rw [show invC1Source a = Fp.mulCanonical (Fp.negSource a.c1)
-      (Fp.invCanonical (invNormSource a)) by rfl]
+  rw [show invImaginarySource a.c1 (Fp.invCanonical (invNormSource a)) =
+      Fp.mulCanonical (Fp.negSource a.c1)
+        (Fp.invCanonical (invNormSource a)) by rfl]
   rw [Fp.toField_mulCanonical (Fp.canonical_negSource ha.c1.proof)
       (Fp.canonical_invCanonical (canonical_invNormSource ha).proof),
     map_mul, Fp.toField_negSource ha.c1.proof, map_neg,

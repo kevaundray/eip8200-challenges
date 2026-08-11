@@ -38,14 +38,46 @@ def mulImaginarySource (a b : Repr) (v0 v1 : Fp.Limbs) : Fp.Limbs :=
       (Fp.addSource a.c0 a.c1) (Fp.addSource b.c0 b.c1))
     (Fp.addSource v0 v1)
 
-def mulC0Source (a b : Repr) : Fp.Limbs :=
-  mulRealSource (mulV0Source a b) (mulV1Source a b)
+structure MulSourceTrace where
+  v0 : Fp.Limbs
+  v1 : Fp.Limbs
+  aSum : Fp.Limbs
+  bSum : Fp.Limbs
+  cross : Fp.Limbs
+  vSum : Fp.Limbs
+  c1 : Fp.Limbs
+  result : Repr
 
-def mulC1Source (a b : Repr) : Fp.Limbs :=
-  mulImaginarySource a b (mulV0Source a b) (mulV1Source a b)
+/-- The exact source-order Fp2 multiplication run. Intermediate values are
+retained so checks can pin the three base-field multiplications and their
+reuse, rather than merely a beta-equivalent final expression. -/
+def runMulSource (a b : Repr) : MulSourceTrace :=
+  let v0 := Fp.mulCanonical a.c0 b.c0
+  let v1 := Fp.mulCanonical a.c1 b.c1
+  let aSum := Fp.addSource a.c0 a.c1
+  let bSum := Fp.addSource b.c0 b.c1
+  let cross := Fp.mulCanonical aSum bSum
+  let vSum := Fp.addSource v0 v1
+  let c1 := Fp.subSource cross vSum
+  let c0 := Fp.subSource v0 v1
+  { v0, v1, aSum, bSum, cross, vSum, c1
+    result := mkRepr c0 c1 }
+
+theorem runMulSource_eq (a b : Repr) :
+    runMulSource a b =
+      let v0 := Fp.mulCanonical a.c0 b.c0
+      let v1 := Fp.mulCanonical a.c1 b.c1
+      let aSum := Fp.addSource a.c0 a.c1
+      let bSum := Fp.addSource b.c0 b.c1
+      let cross := Fp.mulCanonical aSum bSum
+      let vSum := Fp.addSource v0 v1
+      let c1 := Fp.subSource cross vSum
+      let c0 := Fp.subSource v0 v1
+      { v0, v1, aSum, bSum, cross, vSum, c1
+        result := mkRepr c0 c1 } := rfl
 
 def mulSource (a b : Repr) : Repr :=
-  mkRepr (mulC0Source a b) (mulC1Source a b)
+  (runMulSource a b).result
 
 /-- Exact two-multiplication optimized schedule from `Fp2.sqr`. -/
 def sqrRealSource (a : Repr) : Fp.Limbs :=
@@ -74,26 +106,52 @@ def invRealSource (a0 normInv : Fp.Limbs) : Fp.Limbs :=
 def invImaginarySource (a1 normInv : Fp.Limbs) : Fp.Limbs :=
   Fp.mulCanonical (Fp.negSource a1) normInv
 
-def invC0Source (a : Repr) : Fp.Limbs :=
-  invRealSource a.c0 (Fp.invCanonical (invNormSource a))
+structure InvSourceTrace where
+  norm : Fp.Limbs
+  normInv : Fp.Limbs
+  c0 : Fp.Limbs
+  c1 : Fp.Limbs
+  result : Repr
 
-def invC1Source (a : Repr) : Fp.Limbs :=
-  invImaginarySource a.c1 (Fp.invCanonical (invNormSource a))
+/-- The exact source-order Fp2 inversion run. `norm` and `normInv` are each
+computed once and the recorded inverse is reused by both result components. -/
+def runInvSource (a : Repr) : InvSourceTrace :=
+  let norm := invNormSource a
+  let normInv := Fp.invCanonical norm
+  let c0 := invRealSource a.c0 normInv
+  let c1 := invImaginarySource a.c1 normInv
+  { norm, normInv, c0, c1, result := mkRepr c0 c1 }
+
+theorem runInvSource_eq (a : Repr) :
+    runInvSource a =
+      let norm := invNormSource a
+      let normInv := Fp.invCanonical norm
+      let c0 := invRealSource a.c0 normInv
+      let c1 := invImaginarySource a.c1 normInv
+      { norm, normInv, c0, c1, result := mkRepr c0 c1 } := rfl
 
 def invSource (a : Repr) : Repr :=
-  mkRepr (invC0Source a) (invC1Source a)
+  (runInvSource a).result
 
 /-- Exact componentwise scalar multiplication from `Fp2.mulFp`. -/
 def mulFpSource (a : Repr) (s : Fp.Limbs) : Repr :=
   mkRepr (Fp.mulCanonical a.c0 s) (Fp.mulCanonical a.c1 s)
 
 theorem mulSource_eq (a b : Repr) :
-    mulSource a b = mkRepr (mulC0Source a b) (mulC1Source a b) := rfl
+    mulSource a b =
+      let v0 := mulV0Source a b
+      let v1 := mulV1Source a b
+      let c1 := mulImaginarySource a b v0 v1
+      mkRepr (mulRealSource v0 v1) c1 := rfl
 
 theorem sqrSource_eq (a : Repr) :
     sqrSource a = mkRepr (sqrRealSource a) (sqrC1Source a) := rfl
 
 theorem invSource_eq (a : Repr) :
-    invSource a = mkRepr (invC0Source a) (invC1Source a) := rfl
+    invSource a =
+      let norm := invNormSource a
+      let normInv := Fp.invCanonical norm
+      mkRepr (invRealSource a.c0 normInv)
+        (invImaginarySource a.c1 normInv) := rfl
 
 end Challenge.Bls12381.ProofSupport.Fp2
