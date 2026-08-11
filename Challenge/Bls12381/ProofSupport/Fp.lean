@@ -74,6 +74,43 @@ def schoolbookTop (a b : Limbs) : Nat :=
   let middle := Challenge.EvmProof.Limbs.addThree256 p00.hi p10.lo p01.lo
   p10.hi.toNat + p01.hi.toNat + a.hi.toNat * b.hi.toNat + middle.carry.toNat
 
+/-! ## Fixed Barrett constants from `Fp.sol` -/
+
+def modulusLo : UInt256 := UInt256.ofNat
+  0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
+
+def modulusHi : UInt256 := UInt256.ofNat
+  0x1a0111ea397fe69a4b1ba7b6434bacd7
+
+def barrettMu0 : UInt256 := UInt256.ofNat
+  0xad397b918f6ff20d533b6c08511c60e2757079ace6bd401859778ceb4dabc4f8
+
+def barrettMu1 : UInt256 := UInt256.ofNat
+  0x1b82741ff6a0a94bdf4771e0286779d3997167a058f1c07b13e207f56591ba2e
+
+def barrettMu2 : UInt256 := UInt256.ofNat
+  0x9d835d2f3cc9e45ce28101b0cc7a6ba29
+
+def barrettMu : Nat :=
+  barrettMu0.toNat + Challenge.EvmProof.Limbs.radix * barrettMu1.toNat +
+    Challenge.EvmProof.Limbs.radix ^ 2 * barrettMu2.toNat
+
+theorem modulus_words :
+    modulusLo.toNat + Challenge.EvmProof.Limbs.radix * modulusHi.toNat = p := by
+  norm_num [modulusLo, modulusHi, Challenge.EvmProof.Word.word_toNat_ofNat,
+    Challenge.EvmProof.Limbs.radix, p, absU]
+
+theorem barrettMu_words :
+    barrettMu = barrettMu0.toNat +
+      Challenge.EvmProof.Limbs.radix * barrettMu1.toNat +
+      Challenge.EvmProof.Limbs.radix ^ 2 * barrettMu2.toNat := rfl
+
+theorem barrettMu_eq_floor :
+    barrettMu = Challenge.EvmProof.Limbs.radix ^ 4 / p := by
+  norm_num [barrettMu, barrettMu0, barrettMu1, barrettMu2,
+    Challenge.EvmProof.Word.word_toNat_ofNat,
+    Challenge.EvmProof.Limbs.radix, p, absU]
+
 theorem schoolbookTop_lt {a b : Limbs} (ha : Canonical a) (hb : Canonical b) :
     schoolbookTop a b < Challenge.EvmProof.Limbs.radix := by
   let p00 := Challenge.EvmProof.Limbs.fullMul256 a.lo b.lo

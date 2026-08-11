@@ -49,6 +49,18 @@ example (a b : Fp.Limbs) (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
     Fp.schoolbookTop a b < Challenge.EvmProof.Limbs.radix :=
   Fp.schoolbookTop_lt ha hb
 
+example : Fp.barrettMu = Challenge.EvmProof.Limbs.radix ^ 4 / p :=
+  Fp.barrettMu_eq_floor
+
+example : Fp.modulusLo.toNat + Challenge.EvmProof.Limbs.radix *
+    Fp.modulusHi.toNat = p :=
+  Fp.modulus_words
+
+example : Fp.barrettMu = Fp.barrettMu0.toNat +
+    Challenge.EvmProof.Limbs.radix * Fp.barrettMu1.toNat +
+    Challenge.EvmProof.Limbs.radix ^ 2 * Fp.barrettMu2.toNat :=
+  Fp.barrettMu_words
+
 #print axioms Fp.value_addCanonical
 #print axioms Fp.value_subCanonical
 #print axioms Fp.toField_mul
@@ -73,5 +85,13 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.schoolbookProduct_r2_value' depends on
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_schoolbookProduct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp.value_schoolbookProduct
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.modulus_words' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.modulus_words
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.barrettMu_eq_floor' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.barrettMu_eq_floor
 
 end Checks.Bls12381Fp
