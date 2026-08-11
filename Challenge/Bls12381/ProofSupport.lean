@@ -16,6 +16,8 @@ import Challenge.Bls12381.ProofSupport.FpMontgomeryLawful
 import Challenge.Bls12381.ProofSupport.FpMontgomeryPowLawful
 import Challenge.Bls12381.ProofSupport.FpInvConstants
 import Challenge.Bls12381.ProofSupport.FpInv
+import Challenge.Bls12381.ProofSupport.FpSqrtConstants
+import Challenge.Bls12381.ProofSupport.FpSqrt
 import Challenge.Bls12381.ProofSupport.LawfulFp2
 import Challenge.Bls12381.ProofSupport.Fp2
 import Challenge.Bls12381.ProofSupport.Fp2Representation
