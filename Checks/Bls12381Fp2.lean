@@ -4,6 +4,14 @@ set_option warningAsError true
 
 namespace Checks.Bls12381Fp2
 
+example : Challenge.Bls12381.ProofSupport.Fp2.toField
+    Challenge.Bls12381.ProofSupport.Fp2.zero = 0 :=
+  Challenge.Bls12381.ProofSupport.Fp2.toField_zero
+
+example : Challenge.Bls12381.ProofSupport.Fp2.toField
+    Challenge.Bls12381.ProofSupport.Fp2.one = 1 :=
+  Challenge.Bls12381.ProofSupport.Fp2.toField_one
+
 example (a : Challenge.Bls12381.ProofSupport.Fp2.Repr) :
     Challenge.Bls12381.ProofSupport.Fp2.toField
         (Challenge.Bls12381.ProofSupport.Fp2.conj a) =

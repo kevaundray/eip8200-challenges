@@ -29,6 +29,10 @@ theorem refines_ofField (a : EvmSemantics.Crypto.Bls12381.Fp2) :
     Refines (ofField a) a := by
   simp [Refines]
 
+def zero : Repr := { c0 := Fp.normalize 0, c1 := Fp.normalize 0 }
+
+def one : Repr := { c0 := Fp.normalize 1, c1 := Fp.normalize 0 }
+
 /-- Componentwise addition over the two-word base-field representation. -/
 def add (a b : Repr) : Repr :=
   { c0 := Fp.add a.c0 b.c0, c1 := Fp.add a.c1 b.c1 }
@@ -166,6 +170,16 @@ theorem refines_invSpecRepr (a : Repr) :
   refines_invWith invert a hinvert
 @[simp] theorem toField_invSpecRepr (a : Repr) :
     toField (invSpecRepr a) = (toField a)⁻¹ := refines_invSpecRepr a
+
+@[simp] theorem toField_zero : toField zero = 0 := by
+  change ({ c0 := 0, c1 := 0 } : EvmSemantics.Crypto.Bls12381.Fp2) =
+    _root_.Fp2.zero
+  rfl
+
+@[simp] theorem toField_one : toField one = 1 := by
+  change ({ c0 := 1, c1 := 0 } : EvmSemantics.Crypto.Bls12381.Fp2) =
+    _root_.Fp2.one
+  rfl
 
 @[simp] theorem semantic_pow_two (a : EvmSemantics.Crypto.Bls12381.Fp2) :
     a ^ 2 = _root_.Fp2.square a := rfl

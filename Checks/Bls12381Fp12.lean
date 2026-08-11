@@ -6,6 +6,19 @@ namespace Checks.Bls12381Fp12
 
 open Challenge.Bls12381.ProofSupport
 
+example : Challenge.Bls12381.ProofSupport.Fp12.toField
+    Challenge.Bls12381.ProofSupport.Fp12.zero = 0 :=
+  Challenge.Bls12381.ProofSupport.Fp12.toField_zero
+
+example : Challenge.Bls12381.ProofSupport.Fp12.toField
+    Challenge.Bls12381.ProofSupport.Fp12.one = 1 :=
+  Challenge.Bls12381.ProofSupport.Fp12.toField_one
+
+example (a : Fp12.Repr) :
+    Challenge.Bls12381.ProofSupport.Fp12.pow a 0 =
+      Challenge.Bls12381.ProofSupport.Fp12.one :=
+  Challenge.Bls12381.ProofSupport.Fp12.pow_zero a
+
 example (a : Fp12.Repr) :
     Challenge.Bls12381.ProofSupport.Fp12.toField
         (Challenge.Bls12381.ProofSupport.Fp12.conj a) =
@@ -47,5 +60,6 @@ example (invert : Fp6.Repr → Fp6.Repr) (a : Fp12.Repr)
 #print axioms Challenge.Bls12381.ProofSupport.Fp12.toField_mulBy014
 #print axioms Challenge.Bls12381.ProofSupport.Fp12.toField_frobenius
 #print axioms Challenge.Bls12381.ProofSupport.Fp12.toField_invWith
+#print axioms Challenge.Bls12381.ProofSupport.Fp12.refines_pow
 
 end Checks.Bls12381Fp12

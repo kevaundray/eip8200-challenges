@@ -6,6 +6,14 @@ namespace Checks.Bls12381Fp6
 
 open Challenge.Bls12381.ProofSupport
 
+example : Challenge.Bls12381.ProofSupport.Fp6.toField
+    Challenge.Bls12381.ProofSupport.Fp6.zero = 0 :=
+  Challenge.Bls12381.ProofSupport.Fp6.toField_zero
+
+example : Challenge.Bls12381.ProofSupport.Fp6.toField
+    Challenge.Bls12381.ProofSupport.Fp6.one = 1 :=
+  Challenge.Bls12381.ProofSupport.Fp6.toField_one
+
 example (a : Fp6.Repr) :
     Challenge.Bls12381.ProofSupport.Fp6.toField
         (Challenge.Bls12381.ProofSupport.Fp6.neg a) =

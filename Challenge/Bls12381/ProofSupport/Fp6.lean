@@ -30,6 +30,10 @@ theorem refines_ofField (a : EvmSemantics.Crypto.Bls12381.Fp6) :
     Refines (ofField a) a := by
   simp [Refines]
 
+def zero : Repr := { c0 := Fp2.zero, c1 := Fp2.zero, c2 := Fp2.zero }
+
+def one : Repr := { c0 := Fp2.one, c1 := Fp2.zero, c2 := Fp2.zero }
+
 /-- Multiplication by BLS12-381's sextic non-residue `1 + u`. -/
 def mulByXi (a : Fp2.Repr) : Fp2.Repr :=
   { c0 := Fp.sub a.c0 a.c1, c1 := Fp.add a.c0 a.c1 }
@@ -252,6 +256,16 @@ theorem refines_invSpecRepr (a : Repr) :
   refines_invWith invert a hinvert
 @[simp] theorem toField_invSpecRepr (a : Repr) :
     toField (invSpecRepr a) = _root_.Fp6.inv (toField a) := refines_invSpecRepr a
+
+@[simp] theorem toField_zero : toField zero = 0 := by
+  change ({ c0 := 0, c1 := 0, c2 := 0 } :
+    EvmSemantics.Crypto.Bls12381.Fp6) = _root_.Fp6.zero
+  rfl
+
+@[simp] theorem toField_one : toField one = 1 := by
+  change ({ c0 := 1, c1 := 0, c2 := 0 } :
+    EvmSemantics.Crypto.Bls12381.Fp6) = _root_.Fp6.one
+  rfl
 
 @[simp] theorem semantic_pow_two (a : EvmSemantics.Crypto.Bls12381.Fp6) :
     a ^ 2 = _root_.Fp6.square a := rfl

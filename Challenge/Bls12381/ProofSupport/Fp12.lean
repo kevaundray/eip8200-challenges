@@ -29,6 +29,10 @@ theorem refines_ofField (a : EvmSemantics.Crypto.Bls12381.Fp12) :
     Refines (ofField a) a := by
   simp [Refines]
 
+def zero : Repr := { c0 := Fp6.zero, c1 := Fp6.zero }
+
+def one : Repr := { c0 := Fp6.one, c1 := Fp6.zero }
+
 def add (a b : Repr) : Repr :=
   { c0 := Fp6.add a.c0 b.c0, c1 := Fp6.add a.c1 b.c1 }
 
@@ -85,6 +89,31 @@ def mulBy014 (a : Repr) (b0 b1 b4 : Fp2.Repr) : Repr :=
 
 /-- The current executable cyclotomic square uses the proven general square formula. -/
 def cyclotomicSquare (a : Repr) : Repr := square a
+
+/-- Fuel-bounded right-to-left square-and-multiply in the executable
+representation.  As with scalar multiplication, the exponent is valid fuel
+because every nonterminal iteration halves the working exponent. -/
+def powLoop : Nat → Nat → Repr → Repr → Repr
+  | 0, _, acc, _ => acc
+  | fuel + 1, exponent, acc, base =>
+      if exponent = 0 then acc
+      else
+        let acc' := if exponent % 2 = 1 then mul acc base else acc
+        powLoop fuel (exponent / 2) acc' (square base)
+
+def pow (a : Repr) (exponent : Nat) : Repr :=
+  powLoop exponent exponent one a
+
+/-- Component-level semantic specification for `powLoop`; kept independent
+of the pinned opaque imperative exponentiation definition. -/
+def powSpecLoop : Nat → Nat → EvmSemantics.Crypto.Bls12381.Fp12 →
+    EvmSemantics.Crypto.Bls12381.Fp12 → EvmSemantics.Crypto.Bls12381.Fp12
+  | 0, _, acc, _ => acc
+  | fuel + 1, exponent, acc, base =>
+      if exponent = 0 then acc
+      else
+        let acc' := if exponent % 2 = 1 then _root_.Fp12.mul acc base else acc
+        powSpecLoop fuel (exponent / 2) acc' (_root_.Fp12.square base)
 
 theorem mul_components (a b : Repr) :
     mul a b =
@@ -149,6 +178,34 @@ theorem refines_invWith (invert : Fp6.Repr → Fp6.Repr) (a : Repr)
 theorem refines_invSpecRepr (a : Repr) :
     Refines (invSpecRepr a) (_root_.Fp12.inv (toField a)) := refines_ofField _
 
+theorem toField_powLoop (fuel exponent : Nat) (acc base : Repr) :
+    toField (powLoop fuel exponent acc base) =
+      powSpecLoop fuel exponent (toField acc) (toField base) := by
+  induction fuel generalizing exponent acc base with
+  | zero => rfl
+  | succ fuel ih =>
+      simp only [powLoop, powSpecLoop]
+      split
+      · rfl
+      · rw [ih]
+        have hmul : toField (mul acc base) =
+            _root_.Fp12.mul (toField acc) (toField base) := refines_mul acc base
+        have hsquare : toField (square base) =
+            _root_.Fp12.square (toField base) := refines_square base
+        rw [hsquare]
+        by_cases hodd : exponent % 2 = 1
+        · simp [hodd, hmul]
+        · simp [hodd]
+
+theorem refines_pow (a : Repr) (exponent : Nat) :
+    Refines (pow a exponent)
+      (powSpecLoop exponent exponent 1 (toField a)) := by
+  have hone : toField one = 1 := by
+    change ({ c0 := 1, c1 := 0 } : EvmSemantics.Crypto.Bls12381.Fp12) =
+      _root_.Fp12.one
+    rfl
+  simp [Refines, pow, toField_powLoop, hone]
+
 @[simp] theorem toField_add (a b : Repr) :
     toField (add a b) = toField a + toField b := refines_add a b
 @[simp] theorem toField_sub (a b : Repr) :
@@ -176,5 +233,18 @@ theorem refines_invSpecRepr (a : Repr) :
       _root_.Fp6.inv (Fp6.toField (invNorm a))) :
     toField (invWith invert a) = _root_.Fp12.inv (toField a) :=
   refines_invWith invert a hinvert
+
+@[simp] theorem toField_zero : toField zero = 0 := by
+  change ({ c0 := 0, c1 := 0 } : EvmSemantics.Crypto.Bls12381.Fp12) =
+    _root_.Fp12.zero
+  rfl
+
+@[simp] theorem toField_one : toField one = 1 := by
+  change ({ c0 := 1, c1 := 0 } : EvmSemantics.Crypto.Bls12381.Fp12) =
+    _root_.Fp12.one
+  rfl
+
+@[simp] theorem pow_zero (a : Repr) : pow a 0 = one := rfl
+
 
 end Challenge.Bls12381.ProofSupport.Fp12
