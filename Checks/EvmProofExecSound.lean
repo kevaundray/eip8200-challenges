@@ -46,6 +46,19 @@ example {E : ExecDialect} [DecidableEq E.toDialect.Value]
   Interp.evalExpr_call_of_evalArgs_eq hargs
 
 example {E : ExecDialect} [DecidableEq E.toDialect.Value]
+    {n funs funs' V st args V' st' args' fn}
+    (hargs : Interp.evalArgs E n funs V st args =
+      Interp.evalArgs E n funs' V' st' args')
+    (hlookup : lookupFun funs fn = lookupFun funs' fn) :
+    Interp.evalExpr E (n + 1) funs V st (.call fn args) =
+      Interp.evalExpr E (n + 1) funs' V' st' (.call fn args') :=
+  Interp.evalExpr_call_of_evalArgs_lookup_eq hargs hlookup
+
+/-- info: 'YulSemantics.Interp.evalExpr_call_of_evalArgs_lookup_eq' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms YulSemantics.Interp.evalExpr_call_of_evalArgs_lookup_eq
+
+example {E : ExecDialect} [DecidableEq E.toDialect.Value]
     {n funs V st pre tail V1 st1 Vend st2 outcome}
     (hn : 0 < n)
     (hprefix : Interp.execStmts E (n + pre.length) funs V st pre =

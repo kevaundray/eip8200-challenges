@@ -55,6 +55,18 @@ theorem evalExpr_call_of_evalArgs_eq
   simp only [evalExpr]
   rw [hargs]
 
+/-- The call evaluator can also move between function environments when both
+argument evaluation and lookup agree. -/
+theorem evalExpr_call_of_evalArgs_lookup_eq
+    {n funs funs' V st args V' st' args' fn}
+    (hargs : evalArgs E n funs V st args =
+      evalArgs E n funs' V' st' args')
+    (hlookup : lookupFun funs fn = lookupFun funs' fn) :
+    evalExpr E (n + 1) funs V st (.call fn args) =
+      evalExpr E (n + 1) funs' V' st' (.call fn args') := by
+  simp only [evalExpr]
+  rw [hargs, hlookup]
+
 /-- A normally completed prefix can be spliced in front of a separately
 checked tail when the starting fuel accounts for the prefix length. -/
 theorem execStmts_append_normal
