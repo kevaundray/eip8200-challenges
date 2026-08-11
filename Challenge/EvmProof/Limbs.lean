@@ -65,6 +65,38 @@ def joinAt (base : Nat) (words : Nat × Nat) : Nat :=
 def mulSplit (base a b : Nat) : Nat × Nat :=
   splitAt base (a * b)
 
+/-- Add three words at an arbitrary base, retaining the two source-style
+overflow bits as a (possibly two-valued) carry. -/
+def addThreeAt (base x y z : Nat) : Nat × Nat :=
+  let first := (x + y) % base
+  let carry₁ := if first < x then 1 else 0
+  let result := (first + z) % base
+  let carry₂ := if result < first then 1 else 0
+  (result, carry₁ + carry₂)
+
+/-- Result word and carry word produced by the EVM's two-`ADD` accumulation
+pattern.  The carry can be 0, 1, or 2. -/
+structure WordSum where
+  word : UInt256
+  carry : UInt256
+deriving DecidableEq, Repr
+
+namespace WordSum
+
+def value (sum : WordSum) : Nat :=
+  sum.word.toNat + radix * sum.carry.toNat
+
+end WordSum
+
+/-- Add three EVM words exactly as the source does: two wrapped `ADD`s and the
+sum of their two `LT` overflow bits. -/
+def addThree256 (x y z : UInt256) : WordSum :=
+  let first := x + y
+  let carry₁ := UInt256.lt first x
+  let result := first + z
+  let carry₂ := UInt256.lt result first
+  { word := result, carry := carry₁ + carry₂ }
+
 @[simp] theorem join_splitAt {base : Nat} (_hbase : 0 < base) (value : Nat) :
     joinAt base (splitAt base value) = value := by
   simpa [joinAt, splitAt] using Nat.mod_add_div value base
@@ -239,6 +271,64 @@ theorem mod_eq_cond_sub {total modulus : Nat}
   split_ifs with hlt
   · exact Nat.mod_eq_of_lt hlt
   · rw [Nat.mod_eq_sub_mod (by omega), Nat.mod_eq_of_lt (by omega)]
+
+@[simp] theorem join_addThreeAt {base x y z : Nat} (_hbase : 0 < base)
+    (hx : x < base) (hy : y < base) (hz : z < base) :
+    joinAt base (addThreeAt base x y z) = x + y + z := by
+  have hxy : x + y < 2 * base := by omega
+  simp only [addThreeAt]
+  rw [mod_eq_cond_sub hxy]
+  by_cases hfirst : x + y < base
+  · simp only [hfirst, ↓reduceIte]
+    have hfirstCarry : ¬x + y < x := by omega
+    rw [if_neg hfirstCarry]
+    have hxyz : x + y + z < 2 * base := by omega
+    rw [mod_eq_cond_sub hxyz]
+    by_cases hresult : x + y + z < base
+    · simp [hresult, joinAt]
+    · simp only [hresult, ↓reduceIte]
+      have hoverflow : x + y + z - base < x + y := by omega
+      simp [hoverflow, joinAt]
+      omega
+  · simp only [hfirst, ↓reduceIte]
+    have hfirstOverflow : x + y - base < x := by omega
+    rw [if_pos hfirstOverflow]
+    have hnext : x + y - base + z < 2 * base := by omega
+    rw [mod_eq_cond_sub hnext]
+    by_cases hresult : x + y - base + z < base
+    · simp only [hresult, ↓reduceIte]
+      have hnotCarry : ¬x + y - base + z < x + y - base := by omega
+      simp [hnotCarry, joinAt]
+      omega
+    · simp only [hresult, ↓reduceIte]
+      have hoverflow : x + y - base + z - base < x + y - base := by omega
+      simp [hoverflow, joinAt]
+      omega
+
+theorem addThree256_value (x y z : UInt256) :
+    (addThree256 x y z).value = x.toNat + y.toNat + z.toNat := by
+  unfold WordSum.value addThree256
+  dsimp only
+  simp only [Challenge.EvmProof.Word.word_toNat_add,
+    Challenge.EvmProof.Word.word_toNat_lt]
+  rw [show 2 ^ 256 = radix by rfl]
+  have hcarry :
+      (if (x.toNat + y.toNat) % radix < x.toNat then 1 else 0) +
+          (if ((x.toNat + y.toNat) % radix + z.toNat) % radix <
+            (x.toNat + y.toNat) % radix then 1 else 0) < radix := by
+    split_ifs <;> norm_num [radix]
+  rw [Nat.mod_eq_of_lt hcarry]
+  convert join_addThreeAt (base := radix) radix_pos
+      x.val.isLt y.val.isLt z.val.isLt using 1 <;>
+    simp [joinAt, addThreeAt, UInt256.toNat]
+
+theorem addThree256_carry_lt_three (x y z : UInt256) :
+    (addThree256 x y z).carry.toNat < 3 := by
+  unfold addThree256
+  dsimp only
+  simp only [Challenge.EvmProof.Word.word_toNat_add,
+    Challenge.EvmProof.Word.word_toNat_lt]
+  split_ifs <;> norm_num
 
 /-- The high-word identity behind the EVM `mul`/`mulmod (base - 1)` trick.
 The conditional subtraction is exactly the pair of wrapped `SUB`s used by the

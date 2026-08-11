@@ -26,9 +26,52 @@ example (a : Fp.Limbs) (exponent : Nat) :
     Fp.toField (Fp.powSpecRepr a exponent) = Fp.PowSpec a exponent :=
   Fp.toField_powSpecRepr a exponent
 
+example (a b : Fp.Limbs) (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    (Fp.schoolbookProduct a b).value = Fp.value a * Fp.value b :=
+  Fp.value_schoolbookProduct ha hb
+
+example (a b : Fp.Limbs) (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    (Fp.schoolbookProduct a b).r2.toNat < Challenge.EvmProof.Limbs.radix :=
+  Fp.schoolbookProduct_r2_lt ha hb
+
+example (a b : Fp.Limbs) (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    (Fp.schoolbookProduct a b).r2.toNat =
+      (Challenge.EvmProof.Limbs.fullMul256 a.hi b.lo).hi.toNat +
+      (Challenge.EvmProof.Limbs.fullMul256 a.lo b.hi).hi.toNat +
+      a.hi.toNat * b.hi.toNat +
+      (Challenge.EvmProof.Limbs.addThree256
+        (Challenge.EvmProof.Limbs.fullMul256 a.lo b.lo).hi
+        (Challenge.EvmProof.Limbs.fullMul256 a.hi b.lo).lo
+        (Challenge.EvmProof.Limbs.fullMul256 a.lo b.hi).lo).carry.toNat :=
+  Fp.schoolbookProduct_r2_value ha hb
+
+example (a b : Fp.Limbs) (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    Fp.schoolbookTop a b < Challenge.EvmProof.Limbs.radix :=
+  Fp.schoolbookTop_lt ha hb
+
 #print axioms Fp.value_addCanonical
 #print axioms Fp.value_subCanonical
 #print axioms Fp.toField_mul
 #print axioms Fp.toField_powSpecRepr
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.schoolbookTop_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.schoolbookTop_lt
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.schoolbookProduct_r2_value' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.schoolbookProduct_r2_value
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.schoolbookProduct_r2_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.schoolbookProduct_r2_lt
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_schoolbookProduct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.value_schoolbookProduct
 
 end Checks.Bls12381Fp
