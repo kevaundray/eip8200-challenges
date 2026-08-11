@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.PrimeCertificate.Huge
+import Challenge.Bls12381.ProofSupport.PrimeCertificate.Giant
 
 set_option warningAsError true
 
