@@ -41,7 +41,7 @@ jobs:
         env:
           DEPENDENCY_HASH: ${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
           PACKAGE_TARGET_HASH: ${{ hashFiles('.github/lean-package-cache-targets') }}
-          SHARED_HASH: ${{ hashFiles('lakefile.toml', 'Challenge/EvmProof.lean', 'Challenge/EvmProof/**/*.lean', 'Checks/EvmProof.lean', 'Challenge/Bls12381.lean', 'Challenge/Bls12381/**/*.lean', 'Checks/Bls12381.lean', 'Checks/Bls12381*.lean') }}
+          SHARED_HASH: ${{ hashFiles('lakefile.toml', 'Challenge/EvmProof.lean', 'Challenge/EvmProof/**/*.lean', 'Checks/EvmProof.lean', 'Challenge/Bls12381.lean', 'Challenge/Bls12381/**/*.lean', 'Checks/Bls12381*.lean', '!Checks/Bls12381Codec.lean', '!Checks/Bls12381Fp.lean', '!Checks/Bls12381Fp2.lean', '!Checks/Bls12381Fp6.lean', '!Checks/Bls12381Fp12.lean', '!Checks/Bls12381G1Add*.lean', '!Checks/Bls12381G1Msm.lean', '!Checks/Bls12381G1Projective.lean', '!Checks/Bls12381G2Add*.lean', '!Checks/Bls12381G2Msm.lean', '!Checks/Bls12381G2Projective.lean', '!Checks/Bls12381MapFp*.lean', '!Checks/Bls12381Pairing.lean', '!Checks/Bls12381PrimeCertificate.lean', '!Checks/Bls12381PrimeField.lean', '!Checks/Bls12381Conformance.lean', '!Checks/Bls12381ReferenceBaseline.lean') }}
         run: |
           package_key="lake-packages-v4-${{ runner.os }}-${{ runner.arch }}-${DEPENDENCY_HASH}-${PACKAGE_TARGET_HASH}"
           shared_key="project-shared-v3-${{ runner.os }}-${{ runner.arch }}-${DEPENDENCY_HASH}-${PACKAGE_TARGET_HASH}-${SHARED_HASH}"
