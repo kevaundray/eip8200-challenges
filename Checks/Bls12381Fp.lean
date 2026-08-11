@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.Fp
+import Challenge.Bls12381.ProofSupport.FpSchoolbook
 
 set_option warningAsError true
 
