@@ -128,6 +128,27 @@ theorem splitAt_low_lt {base value : Nat} (hbase : 0 < base) :
     (splitAt base value).1 < base := by
   exact Nat.mod_lt value hbase
 
+/-- Two base-bounded digits reconstruct below the square of the base. -/
+theorem twoDigits_lt {base lo hi : Nat} (hbase : 1 < base)
+    (hlo : lo < base) (hhi : hi < base) :
+    lo + base * hi < base ^ 2 := by
+  rw [show lo + base * hi = Nat.ofDigits base [lo, hi] by
+    simp [Nat.ofDigits_cons]]
+  apply Nat.ofDigits_lt_base_pow_length hbase
+  simp only [List.mem_cons, List.not_mem_nil, or_false]
+  intro digit hdigit
+  rcases hdigit with rfl | rfl
+  · exact hlo
+  · exact hhi
+
+/-- Removing one exact modulus from a value leaves its canonical remainder. -/
+theorem residual_eq_mod_of_eq_add {modulus total residual : Nat}
+    (htotal : total = modulus + residual) (hresidual : residual < modulus) :
+    residual = total % modulus := by
+  rw [htotal, Nat.add_mod, Nat.mod_self, Nat.zero_add]
+  rw [Nat.mod_mod]
+  exact (Nat.mod_eq_of_lt hresidual).symm
+
 theorem mulSplit_high_lt {base a b : Nat} (hbase : 0 < base)
     (ha : a < base) (hb : b < base) :
     (mulSplit base a b).2 < base := by
@@ -259,6 +280,13 @@ the `LT` borrow, then perform the two wrapped high-word `SUB`s. -/
 def subWide256 (a b : WideProduct) : WideProduct :=
   let borrow := UInt256.lt a.lo b.lo
   { hi := a.hi - b.hi - borrow, lo := a.lo - b.lo }
+
+/-- Exact two-word EVM addition schedule: add the low words, test the wrapped
+result against the first low operand, then add both high words and that carry.
+-/
+def addWide256 (a b : WideProduct) : WideProduct :=
+  let low := addTwo256 a.lo b.lo
+  { hi := a.hi + b.hi + low.carry, lo := low.word }
 
 /-- Low two words of the schoolbook product of two two-word values.  Terms at
 word position two and above are deliberately discarded. -/
@@ -595,6 +623,83 @@ theorem addTwo256_value (x y : UInt256) :
     norm_num [radix]
     exact Nat.sub_add_cancel (by
       simpa [radix] using (Nat.le_of_not_gt hoverflow))
+
+/-- The exact two-word source addition reconstructs addition modulo the
+two-word radix. -/
+theorem addWide256_value_mod (a b : WideProduct) :
+    (addWide256 a b).value = (a.value + b.value) % radix ^ 2 := by
+  let low := addTwo256 a.lo b.lo
+  have hlow : low.value = a.lo.toNat + b.lo.toNat :=
+    addTwo256_value a.lo b.lo
+  have hcarry : low.carry.toNat < 2 := by
+    unfold low addTwo256
+    dsimp only
+    rw [Challenge.EvmProof.Word.word_toNat_lt]
+    split <;> norm_num
+  have halo := a.lo.val.isLt
+  have hblo := b.lo.val.isLt
+  have hahi := a.hi.val.isLt
+  have hbhi := b.hi.val.isLt
+  change a.lo.toNat < radix at halo
+  change b.lo.toNat < radix at hblo
+  change a.hi.toNat < radix at hahi
+  change b.hi.toNat < radix at hbhi
+  have hlowWord : low.word.toNat < radix := low.word.val.isLt
+  have hhighSum : a.hi.toNat + b.hi.toNat + low.carry.toNat < 2 * radix := by
+    omega
+  have htotal : a.value + b.value =
+      low.word.toNat + radix *
+        (a.hi.toNat + b.hi.toNat + low.carry.toNat) := by
+    change low.word.toNat + radix * low.carry.toNat =
+      a.lo.toNat + b.lo.toNat at hlow
+    calc
+      a.value + b.value =
+          (a.lo.toNat + b.lo.toNat) +
+            radix * (a.hi.toNat + b.hi.toNat) := by
+        unfold WideProduct.value
+        ring
+      _ = (low.word.toNat + radix * low.carry.toNat) +
+            radix * (a.hi.toNat + b.hi.toNat) := by rw [hlow]
+      _ = low.word.toNat + radix *
+            (a.hi.toNat + b.hi.toNat + low.carry.toNat) := by ring
+  unfold addWide256
+  change low.word.toNat + radix *
+      (a.hi + b.hi + low.carry).toNat = _
+  simp only [Challenge.EvmProof.Word.word_toNat_add]
+  rw [show 2 ^ 256 = radix by rfl]
+  have hhighMod :
+      ((a.hi.toNat + b.hi.toNat) % radix + low.carry.toNat) % radix =
+        (a.hi.toNat + b.hi.toNat + low.carry.toNat) % radix := by
+    simp [Nat.add_mod]
+  rw [hhighMod, htotal]
+  by_cases hhigh : a.hi.toNat + b.hi.toNat + low.carry.toNat < radix
+  · rw [Nat.mod_eq_of_lt hhigh]
+    apply (Nat.mod_eq_of_lt _).symm
+    nlinarith
+  · have hhighLe : radix ≤
+        a.hi.toNat + b.hi.toNat + low.carry.toNat := Nat.le_of_not_gt hhigh
+    rw [mod_eq_cond_sub hhighSum, if_neg hhigh]
+    have hresult : low.word.toNat + radix *
+        (a.hi.toNat + b.hi.toNat + low.carry.toNat - radix) <
+          radix ^ 2 := by
+      apply twoDigits_lt radix_gt_one hlowWord
+      omega
+    have hsplit : radix +
+        (a.hi.toNat + b.hi.toNat + low.carry.toNat - radix) =
+          a.hi.toNat + b.hi.toNat + low.carry.toNat := by omega
+    have hrearrange :
+        low.word.toNat + radix *
+            (a.hi.toNat + b.hi.toNat + low.carry.toNat) =
+          radix ^ 2 +
+            (low.word.toNat + radix *
+              (a.hi.toNat + b.hi.toNat + low.carry.toNat - radix)) := by
+      calc
+        _ = low.word.toNat + radix *
+              (radix +
+                (a.hi.toNat + b.hi.toNat + low.carry.toNat - radix)) := by
+          rw [hsplit]
+        _ = _ := by ring
+    exact residual_eq_mod_of_eq_add hrearrange hresult
 
 theorem addTwo256_carry_lt_two (x y : UInt256) :
     (addTwo256 x y).carry.toNat < 2 := by

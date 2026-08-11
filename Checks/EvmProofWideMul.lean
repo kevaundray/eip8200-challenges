@@ -28,6 +28,11 @@ example (base value : Nat) (hbase : 0 < base) :
     Limbs.joinAt base (Limbs.splitAt base value) = value :=
   Limbs.join_splitAt hbase value
 
+example {base lo hi : Nat} (hbase : 1 < base)
+    (hlo : lo < base) (hhi : hi < base) :
+    lo + base * hi < base ^ 2 :=
+  Limbs.twoDigits_lt hbase hlo hhi
+
 example (base a b : Nat) (hbase : 0 < base) :
     Limbs.joinAt base (Limbs.mulSplit base a b) = a * b :=
   Limbs.join_mulSplit hbase a b
@@ -92,6 +97,11 @@ example (a b : Limbs.WideProduct) :
     (Limbs.subWide256 a b).value =
       (a.value + Limbs.radix ^ 2 - b.value) % Limbs.radix ^ 2 :=
   Limbs.subWide256_value_mod a b
+
+example (a b : Limbs.WideProduct) :
+    (Limbs.addWide256 a b).value =
+      (a.value + b.value) % Limbs.radix ^ 2 :=
+  Limbs.addWide256_value_mod a b
 
 example (a b : Limbs.WideProduct) :
     (Limbs.wideGeWord a b).toNat ≠ 0 ↔ b.value ≤ a.value :=
@@ -280,6 +290,18 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.fullMul256_words_lt' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms Limbs.fullMul256_words_lt
+
+/-- info: 'Challenge.EvmProof.Limbs.twoDigits_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.twoDigits_lt
+
+/-- info: 'Challenge.EvmProof.Limbs.residual_eq_mod_of_eq_add' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Limbs.residual_eq_mod_of_eq_add
+
+/-- info: 'Challenge.EvmProof.Limbs.addWide256_value_mod' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.addWide256_value_mod
 
 /-- info: 'Challenge.EvmProof.Limbs.fullMul256_hi_lt_pred' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
