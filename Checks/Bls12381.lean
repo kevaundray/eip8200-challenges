@@ -15,6 +15,11 @@ import Checks.Bls12381FpMontgomery
 import Checks.Bls12381FpMontgomeryPow
 import Checks.Bls12381FpInvConstants
 import Checks.Bls12381FpInv
+import Checks.Bls12381Fp2SourceSchedule
+import Checks.Bls12381Fp2SourceCanonical
+import Checks.Bls12381Fp2SourceLawful
+import Checks.Bls12381Fp2SourceMul
+import Checks.Bls12381Fp2SourceInv
 
 set_option warningAsError true
 

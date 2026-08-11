@@ -18,6 +18,10 @@ import Challenge.Bls12381.ProofSupport.FpInvConstants
 import Challenge.Bls12381.ProofSupport.FpInv
 import Challenge.Bls12381.ProofSupport.LawfulFp2
 import Challenge.Bls12381.ProofSupport.Fp2
+import Challenge.Bls12381.ProofSupport.Fp2Representation
+import Challenge.Bls12381.ProofSupport.Fp2SourceDefs
+import Challenge.Bls12381.ProofSupport.Fp2Source
+import Challenge.Bls12381.ProofSupport.Fp2SourceLawful
 import Challenge.Bls12381.ProofSupport.LawfulFp6
 import Challenge.Bls12381.ProofSupport.LawfulFp6Norm
 import Challenge.Bls12381.ProofSupport.Fp6
