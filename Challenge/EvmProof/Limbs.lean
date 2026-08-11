@@ -166,6 +166,18 @@ def mulWideLow256 (a b : WideProduct) : WideProduct :=
   let low := fullMul256 a.lo b.lo
   { hi := low.hi + a.lo * b.hi + a.hi * b.lo, lo := low.lo }
 
+/-- Exact two-word unsigned `>=` condition used by the source: compare high
+words first, then compare low words only when the high words are equal. -/
+def wideGeWord (a b : WideProduct) : UInt256 :=
+  UInt256.lor (UInt256.gt a.hi b.hi)
+    (UInt256.land (UInt256.eq a.hi b.hi)
+      (UInt256.isZero (UInt256.lt a.lo b.lo)))
+
+/-- Execute the source's two-word conditional subtraction, branching on the
+EVM comparison word rather than a semantic natural-number comparison. -/
+def conditionalSubWide256 (a b : WideProduct) : WideProduct :=
+  if (wideGeWord a b).toNat ≠ 0 then subWide256 a b else a
+
 /-- Reconstructing the exact two-word EVM subtraction gives ordinary
 subtraction when it does not underflow, and the radix-squared wrapped value
 otherwise. -/
@@ -238,6 +250,55 @@ theorem subWide256_value_mod (a b : WideProduct) :
         radix ^ 2 + a.value - b.value := by omega
     rw [hrearrange]
     exact (Nat.mod_eq_of_lt hwrapped).symm
+
+/-- The EVM comparison word is nonzero exactly when the reconstructed first
+operand is at least the second. -/
+theorem wideGeWord_nonzero_iff (a b : WideProduct) :
+    (wideGeWord a b).toNat ≠ 0 ↔ b.value ≤ a.value := by
+  have halo := a.lo.val.isLt
+  have hahi := a.hi.val.isLt
+  have hblo := b.lo.val.isLt
+  have hbhi := b.hi.val.isLt
+  change a.lo.toNat < radix at halo
+  change a.hi.toNat < radix at hahi
+  change b.lo.toNat < radix at hblo
+  change b.hi.toNat < radix at hbhi
+  have hword : (wideGeWord a b).toNat ≠ 0 ↔
+      b.hi.toNat < a.hi.toNat ∨
+        (a.hi.toNat = b.hi.toNat ∧ ¬a.lo.toNat < b.lo.toNat) := by
+    unfold wideGeWord
+    simp only [Challenge.EvmProof.Word.word_toNat_lor,
+      Challenge.EvmProof.Word.word_toNat_gt,
+      Challenge.EvmProof.Word.word_toNat_land,
+      Challenge.EvmProof.Word.word_toNat_eq,
+      Challenge.EvmProof.Word.word_toNat_isZero,
+      Challenge.EvmProof.Word.word_toNat_lt]
+    by_cases hgt : b.hi.toNat < a.hi.toNat <;>
+      by_cases heq : a.hi.toNat = b.hi.toNat <;>
+      by_cases hlo : b.lo.toNat ≤ a.lo.toNat <;>
+      simp [hgt, heq, hlo]
+  rw [hword]
+  unfold WideProduct.value
+  unfold radix at *
+  omega
+
+/-- The source conditional subtraction either subtracts the second pair once
+or leaves the first pair unchanged. -/
+theorem conditionalSubWide256_value (a b : WideProduct) :
+    (conditionalSubWide256 a b).value =
+      if b.value ≤ a.value then a.value - b.value else a.value := by
+  unfold conditionalSubWide256
+  by_cases hcondition : (wideGeWord a b).toNat ≠ 0
+  · rw [if_pos hcondition]
+    have hle := (wideGeWord_nonzero_iff a b).mp hcondition
+    rw [subWide256_value]
+    simp [hle]
+  · rw [if_neg hcondition]
+    have hnle : ¬b.value ≤ a.value := by
+      intro hle
+      apply hcondition
+      exact (wideGeWord_nonzero_iff a b).mpr hle
+    simp [hnle]
 
 /-- Three EVM words always reconstruct below the three-word radix bound. -/
 theorem threeWords_lt (x y z : UInt256) :

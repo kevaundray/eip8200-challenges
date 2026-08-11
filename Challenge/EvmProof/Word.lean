@@ -87,6 +87,20 @@ theorem word_toNat_lt (a b : EvmSemantics.UInt256) :
   split <;> norm_num [EvmSemantics.UInt256.ofNat,
     EvmSemantics.UInt256.toNat, EvmSemantics.UInt256.size]
 
+theorem word_toNat_gt (a b : EvmSemantics.UInt256) :
+    (EvmSemantics.UInt256.gt a b).toNat =
+      if b.toNat < a.toNat then 1 else 0 := by
+  simp only [EvmSemantics.UInt256.gt]
+  split <;> norm_num [EvmSemantics.UInt256.ofNat,
+    EvmSemantics.UInt256.toNat, EvmSemantics.UInt256.size]
+
+theorem word_toNat_eq (a b : EvmSemantics.UInt256) :
+    (EvmSemantics.UInt256.eq a b).toNat =
+      if a.toNat = b.toNat then 1 else 0 := by
+  simp only [EvmSemantics.UInt256.eq]
+  split <;> norm_num [EvmSemantics.UInt256.ofNat,
+    EvmSemantics.UInt256.toNat, EvmSemantics.UInt256.size]
+
 theorem word_toNat_isZero (a : EvmSemantics.UInt256) :
     a.isZero.toNat = if a.toNat = 0 then 1 else 0 := by
   simp only [EvmSemantics.UInt256.isZero]

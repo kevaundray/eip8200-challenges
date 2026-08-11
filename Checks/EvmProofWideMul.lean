@@ -49,6 +49,15 @@ example (a b : Limbs.WideProduct) :
   Limbs.subWide256_value_mod a b
 
 example (a b : Limbs.WideProduct) :
+    (Limbs.wideGeWord a b).toNat ≠ 0 ↔ b.value ≤ a.value :=
+  Limbs.wideGeWord_nonzero_iff a b
+
+example (a b : Limbs.WideProduct) :
+    (Limbs.conditionalSubWide256 a b).value =
+      if b.value ≤ a.value then a.value - b.value else a.value :=
+  Limbs.conditionalSubWide256_value a b
+
+example (a b : Limbs.WideProduct) :
     (Limbs.mulWideLow256 a b).value =
       (a.value * b.value) % Limbs.radix ^ 2 :=
   Limbs.mulWideLow256_value a b
@@ -131,5 +140,21 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.mulWideLow256_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Limbs.mulWideLow256_value
+
+/-- info: 'Challenge.EvmProof.Word.word_toNat_gt' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Word.word_toNat_gt
+
+/-- info: 'Challenge.EvmProof.Word.word_toNat_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Word.word_toNat_eq
+
+/-- info: 'Challenge.EvmProof.Limbs.wideGeWord_nonzero_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.wideGeWord_nonzero_iff
+
+/-- info: 'Challenge.EvmProof.Limbs.conditionalSubWide256_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.conditionalSubWide256_value
 
 end Checks.EvmProofWideMul
