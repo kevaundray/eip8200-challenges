@@ -27,6 +27,35 @@ structure Ops (Cell Pair : Type) where
   squarePair : Pair → Pair
   invTwo : Cell
 
+/-- A pointwise refinement between two interpretations of the source program. -/
+structure Refines {Cell₁ Pair₁ Cell₂ Pair₂ : Type}
+    (src : Ops Cell₁ Pair₁) (dst : Ops Cell₂ Pair₂)
+    (CellRel : Cell₁ → Cell₂ → Prop)
+    (PairRel : Pair₁ → Pair₂ → Prop) : Prop where
+  c0 : ∀ {a b}, PairRel a b → CellRel (src.c0 a) (dst.c0 b)
+  c1 : ∀ {a b}, PairRel a b → CellRel (src.c1 a) (dst.c1 b)
+  zero : PairRel src.zero dst.zero
+  pair : ∀ {a₀ b₀ a₁ b₁}, CellRel a₀ b₀ → CellRel a₁ b₁ →
+    PairRel (src.pair a₀ a₁) (dst.pair b₀ b₁)
+  isZeroPair : ∀ {a b}, PairRel a b → src.isZeroPair a = dst.isZeroPair b
+  isZeroCell : ∀ {a b}, CellRel a b → src.isZeroCell a = dst.isZeroCell b
+  eqCell : ∀ {a₀ b₀ a₁ b₁}, CellRel a₀ b₀ → CellRel a₁ b₁ →
+    src.eqCell a₀ a₁ = dst.eqCell b₀ b₁
+  eqPair : ∀ {a₀ b₀ a₁ b₁}, PairRel a₀ b₀ → PairRel a₁ b₁ →
+    src.eqPair a₀ a₁ = dst.eqPair b₀ b₁
+  add : ∀ {a₀ b₀ a₁ b₁}, CellRel a₀ b₀ → CellRel a₁ b₁ →
+    CellRel (src.add a₀ a₁) (dst.add b₀ b₁)
+  sub : ∀ {a₀ b₀ a₁ b₁}, CellRel a₀ b₀ → CellRel a₁ b₁ →
+    CellRel (src.sub a₀ a₁) (dst.sub b₀ b₁)
+  neg : ∀ {a b}, CellRel a b → CellRel (src.neg a) (dst.neg b)
+  mul : ∀ {a₀ b₀ a₁ b₁}, CellRel a₀ b₀ → CellRel a₁ b₁ →
+    CellRel (src.mul a₀ a₁) (dst.mul b₀ b₁)
+  square : ∀ {a b}, CellRel a b → CellRel (src.square a) (dst.square b)
+  sqrt : ∀ {a b}, CellRel a b → CellRel (src.sqrt a) (dst.sqrt b)
+  inv : ∀ {a b}, CellRel a b → CellRel (src.inv a) (dst.inv b)
+  squarePair : ∀ {a b}, PairRel a b → PairRel (src.squarePair a) (dst.squarePair b)
+  invTwo : CellRel src.invTwo dst.invTwo
+
 /-- The one authoritative source program, including every branch and reuse. -/
 def run {Cell Pair : Type} (ops : Ops Cell Pair) (a : Pair) : Result Pair :=
   if ops.isZeroPair a then { exists_ := true, root := ops.zero }
@@ -52,6 +81,60 @@ def run {Cell Pair : Type} (ops : Ops Cell Pair) (a : Pair) : Result Pair :=
       if !(ops.eqPair (ops.squarePair root) a) then
         { exists_ := false, root := ops.zero }
       else { exists_ := true, root }
+
+theorem run_refines {Cell₁ Pair₁ Cell₂ Pair₂ : Type}
+    {src : Ops Cell₁ Pair₁} {dst : Ops Cell₂ Pair₂}
+    {CellRel : Cell₁ → Cell₂ → Prop} {PairRel : Pair₁ → Pair₂ → Prop}
+    (h : Refines src dst CellRel PairRel) {a : Pair₁} {b : Pair₂}
+    (ha : PairRel a b) :
+    (run src a).exists_ = (run dst b).exists_ ∧
+      PairRel (run src a).root (run dst b).root := by
+  unfold run
+  rw [h.isZeroPair ha]
+  split
+  · exact ⟨rfl, h.zero⟩
+  · dsimp only
+    have hc0 := h.c0 ha
+    have hc1 := h.c1 ha
+    have hnorm := h.add (h.square hc0) (h.square hc1)
+    have ht := h.sqrt hnorm
+    rw [h.eqCell (h.square ht) hnorm]
+    split
+    · exact ⟨rfl, h.zero⟩
+    · have halpha := h.mul (h.add hc0 ht) h.invTwo
+      have halphaRoot := h.sqrt halpha
+      rw [h.eqCell (h.square halphaRoot) halpha]
+      split
+      · have hbeta := h.mul (h.sub hc0 ht) h.invTwo
+        have hx0 := h.sqrt hbeta
+        rw [h.isZeroCell hx0]
+        split
+        · have hx1 := h.sqrt (h.neg hc0)
+          have hroot := h.pair hx0 hx1
+          rw [h.eqPair (h.squarePair hroot) ha]
+          split
+          · exact ⟨rfl, h.zero⟩
+          · exact ⟨rfl, hroot⟩
+        · have hx1 := h.mul hc1 (h.inv (h.add hx0 hx0))
+          have hroot := h.pair hx0 hx1
+          rw [h.eqPair (h.squarePair hroot) ha]
+          split
+          · exact ⟨rfl, h.zero⟩
+          · exact ⟨rfl, hroot⟩
+      · rw [h.isZeroCell halphaRoot]
+        split
+        · have hx1 := h.sqrt (h.neg hc0)
+          have hroot := h.pair halphaRoot hx1
+          rw [h.eqPair (h.squarePair hroot) ha]
+          split
+          · exact ⟨rfl, h.zero⟩
+          · exact ⟨rfl, hroot⟩
+        · have hx1 := h.mul hc1 (h.inv (h.add halphaRoot halphaRoot))
+          have hroot := h.pair halphaRoot hx1
+          rw [h.eqPair (h.squarePair hroot) ha]
+          split
+          · exact ⟨rfl, h.zero⟩
+          · exact ⟨rfl, hroot⟩
 
 theorem run_good {Cell Pair : Type} (ops : Ops Cell Pair)
     (GoodCell : Cell → Prop) (GoodPair : Pair → Prop)

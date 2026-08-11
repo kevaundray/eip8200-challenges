@@ -36,6 +36,10 @@ example {Cell Pair : Type} (ops : SqrtProgram.Ops Cell Pair) (a : Pair) :
 #guard_msgs in
 #print axioms SqrtProgram.run_good
 
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.SqrtProgram.run_refines' does not depend on any axioms -/
+#guard_msgs in
+#print axioms SqrtProgram.run_refines
+
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp2.SqrtProgram.run_success' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms SqrtProgram.run_success
