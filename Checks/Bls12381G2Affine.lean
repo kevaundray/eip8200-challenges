@@ -1,10 +1,22 @@
 import Challenge.Bls12381.ProofSupport.G2Affine
+import Challenge.Bls12381.ProofSupport.AffineGroup
 
 set_option warningAsError true
 
 namespace Checks.Bls12381G2Affine
 
 open Challenge.Bls12381.ProofSupport
+
+example : WeierstrassCurve.IsElliptic
+    (AffineGroup.mathCurve G2Affine.curve) := inferInstance
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.G2Affine.mathCurve_discriminant_ne_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms G2Affine.mathCurve_discriminant_ne_zero
 
 example (point : EvmSemantics.Crypto.Bls12381.G2Point) :
     G2Affine.toWire (G2Affine.ofWire point) = point :=
