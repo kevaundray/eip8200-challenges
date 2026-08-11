@@ -44,6 +44,17 @@ theorem execStmts_cons_normal
       .ok (Vend, st2, .normal) := by
   simp [execStmts, hhead, htail]
 
+/-- Function-call evaluation depends on its argument expressions only through
+the argument evaluator's result. -/
+theorem evalExpr_call_of_evalArgs_eq
+    {n funs V st args V' st' args' fn}
+    (hargs : evalArgs E n funs V st args =
+      evalArgs E n funs V' st' args') :
+    evalExpr E (n + 1) funs V st (.call fn args) =
+      evalExpr E (n + 1) funs V' st' (.call fn args') := by
+  simp only [evalExpr]
+  rw [hargs]
+
 theorem sound_all_of
     (hE : ∀ op args st result, E.builtinFn op args st = some result →
       E.toDialect.Builtin op args st result) : ∀ n : Nat,
