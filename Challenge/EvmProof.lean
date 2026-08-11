@@ -6,6 +6,7 @@ import Challenge.EvmProof.GasFormula
 import Challenge.EvmProof.Limbs
 import Challenge.EvmProof.Memory
 import Challenge.EvmProof.MemoryRegion
+import Challenge.EvmProof.ModexpCalls
 import Challenge.EvmProof.Ops
 import Challenge.EvmProof.Program
 import Challenge.EvmProof.Word

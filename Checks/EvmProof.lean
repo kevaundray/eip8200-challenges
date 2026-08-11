@@ -1,5 +1,6 @@
 import Challenge.EvmProof
 import Checks.EvmProofByteWindow
+import Checks.EvmProofModexpCalls
 import Checks.EvmProofWideMul
 set_option warningAsError true
 /-!
