@@ -206,6 +206,21 @@ theorem fpMulInput_base (yst : EvmState) (ahi alo bhi blo : U256) :
   simp only [YulEvmCompiler.conv_toNat]
   ring
 
+theorem fpMulInput_runModexp_raw (ahi alo bhi blo : U256) (yst : EvmState) :
+    Precompile.runModexp .Osaka (fpMulInput yst ahi alo bhi blo) 500 =
+      .success (Precompile.natToBytes
+        ((convFullMul (fullMulValue ahi alo bhi blo)).value %
+          EvmSemantics.Crypto.Bls12381.p) 48) 500 := by
+  exact Challenge.EvmProof.ModexpOne.runModexp_96_1_48
+    (fpMulInput_baseSize yst ahi alo bhi blo)
+    (fpMulInput_exponentSize yst ahi alo bhi blo)
+    (fpMulInput_modulusSize yst ahi alo bhi blo)
+    (fpMulInput_base yst ahi alo bhi blo)
+    (fpMulInput_exponent yst ahi alo bhi blo)
+    (fpMulInput_modulus yst ahi alo bhi blo)
+    (by norm_num [EvmSemantics.Crypto.Bls12381.p,
+      EvmSemantics.Crypto.Bls12381.absU])
+
 /-- The exact 241-byte source input makes the literal-500-gas MODEXP call
 reduce the full schoolbook product modulo the BLS base-field modulus. -/
 theorem fpMulInput_runModexp (ahi alo bhi blo : U256) (yst : EvmState)
@@ -220,23 +235,8 @@ theorem fpMulInput_runModexp (ahi alo bhi blo : U256) (yst : EvmState)
           Challenge.Bls12381.ProofSupport.Fp.value
             { hi := YulEvmCompiler.conv bhi, lo := YulEvmCompiler.conv blo }) %
           EvmSemantics.Crypto.Bls12381.p) 48) 500 := by
-  have hbaseValue :
-      (convFullMul (fullMulValue ahi alo bhi blo)).value =
-        Challenge.Bls12381.ProofSupport.Fp.value
-            { hi := YulEvmCompiler.conv ahi, lo := YulEvmCompiler.conv alo } *
-          Challenge.Bls12381.ProofSupport.Fp.value
-            { hi := YulEvmCompiler.conv bhi, lo := YulEvmCompiler.conv blo } := by
-    rw [conv_fullMulValue]
-    exact Challenge.Bls12381.ProofSupport.Fp.value_schoolbookProduct ha hb
-  have hrun := Challenge.EvmProof.ModexpOne.runModexp_96_1_48
-    (fpMulInput_baseSize yst ahi alo bhi blo)
-    (fpMulInput_exponentSize yst ahi alo bhi blo)
-    (fpMulInput_modulusSize yst ahi alo bhi blo)
-    (fpMulInput_base yst ahi alo bhi blo)
-    (fpMulInput_exponent yst ahi alo bhi blo)
-    (fpMulInput_modulus yst ahi alo bhi blo)
-    (by norm_num [EvmSemantics.Crypto.Bls12381.p,
-      EvmSemantics.Crypto.Bls12381.absU])
-  simpa [hbaseValue] using hrun
+  rw [fpMulInput_runModexp_raw]
+  rw [conv_fullMulValue,
+    Challenge.Bls12381.ProofSupport.Fp.value_schoolbookProduct ha hb]
 
 end Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics

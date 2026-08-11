@@ -65,6 +65,12 @@ example (ahi alo bhi blo : U256) (yst : EvmState)
 #guard_msgs in
 #print axioms fpMulInput_base
 
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpMulInput_runModexp_raw' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms fpMulInput_runModexp_raw
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpMulInput_runModexp' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
