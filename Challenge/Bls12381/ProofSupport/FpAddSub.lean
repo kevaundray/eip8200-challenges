@@ -156,6 +156,160 @@ theorem asWide_subRaw (a b : Limbs) :
     asWide (subRaw a b) = Challenge.EvmProof.Limbs.subWide256
       (asWide a) (asWide b) := rfl
 
+theorem asWide_subRepair (diff : Limbs) :
+    asWide (subRepair diff) = Challenge.EvmProof.Limbs.addWide256
+      (asWide diff) modulusWide := rfl
+
+theorem value_subRepair (diff : Limbs) :
+    value (subRepair diff) =
+      (value diff + EvmSemantics.Crypto.Bls12381.p) %
+        Challenge.EvmProof.Limbs.radix ^ 2 := by
+  have hwide := congrArg Challenge.EvmProof.Limbs.WideProduct.value
+    (asWide_subRepair diff)
+  rw [asWide_value, Challenge.EvmProof.Limbs.addWide256_value_mod,
+    asWide_value, modulusWide_value] at hwide
+  exact hwide
+
+theorem subRepairCondition_iff {a b : Limbs} (ha : Canonical a)
+    (hb : Canonical b) :
+    (UInt256.gt (subRaw a b).hi modulusHi).toNat ≠ 0 ↔ value a < value b := by
+  let diff := subRaw a b
+  have hword : (UInt256.gt diff.hi modulusHi).toNat ≠ 0 ↔
+      modulusHi.toNat < diff.hi.toNat := by
+    rw [Challenge.EvmProof.Word.word_toNat_gt]
+    by_cases hgt : modulusHi.toNat < diff.hi.toNat <;> simp [hgt]
+  rw [hword]
+  have hraw := congrArg Challenge.EvmProof.Limbs.WideProduct.value
+    (asWide_subRaw a b)
+  rw [asWide_value, Challenge.EvmProof.Limbs.subWide256_value,
+    asWide_value, asWide_value] at hraw
+  have hdiffLo : diff.lo.toNat < Challenge.EvmProof.Limbs.radix :=
+    diff.lo.val.isLt
+  have hpLo : modulusLo.toNat < Challenge.EvmProof.Limbs.radix :=
+    modulusLo.val.isLt
+  have hpBelowNext : EvmSemantics.Crypto.Bls12381.p <
+      Challenge.EvmProof.Limbs.radix * (modulusHi.toNat + 1) := by
+    calc
+      _ = modulusLo.toNat +
+          Challenge.EvmProof.Limbs.radix * modulusHi.toNat := modulus_words.symm
+      _ < Challenge.EvmProof.Limbs.radix +
+          Challenge.EvmProof.Limbs.radix * modulusHi.toNat :=
+        Nat.add_lt_add_right hpLo _
+      _ = _ := by ring
+  have hgap : Challenge.EvmProof.Limbs.radix * (modulusHi.toNat + 1) <
+      Challenge.EvmProof.Limbs.radix ^ 2 -
+        EvmSemantics.Crypto.Bls12381.p := by
+    norm_num [modulusHi, Challenge.EvmProof.Word.word_toNat_ofNat,
+      Challenge.EvmProof.Limbs.radix, EvmSemantics.Crypto.Bls12381.p,
+      EvmSemantics.Crypto.Bls12381.absU]
+  by_cases hle : value b ≤ value a
+  · rw [if_pos hle] at hraw
+    constructor
+    · intro hgt
+      have hmul : Challenge.EvmProof.Limbs.radix *
+          (modulusHi.toNat + 1) ≤
+            Challenge.EvmProof.Limbs.radix * diff.hi.toNat :=
+        Nat.mul_le_mul_left _ (Nat.succ_le_of_lt hgt)
+      have hdiffGe : Challenge.EvmProof.Limbs.radix * diff.hi.toNat ≤
+          value diff := by
+        unfold value
+        omega
+      have hdiffLt : value diff < EvmSemantics.Crypto.Bls12381.p := by
+        rw [hraw]
+        exact (Nat.sub_le _ _).trans_lt ha.2
+      omega
+    · intro hlt
+      omega
+  · have hlt : value a < value b := by omega
+    rw [if_neg hle] at hraw
+    constructor
+    · intro _
+      exact hlt
+    · intro _
+      by_contra hnhi
+      have hhi : diff.hi.toNat ≤ modulusHi.toNat := by omega
+      have hmul : Challenge.EvmProof.Limbs.radix * diff.hi.toNat ≤
+          Challenge.EvmProof.Limbs.radix * modulusHi.toNat :=
+        Nat.mul_le_mul_left _ hhi
+      have hdiffUpper : value diff <
+          Challenge.EvmProof.Limbs.radix * (modulusHi.toNat + 1) := by
+        have hloLe : diff.lo.toNat ≤ Challenge.EvmProof.Limbs.radix - 1 :=
+          Nat.le_pred_of_lt hdiffLo
+        calc
+          value diff = diff.lo.toNat +
+              Challenge.EvmProof.Limbs.radix * diff.hi.toNat := rfl
+          _ ≤ (Challenge.EvmProof.Limbs.radix - 1) +
+              Challenge.EvmProof.Limbs.radix * modulusHi.toNat :=
+            Nat.add_le_add hloLe hmul
+          _ < Challenge.EvmProof.Limbs.radix +
+              Challenge.EvmProof.Limbs.radix * modulusHi.toNat :=
+            Nat.add_lt_add_right
+              (Nat.sub_lt Challenge.EvmProof.Limbs.radix_pos (by omega)) _
+          _ = _ := by ring
+      have hdiffLower : Challenge.EvmProof.Limbs.radix ^ 2 -
+          EvmSemantics.Crypto.Bls12381.p < value diff := by
+        have hbSq : value b < Challenge.EvmProof.Limbs.radix ^ 2 :=
+          hb.2.trans p_lt_radix_sq
+        have hsub : Challenge.EvmProof.Limbs.radix ^ 2 -
+            EvmSemantics.Crypto.Bls12381.p <
+              Challenge.EvmProof.Limbs.radix ^ 2 - value b :=
+          Nat.sub_lt_sub_left hbSq hb.2
+        have hadd : Challenge.EvmProof.Limbs.radix ^ 2 - value b ≤
+            Challenge.EvmProof.Limbs.radix ^ 2 + value a - value b :=
+          Nat.sub_le_sub_right (Nat.le_add_right _ _) _
+        rw [hraw]
+        exact hsub.trans_le hadd
+      omega
+
+theorem value_subSource {a b : Limbs} (ha : Canonical a) (hb : Canonical b) :
+    value (subSource a b) =
+      (EvmSemantics.Crypto.Bls12381.p + value a - value b) %
+        EvmSemantics.Crypto.Bls12381.p := by
+  let diff := subRaw a b
+  have hcondition := subRepairCondition_iff ha hb
+  have hraw := congrArg Challenge.EvmProof.Limbs.WideProduct.value
+    (asWide_subRaw a b)
+  rw [asWide_value, Challenge.EvmProof.Limbs.subWide256_value,
+    asWide_value, asWide_value] at hraw
+  unfold subSource
+  change value (if (UInt256.gt diff.hi modulusHi).toNat ≠ 0 then
+      subRepair diff else diff) = _
+  by_cases hlt : value a < value b
+  · have hrepair := hcondition.mpr hlt
+    rw [if_pos hrepair, value_subRepair]
+    have hnle : ¬value b ≤ value a := by omega
+    rw [if_neg hnle] at hraw
+    have hbvalue := hb.2
+    have hresidual : EvmSemantics.Crypto.Bls12381.p + value a - value b <
+        EvmSemantics.Crypto.Bls12381.p := by omega
+    have hresidualSq : EvmSemantics.Crypto.Bls12381.p + value a - value b <
+        Challenge.EvmProof.Limbs.radix ^ 2 :=
+      hresidual.trans p_lt_radix_sq
+    have hsum : value diff + EvmSemantics.Crypto.Bls12381.p =
+        Challenge.EvmProof.Limbs.radix ^ 2 +
+          (EvmSemantics.Crypto.Bls12381.p + value a - value b) := by
+      have hbSq : value b < Challenge.EvmProof.Limbs.radix ^ 2 :=
+        hb.2.trans p_lt_radix_sq
+      rw [hraw]
+      omega
+    have hmod := Challenge.EvmProof.Limbs.residual_eq_mod_of_eq_add
+      hsum hresidualSq
+    rw [← hmod, Nat.mod_eq_of_lt hresidual]
+  · have hkeep : ¬(UInt256.gt diff.hi modulusHi).toNat ≠ 0 := by
+      intro hrepair
+      exact hlt (hcondition.mp hrepair)
+    rw [if_neg hkeep]
+    have hle : value b ≤ value a := by omega
+    rw [if_pos hle] at hraw
+    rw [hraw]
+    have hresidual : value a - value b < EvmSemantics.Crypto.Bls12381.p :=
+      (Nat.sub_le _ _).trans_lt ha.2
+    have hsum : EvmSemantics.Crypto.Bls12381.p + value a - value b =
+        EvmSemantics.Crypto.Bls12381.p + (value a - value b) := by omega
+    rw [hsum, Nat.add_mod, Nat.mod_self, Nat.zero_add]
+    rw [Nat.mod_mod]
+    exact (Nat.mod_eq_of_lt hresidual).symm
+
 theorem asWide_negNonzero (a : Limbs) :
     asWide (negNonzero a) = Challenge.EvmProof.Limbs.subWide256
       modulusWide (asWide a) := rfl
@@ -220,6 +374,14 @@ theorem canonical_negSource {a : Limbs} (ha : Canonical a) :
     norm_num [EvmSemantics.Crypto.Bls12381.p,
       EvmSemantics.Crypto.Bls12381.absU])
 
+theorem canonical_subSource {a b : Limbs} (ha : Canonical a)
+    (hb : Canonical b) : Canonical (subSource a b) := by
+  apply canonical_of_value_lt
+  rw [value_subSource ha hb]
+  exact Nat.mod_lt _ (by
+    norm_num [EvmSemantics.Crypto.Bls12381.p,
+      EvmSemantics.Crypto.Bls12381.absU])
+
 theorem toField_addSource {a b : Limbs} (ha : Canonical a)
     (hb : Canonical b) : toField (addSource a b) = toField a + toField b := by
   apply Fin.ext
@@ -233,5 +395,18 @@ theorem toField_negSource {a : Limbs} (ha : Canonical a) :
   simp only [toField, Fin.neg_def, Fin.val_ofNat]
   rw [value_negSource ha]
   rw [Nat.mod_mod, Nat.mod_eq_of_lt ha.2]
+
+theorem toField_subSource {a b : Limbs} (ha : Canonical a)
+    (hb : Canonical b) : toField (subSource a b) = toField a - toField b := by
+  apply Fin.ext
+  simp only [toField, Fin.sub_def, Fin.val_ofNat]
+  rw [value_subSource ha hb]
+  simp only [Nat.mod_mod]
+  rw [Nat.mod_eq_of_lt ha.2, Nat.mod_eq_of_lt hb.2]
+  by_cases hbzero : value b = 0
+  · simp [hbzero]
+  · have hbvalue := hb.2
+    congr 1
+    omega
 
 end Challenge.Bls12381.ProofSupport.Fp
