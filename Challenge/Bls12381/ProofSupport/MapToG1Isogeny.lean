@@ -1,5 +1,5 @@
 import Challenge.Bls12381.ProofSupport.G1Affine
-import Challenge.Bls12381.ProofSupport.MapToG1Sswu
+import Challenge.Bls12381.ProofSupport.MapToG1
 import EvmSemantics.Crypto.Bls12381.MapFpToG1
 
 set_option warningAsError true
