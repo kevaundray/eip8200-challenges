@@ -10,12 +10,13 @@ set_option warningAsError true
 /-!
 # Shared naive scalar multiplication
 
-The trusted semantic theorem in this module is binary recursion by definition:
-`binary_even` and `binary_odd` universally characterize the implemented
-double-and-add operation.  This slice does not claim a connection to a
-separately defined repeated-addition/group action, because the local affine
-boundary currently proves curve preservation rather than the full group laws.
-It also makes no equality claim about the pinned opaque-inverse scalar code.
+The executable algorithm is binary recursion by definition: `binary_even`
+and `binary_odd` universally characterize its double-and-add schedule.  The
+`g1_nsmul` and `g2_nsmul` theorems then map that recursion through the local
+affine boundary into Mathlib's independently proved affine elliptic-curve
+group, establishing equality with its natural-number scalar action.  This
+module still makes no equality claim about the pinned opaque-inverse scalar
+code.
 -/
 
 namespace Challenge.Bls12381.ProofSupport.ScalarMul
