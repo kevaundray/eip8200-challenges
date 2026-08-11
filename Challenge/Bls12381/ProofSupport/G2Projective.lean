@@ -1,5 +1,4 @@
-import Challenge.Bls12381.ProofSupport.Fp2
-import Mathlib.Tactic.NormNum
+import Challenge.Bls12381.ProofSupport.LawfulFp2
 
 set_option warningAsError true
 
@@ -10,32 +9,43 @@ namespace Challenge.Bls12381.ProofSupport.G2Projective
 open EvmSemantics.Crypto.Bls12381
 
 structure Point where
-  x : EvmSemantics.Crypto.Bls12381.Fp2
-  y : EvmSemantics.Crypto.Bls12381.Fp2
-  z : EvmSemantics.Crypto.Bls12381.Fp2
+  x : LawfulFp2.Carrier
+  y : LawfulFp2.Carrier
+  z : LawfulFp2.Carrier
 deriving DecidableEq
 
 def infinity : Point := { x := 0, y := 1, z := 0 }
 
-def affine : EvmSemantics.Crypto.Bls12381.G2Point → Point
+/-- Embed the pinned affine Fp2 wire carrier into lawful Jacobian
+coordinates. -/
+def ofWire : EvmSemantics.Crypto.Bls12381.G2Point → Point
   | .infinity => infinity
-  | .affine x y => { x, y, z := 1 }
+  | .affine x y =>
+      { x := LawfulFp2.ofWire x, y := LawfulFp2.ofWire y, z := 1 }
 
-def toAffine (point : Point) : EvmSemantics.Crypto.Bls12381.G2Point :=
+/-- Convert lawful Jacobian coordinates back to the pinned affine Fp2 wire
+carrier using the certified lawful field inverse. -/
+def toWire (point : Point) : EvmSemantics.Crypto.Bls12381.G2Point :=
   if point.z = 0 then .infinity
-  else if point.z = 1 then .affine point.x point.y
+  else if point.z = 1 then
+    .affine (LawfulFp2.toWire point.x) (LawfulFp2.toWire point.y)
   else
     let zInv := point.z⁻¹
-    .affine (point.x * zInv ^ 2) (point.y * zInv ^ 3)
+    .affine (LawfulFp2.toWire (point.x * zInv ^ 2))
+      (LawfulFp2.toWire (point.y * zInv ^ 3))
+
+abbrev affine := ofWire
+abbrev toAffine := toWire
 
 @[simp] theorem infinity_toAffine : toAffine infinity = .infinity := by
-  simp [toAffine, infinity]
+  simp [toAffine, toWire, infinity]
 
 @[simp] theorem affine_toAffine (point : EvmSemantics.Crypto.Bls12381.G2Point) :
     toAffine (affine point) = point := by
-  have hone : (1 : EvmSemantics.Crypto.Bls12381.Fp2) ≠ 0 := by
-    decide
-  cases point <;> simp [affine, toAffine, infinity, hone]
+  cases point <;> simp [affine, toAffine, ofWire, toWire, infinity]
+
+@[simp] theorem toWire_ofWire (point : EvmSemantics.Crypto.Bls12381.G2Point) :
+    toWire (ofWire point) = point := affine_toAffine point
 
 /-- Jacobian doubling for the `a = 0` BLS12-381 G2 twist. -/
 def double (point : Point) : Point :=
@@ -96,10 +106,5 @@ def add (left right : Point) : Point :=
 @[simp] theorem add_infinity_of_z_eq_zero (point : Point) (hz : point.z = 0) :
     add point infinity = infinity := by
   simp [add, infinity, hz]
-
-/-- The exact algebraic dependency needed to connect nonzero Jacobian `z`
-coordinates to the pinned affine inverse operation. -/
-def InverseLaw : Prop :=
-  ∀ a : EvmSemantics.Crypto.Bls12381.Fp2, a ≠ 0 → a * a⁻¹ = 1
 
 end Challenge.Bls12381.ProofSupport.G2Projective
