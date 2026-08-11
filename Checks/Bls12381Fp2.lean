@@ -4,6 +4,18 @@ set_option warningAsError true
 
 namespace Checks.Bls12381Fp2
 
+open Challenge.Bls12381.ProofSupport
+
+example (a : EvmSemantics.Crypto.Bls12381.Fp2) :
+    LawfulFp2.toWire (LawfulFp2.ofWire a) = a :=
+  LawfulFp2.toWire_ofWire a
+
+example (a : LawfulFp2.Carrier) (ha : a ≠ 0) : a * a⁻¹ = 1 :=
+  LawfulFp2.mul_inv_cancel a ha
+
+#print axioms LawfulFp2.toWire_ofWire
+#print axioms LawfulFp2.mul_inv_cancel
+
 example : Challenge.Bls12381.ProofSupport.Fp2.toField
     Challenge.Bls12381.ProofSupport.Fp2.zero = 0 :=
   Challenge.Bls12381.ProofSupport.Fp2.toField_zero
