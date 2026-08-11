@@ -49,6 +49,27 @@ def toWire (a : Carrier) : EvmSemantics.Crypto.Bls12381.Fp2 :=
   cases a
   simp [toWire, ofWire]
 
+@[simp] theorem ofWire_add (a b : EvmSemantics.Crypto.Bls12381.Fp2) :
+    ofWire (a + b) = ofWire a + ofWire b := by
+  change ofWire (_root_.Fp2.add a b) = _
+  cases a
+  cases b
+  apply QuadraticAlgebra.ext <;> simp [ofWire, _root_.Fp2.add]
+
+@[simp] theorem ofWire_mul (a b : EvmSemantics.Crypto.Bls12381.Fp2) :
+    ofWire (a * b) = ofWire a * ofWire b := by
+  change ofWire (_root_.Fp2.mul a b) = _
+  cases a
+  cases b
+  apply QuadraticAlgebra.ext <;> simp [ofWire, _root_.Fp2.mul] <;> ring
+
+@[simp] theorem ofWire_square (a : EvmSemantics.Crypto.Bls12381.Fp2) :
+    ofWire (a ^ 2) = ofWire a ^ 2 := by
+  change ofWire (_root_.Fp2.square a) = _
+  cases a
+  apply QuadraticAlgebra.ext <;>
+    simp [ofWire, _root_.Fp2.square, pow_two] <;> ring
+
 theorem mul_inv_cancel (a : Carrier) (ha : a ≠ 0) : a * a⁻¹ = 1 := by
   simpa [mul_comm] using inv_mul_cancel₀ ha
 
