@@ -12,6 +12,7 @@ import Challenge.EvmProof.ModexpCalls
 import Challenge.EvmProof.ModexpCallRealization
 import Challenge.EvmProof.ModexpExec
 import Challenge.EvmProof.ModexpMemory
+import Challenge.EvmProof.ModexpOne
 import Challenge.EvmProof.Ops
 import Challenge.EvmProof.Program
 import Challenge.EvmProof.ProfiledCalls
