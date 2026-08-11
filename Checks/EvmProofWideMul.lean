@@ -124,6 +124,10 @@ example (a b : UInt256) :
     (Limbs.fullMul256 a b).hi.toNat < Limbs.radix - 1 :=
   Limbs.fullMul256_hi_lt_pred a b
 
+example (a b : UInt256) :
+    (Limbs.fullMul256 a b).hi.toNat ≤ b.toNat :=
+  Limbs.fullMul256_hi_le_right a b
+
 /-- info: 'Challenge.EvmProof.Limbs.join_mulSplit' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms Limbs.join_mulSplit
@@ -247,5 +251,9 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.fullMul256_hi_lt_pred' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Limbs.fullMul256_hi_lt_pred
+
+/-- info: 'Challenge.EvmProof.Limbs.fullMul256_hi_le_right' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.fullMul256_hi_le_right
 
 end Checks.EvmProofWideMul

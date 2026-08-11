@@ -746,6 +746,34 @@ theorem fullMul256_hi_lt_pred (a b : UInt256) :
     (Nat.mul_lt_mul_right hpredPos).2 (Nat.sub_lt radix_pos (by omega))
   exact (Nat.not_lt_of_ge (htoProduct.trans hproduct)) hstrict
 
+/-- The high half of a word product is at most either operand. -/
+theorem fullMul256_hi_le_right (a b : UInt256) :
+    (fullMul256 a b).hi.toNat ≤ b.toNat := by
+  have hvalue := fullMul256_value a b
+  by_cases hb : b.toNat = 0
+  · unfold WideProduct.value at hvalue
+    rw [hb] at hvalue ⊢
+    simp only [Nat.mul_zero] at hvalue
+    have hmul : radix * (fullMul256 a b).hi.toNat = 0 :=
+      Nat.eq_zero_of_add_eq_zero_left hvalue
+    rcases Nat.mul_eq_zero.mp hmul with hradix | hhi
+    · exact False.elim (Nat.ne_of_gt radix_pos hradix)
+    · exact Nat.le_of_eq hhi
+  · have hbpos : 0 < b.toNat := Nat.pos_of_ne_zero hb
+    have ha := a.val.isLt
+    change a.toNat < radix at ha
+    have hproduct : a.toNat * b.toNat < radix * b.toNat :=
+      (Nat.mul_lt_mul_right hbpos).2 ha
+    have hscaled : radix * (fullMul256 a b).hi.toNat <
+        radix * b.toNat := by
+      calc
+        radix * (fullMul256 a b).hi.toNat ≤
+            (fullMul256 a b).lo.toNat +
+              radix * (fullMul256 a b).hi.toNat := Nat.le_add_left _ _
+        _ = a.toNat * b.toNat := hvalue
+        _ < radix * b.toNat := hproduct
+    exact Nat.le_of_lt ((Nat.mul_lt_mul_left radix_pos).mp hscaled)
+
 /-- The source-style shift/splice schedule reconstructs exact doubling when
 the mathematical result fits in two EVM words. -/
 theorem doubleWide256_value (input : WideProduct)
