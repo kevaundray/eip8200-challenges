@@ -1,5 +1,6 @@
 import Mathlib.Algebra.Field.Basic
-import Mathlib.Tactic
+import Mathlib.Tactic.LinearCombination
+import Mathlib.Tactic.Ring
 
 set_option warningAsError true
 
