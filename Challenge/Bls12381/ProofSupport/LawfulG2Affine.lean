@@ -87,4 +87,30 @@ theorem onCurve_ofWire {x y : EvmSemantics.Crypto.Bls12381.Fp2}
   rw [hcurve']
   simp [curve, pow_succ, mul_assoc]
 
+/-- Lawful G2 membership transports back to the inverse-free pinned
+membership predicate. -/
+theorem onCurve_toWire {x y : Field}
+    (hcurve : OnCurve (.affine x y)) :
+    EvmSemantics.Crypto.G2.onCurve EvmSemantics.Crypto.Bls12381.g2Curve
+      (LawfulFp2.toWire x) (LawfulFp2.toWire y) = true := by
+  have hlawful :
+      LawfulFp2.ofWire ((LawfulFp2.toWire y) ^ 2) =
+        LawfulFp2.ofWire
+          (LawfulFp2.toWire x * (LawfulFp2.toWire x) ^ 2 + g2TwistB) := by
+    simpa [OnCurve, LawfulAffine.OnCurve, curve, pow_succ, mul_assoc] using hcurve
+  have hwire' :
+      (LawfulFp2.toWire y) ^ 2 =
+        LawfulFp2.toWire x * (LawfulFp2.toWire x) ^ 2 + g2TwistB := by
+    apply LawfulFp2.ofWire_injective
+    simpa using hlawful
+  have hparts :
+      ((LawfulFp2.toWire y) ^ 2).c0 =
+          (LawfulFp2.toWire x * (LawfulFp2.toWire x) ^ 2 + g2TwistB).c0 ∧
+        ((LawfulFp2.toWire y) ^ 2).c1 =
+          (LawfulFp2.toWire x * (LawfulFp2.toWire x) ^ 2 + g2TwistB).c1 :=
+    ⟨congrArg _root_.Fp2.c0 hwire', congrArg _root_.Fp2.c1 hwire'⟩
+  simp only [EvmSemantics.Crypto.G2.onCurve,
+    EvmSemantics.Crypto.Bls12381.g2Curve, _root_.Fp2.eq]
+  simpa using hparts
+
 end Challenge.Bls12381.ProofSupport.G2Affine

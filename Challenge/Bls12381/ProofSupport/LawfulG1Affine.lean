@@ -77,4 +77,21 @@ theorem onCurve_ofWire {x y : Fp}
   simpa [curve, EvmSemantics.Crypto.Bls12381.curve, hfour,
     pow_two, pow_succ, mul_assoc] using mapped
 
+/-- Lawful membership transports back to the pinned decoded carrier because
+the membership predicate itself does not use inversion. -/
+theorem onCurve_toWire {x y : Field}
+    (hcurve : OnCurve (.affine x y)) :
+    EvmSemantics.Crypto.Bls12381.onCurve
+      (PrimeField.finEquiv.symm x) (PrimeField.finEquiv.symm y) = true := by
+  simp only [EvmSemantics.Crypto.Bls12381.onCurve,
+    EvmSemantics.Crypto.Weierstrass.onCurve]
+  apply decide_eq_true
+  apply PrimeField.finEquiv.injective
+  have hfour : PrimeField.finEquiv (4 : Fp) = (4 : Field) := by
+    apply ZMod.val_injective
+    rfl
+  simpa [OnCurve, LawfulAffine.OnCurve, curve,
+    EvmSemantics.Crypto.Bls12381.curve, hfour,
+    pow_two, pow_succ, mul_assoc] using hcurve
+
 end Challenge.Bls12381.ProofSupport.G1Affine

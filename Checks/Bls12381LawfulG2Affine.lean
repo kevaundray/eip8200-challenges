@@ -25,6 +25,12 @@ example (x y : EvmSemantics.Crypto.Bls12381.Fp2)
     G2Affine.OnCurve (G2Affine.ofWire (.affine x y)) :=
   G2Affine.onCurve_ofWire hcurve
 
+example (x y : G2Affine.Field)
+    (hcurve : G2Affine.OnCurve (.affine x y)) :
+    EvmSemantics.Crypto.G2.onCurve EvmSemantics.Crypto.Bls12381.g2Curve
+      (LawfulFp2.toWire x) (LawfulFp2.toWire y) = true :=
+  G2Affine.onCurve_toWire hcurve
+
 /--
 info: 'Challenge.Bls12381.ProofSupport.LawfulFp2.ofWire_add' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
@@ -44,6 +50,12 @@ info: 'Challenge.Bls12381.ProofSupport.LawfulFp2.ofWire_square' depends on axiom
 #print axioms LawfulFp2.ofWire_square
 
 /--
+info: 'Challenge.Bls12381.ProofSupport.LawfulFp2.ofWire_injective' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms LawfulFp2.ofWire_injective
+
+/--
 info: 'Challenge.Bls12381.ProofSupport.G2Affine.toWire_ofWire' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
@@ -54,6 +66,12 @@ info: 'Challenge.Bls12381.ProofSupport.G2Affine.onCurve_ofWire' depends on axiom
 -/
 #guard_msgs in
 #print axioms G2Affine.onCurve_ofWire
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.G2Affine.onCurve_toWire' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms G2Affine.onCurve_toWire
 
 /--
 info: 'Challenge.Bls12381.ProofSupport.G2Affine.onCurve_double' depends on axioms: [propext, Classical.choice, Quot.sound]

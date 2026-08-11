@@ -24,6 +24,12 @@ example (x y : EvmSemantics.Crypto.Bls12381.Fp)
     G1Affine.OnCurve (G1Affine.ofWire (.affine x y)) :=
   G1Affine.onCurve_ofWire hcurve
 
+example (x y : G1Affine.Field)
+    (hcurve : G1Affine.OnCurve (.affine x y)) :
+    EvmSemantics.Crypto.Bls12381.onCurve
+      (PrimeField.finEquiv.symm x) (PrimeField.finEquiv.symm y) = true :=
+  G1Affine.onCurve_toWire hcurve
+
 /--
 info: 'Challenge.Bls12381.ProofSupport.G1Affine.toWire_ofWire' depends on axioms: [propext, Quot.sound]
 -/
@@ -35,6 +41,12 @@ info: 'Challenge.Bls12381.ProofSupport.G1Affine.onCurve_ofWire' depends on axiom
 -/
 #guard_msgs in
 #print axioms G1Affine.onCurve_ofWire
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.G1Affine.onCurve_toWire' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms G1Affine.onCurve_toWire
 
 /--
 info: 'Challenge.Bls12381.ProofSupport.G1Affine.onCurve_double' depends on axioms: [propext, Classical.choice, Quot.sound]

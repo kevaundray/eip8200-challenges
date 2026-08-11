@@ -49,6 +49,9 @@ def toWire (a : Carrier) : EvmSemantics.Crypto.Bls12381.Fp2 :=
   cases a
   simp [toWire, ofWire]
 
+theorem ofWire_injective : Function.Injective ofWire :=
+  Function.LeftInverse.injective toWire_ofWire
+
 @[simp] theorem ofWire_add (a b : EvmSemantics.Crypto.Bls12381.Fp2) :
     ofWire (a + b) = ofWire a + ofWire b := by
   change ofWire (_root_.Fp2.add a b) = _
