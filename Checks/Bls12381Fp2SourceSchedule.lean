@@ -7,7 +7,8 @@ namespace Checks.Bls12381Fp2SourceSchedule
 open Challenge.Bls12381.ProofSupport
 
 example (a : Fp2.Repr) :
-    Fp2.Canonical a ↔ Fp.Canonical a.c0 ∧ Fp.Canonical a.c1 := Iff.rfl
+    Fp2.Canonical a ↔ Fp.Canonical a.c0 ∧ Fp.Canonical a.c1 :=
+  Fp2.canonical_iff a
 
 example (a b : Fp2.Repr) :
     Fp2.addSource a b =
@@ -34,6 +35,11 @@ example (a b : Fp2.Repr) :
         (Fp.addSource v0 v1)
       { c0 := Fp.subSource v0 v1, c1 } := rfl
 
+example (a b : Fp2.Repr) :
+    Fp2.mulSource a b =
+      Fp2.mkRepr (Fp2.mulC0Source a b) (Fp2.mulC1Source a b) :=
+  Fp2.mulSource_eq a b
+
 example (a : Fp2.Repr) :
     Fp2.sqrSource a =
       let c0 := Fp.mulCanonical
@@ -43,12 +49,22 @@ example (a : Fp2.Repr) :
       { c0, c1 } := rfl
 
 example (a : Fp2.Repr) :
+    Fp2.sqrSource a =
+      Fp2.mkRepr (Fp2.sqrRealSource a) (Fp2.sqrC1Source a) :=
+  Fp2.sqrSource_eq a
+
+example (a : Fp2.Repr) :
     Fp2.invSource a =
       let norm := Fp.addSource
         (Fp.squareCanonical a.c0) (Fp.squareCanonical a.c1)
       let normInv := Fp.invCanonical norm
       { c0 := Fp.mulCanonical a.c0 normInv
         c1 := Fp.mulCanonical (Fp.negSource a.c1) normInv } := rfl
+
+example (a : Fp2.Repr) :
+    Fp2.invSource a =
+      Fp2.mkRepr (Fp2.invC0Source a) (Fp2.invC1Source a) :=
+  Fp2.invSource_eq a
 
 example (a : Fp2.Repr) (s : Fp.Limbs) :
     Fp2.mulFpSource a s =

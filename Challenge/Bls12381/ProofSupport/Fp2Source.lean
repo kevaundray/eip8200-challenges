@@ -1,59 +1,120 @@
-import Challenge.Bls12381.ProofSupport.Fp2Representation
-import Challenge.Bls12381.ProofSupport.FpAddSub
-import Challenge.Bls12381.ProofSupport.FpMul
-import Challenge.Bls12381.ProofSupport.FpSquare
-import Challenge.Bls12381.ProofSupport.FpInv
+import Challenge.Bls12381.ProofSupport.Fp2SourceDefs
 
 set_option warningAsError true
 
-/-! # Source-faithful BLS12-381 Fp2 arithmetic -/
+/-! # Correctness of source-faithful BLS12-381 Fp2 arithmetic -/
 
 namespace Challenge.Bls12381.ProofSupport.Fp2
 
-/-- Exact componentwise `Fp2.add` call graph. -/
-def addSource (a b : Repr) : Repr :=
-  { c0 := Fp.addSource a.c0 b.c0
-    c1 := Fp.addSource a.c1 b.c1 }
+theorem canonical_addSource {a b : Repr} (ha : Canonical a)
+    (hb : Canonical b) : Canonical (addSource a b) :=
+  canonical_mkRepr
+    ⟨Fp.canonical_addSource ha.c0.proof hb.c0.proof⟩
+    ⟨Fp.canonical_addSource ha.c1.proof hb.c1.proof⟩
 
-/-- Exact componentwise `Fp2.sub` call graph. -/
-def subSource (a b : Repr) : Repr :=
-  { c0 := Fp.subSource a.c0 b.c0
-    c1 := Fp.subSource a.c1 b.c1 }
+theorem canonical_subSource {a b : Repr} (ha : Canonical a)
+    (hb : Canonical b) : Canonical (subSource a b) :=
+  canonical_mkRepr
+    ⟨Fp.canonical_subSource ha.c0.proof hb.c0.proof⟩
+    ⟨Fp.canonical_subSource ha.c1.proof hb.c1.proof⟩
 
-/-- Exact componentwise `Fp2.neg` call graph. -/
-def negSource (a : Repr) : Repr :=
-  { c0 := Fp.negSource a.c0
-    c1 := Fp.negSource a.c1 }
+theorem canonical_negSource {a : Repr} (ha : Canonical a) :
+    Canonical (negSource a) :=
+  canonical_mkRepr
+    ⟨Fp.canonical_negSource ha.c0.proof⟩
+    ⟨Fp.canonical_negSource ha.c1.proof⟩
 
-/-- Exact three-multiplication Karatsuba schedule from `Fp2.mul`. -/
-def mulSource (a b : Repr) : Repr :=
-  let v0 := Fp.mulCanonical a.c0 b.c0
-  let v1 := Fp.mulCanonical a.c1 b.c1
-  let c1 := Fp.subSource
-    (Fp.mulCanonical
-      (Fp.addSource a.c0 a.c1) (Fp.addSource b.c0 b.c1))
-    (Fp.addSource v0 v1)
-  { c0 := Fp.subSource v0 v1, c1 }
+theorem canonical_mulRealSource {v0 v1 : Fp.Limbs}
+    (hv0 : ComponentCanonical v0) (hv1 : ComponentCanonical v1) :
+    ComponentCanonical (mulRealSource v0 v1) :=
+  ⟨Fp.canonical_subSource hv0.proof hv1.proof⟩
 
-/-- Exact two-multiplication optimized schedule from `Fp2.sqr`. -/
-def sqrSource (a : Repr) : Repr :=
-  let c0 := Fp.mulCanonical
-    (Fp.addSource a.c0 a.c1) (Fp.subSource a.c0 a.c1)
-  let product := Fp.mulCanonical a.c0 a.c1
-  let c1 := Fp.addSource product product
-  { c0, c1 }
+theorem canonical_mulImaginarySource {a b : Repr} {v0 v1 : Fp.Limbs}
+    (ha : Canonical a) (hb : Canonical b)
+    (hv0 : ComponentCanonical v0) (hv1 : ComponentCanonical v1) :
+    ComponentCanonical (mulImaginarySource a b v0 v1) := by
+  have haSum := Fp.canonical_addSource ha.c0.proof ha.c1.proof
+  have hbSum := Fp.canonical_addSource hb.c0.proof hb.c1.proof
+  have hcross := Fp.canonical_mulCanonical haSum hbSum
+  have hvSum := Fp.canonical_addSource hv0.proof hv1.proof
+  exact ⟨Fp.canonical_subSource hcross hvSum⟩
 
-/-- Exact norm/invert/adjugate schedule from `Fp2.inv`. -/
-def invSource (a : Repr) : Repr :=
-  let norm := Fp.addSource
-    (Fp.squareCanonical a.c0) (Fp.squareCanonical a.c1)
-  let normInv := Fp.invCanonical norm
-  { c0 := Fp.mulCanonical a.c0 normInv
-    c1 := Fp.mulCanonical (Fp.negSource a.c1) normInv }
+theorem canonical_mulC0Source {a b : Repr} (ha : Canonical a)
+    (hb : Canonical b) : ComponentCanonical (mulC0Source a b) := by
+  exact canonical_mulRealSource
+    ⟨Fp.canonical_mulCanonical ha.c0.proof hb.c0.proof⟩
+    ⟨Fp.canonical_mulCanonical ha.c1.proof hb.c1.proof⟩
 
-/-- Exact componentwise scalar multiplication from `Fp2.mulFp`. -/
-def mulFpSource (a : Repr) (s : Fp.Limbs) : Repr :=
-  { c0 := Fp.mulCanonical a.c0 s
-    c1 := Fp.mulCanonical a.c1 s }
+theorem canonical_mulC1Source {a b : Repr} (ha : Canonical a)
+    (hb : Canonical b) : ComponentCanonical (mulC1Source a b) := by
+  exact canonical_mulImaginarySource ha hb
+    ⟨Fp.canonical_mulCanonical ha.c0.proof hb.c0.proof⟩
+    ⟨Fp.canonical_mulCanonical ha.c1.proof hb.c1.proof⟩
+
+theorem canonical_mulSource {a b : Repr} (ha : Canonical a)
+    (hb : Canonical b) : Canonical (mulSource a b) :=
+  canonical_mkRepr (canonical_mulC0Source ha hb) (canonical_mulC1Source ha hb)
+
+theorem canonical_sqrRealSource {a : Repr} (ha : Canonical a) :
+    ComponentCanonical (sqrRealSource a) :=
+  ⟨Fp.canonical_mulCanonical
+    (Fp.canonical_addSource ha.c0.proof ha.c1.proof)
+    (Fp.canonical_subSource ha.c0.proof ha.c1.proof)⟩
+
+theorem canonical_sqrImaginarySource {product : Fp.Limbs}
+    (hproduct : ComponentCanonical product) :
+    ComponentCanonical (sqrImaginarySource product) :=
+  ⟨Fp.canonical_addSource hproduct.proof hproduct.proof⟩
+
+theorem canonical_sqrC1Source {a : Repr} (ha : Canonical a) :
+    ComponentCanonical (sqrC1Source a) := by
+  exact canonical_sqrImaginarySource
+    ⟨Fp.canonical_mulCanonical ha.c0.proof ha.c1.proof⟩
+
+theorem canonical_sqrSource {a : Repr} (ha : Canonical a) :
+    Canonical (sqrSource a) :=
+  canonical_mkRepr (canonical_sqrRealSource ha) (canonical_sqrC1Source ha)
+
+theorem canonical_invNormSource {a : Repr} (ha : Canonical a) :
+    ComponentCanonical (invNormSource a) :=
+  ⟨Fp.canonical_addSource
+    (Fp.canonical_squareCanonical ha.c0.proof)
+    (Fp.canonical_squareCanonical ha.c1.proof)⟩
+
+theorem canonical_invRealSource {a0 normInv : Fp.Limbs}
+    (ha0 : ComponentCanonical a0)
+    (hnormInv : ComponentCanonical normInv) :
+    ComponentCanonical (invRealSource a0 normInv) :=
+  ⟨Fp.canonical_mulCanonical ha0.proof hnormInv.proof⟩
+
+theorem canonical_invImaginarySource {a1 normInv : Fp.Limbs}
+    (ha1 : ComponentCanonical a1)
+    (hnormInv : ComponentCanonical normInv) :
+    ComponentCanonical (invImaginarySource a1 normInv) :=
+  ⟨Fp.canonical_mulCanonical (Fp.canonical_negSource ha1.proof)
+    hnormInv.proof⟩
+
+theorem canonical_invC0Source {a : Repr} (ha : Canonical a) :
+    ComponentCanonical (invC0Source a) := by
+  have hnorm := canonical_invNormSource ha
+  exact canonical_invRealSource ha.c0
+    ⟨Fp.canonical_invCanonical hnorm.proof⟩
+
+theorem canonical_invC1Source {a : Repr} (ha : Canonical a) :
+    ComponentCanonical (invC1Source a) := by
+  have hnorm := canonical_invNormSource ha
+  exact canonical_invImaginarySource ha.c1
+    ⟨Fp.canonical_invCanonical hnorm.proof⟩
+
+theorem canonical_invSource {a : Repr} (ha : Canonical a) :
+    Canonical (invSource a) :=
+  canonical_mkRepr (canonical_invC0Source ha) (canonical_invC1Source ha)
+
+theorem canonical_mulFpSource {a : Repr} {s : Fp.Limbs}
+    (ha : Canonical a) (hs : Fp.Canonical s) :
+    Canonical (mulFpSource a s) :=
+  canonical_mkRepr
+    ⟨Fp.canonical_mulCanonical ha.c0.proof hs⟩
+    ⟨Fp.canonical_mulCanonical ha.c1.proof hs⟩
 
 end Challenge.Bls12381.ProofSupport.Fp2
