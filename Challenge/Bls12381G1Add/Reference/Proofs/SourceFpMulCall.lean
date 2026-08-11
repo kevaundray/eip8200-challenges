@@ -21,7 +21,7 @@ private theorem fpMulStmt9_shape : fpMulStmt9 =
 /-- The literal-500 MODEXP call succeeds on the exact 241-byte input, so the
 source `iszero` failure branch is skipped and the 48-byte result is copied. -/
 theorem exec_fpMulCall (ahi alo bhi blo : U256) (yst : EvmState) :
-    Interp.execStmt Challenge.EvmProof.modexpExec 56 fpMulFuns
+    Interp.execStmt Challenge.EvmProof.modexpExec 56 fpMulBodyFuns
       (fpMulProductEnv ahi alo bhi blo)
       (fpMulInputState yst ahi alo bhi blo) fpMulStmt9 =
     .ok (fpMulProductEnv ahi alo bhi blo,

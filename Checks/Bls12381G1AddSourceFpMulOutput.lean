@@ -7,7 +7,7 @@ namespace Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
 open YulSemantics YulSemantics.EVM
 
 example (ahi alo bhi blo : U256) (yst : EvmState) :
-    Interp.execStmts Challenge.EvmProof.modexpExec 56 fpMulFuns
+    Interp.execStmts Challenge.EvmProof.modexpExec 56 fpMulBodyFuns
       (fpMulProductEnv ahi alo bhi blo)
       (fpMulCallState yst ahi alo bhi blo) [fpMulStmt10, fpMulStmt11] =
     .ok (fpMulReturnEnv yst ahi alo bhi blo,

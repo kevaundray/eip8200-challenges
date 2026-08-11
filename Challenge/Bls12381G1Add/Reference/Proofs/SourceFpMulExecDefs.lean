@@ -43,6 +43,15 @@ theorem hoist_fpMulBody :
     hoist Challenge.EvmProof.modexpExec.toDialect fpMulBody = [] := by
   rfl
 
+def fpMulBodyFuns : FunEnv Challenge.EvmProof.modexpExec.toDialect :=
+  [] :: fpMulFuns
+
+theorem fpMulBodyFuns_eq :
+    hoist Challenge.EvmProof.modexpExec.toDialect fpMulBody :: fpMulFuns =
+      fpMulBodyFuns := by
+  rw [hoist_fpMulBody]
+  rfl
+
 def fpMulDecl : FDecl Challenge.EvmProof.modexpExec.toDialect :=
   { params := ["\x0068", "\x0069", "\x0070", "\x0071"]
     rets := ["\x0072", "\x0073"]

@@ -15,6 +15,10 @@ example : fpMulBody =
 example : hoist Challenge.EvmProof.modexpExec.toDialect fpMulBody = [] :=
   hoist_fpMulBody
 
+example : hoist Challenge.EvmProof.modexpExec.toDialect fpMulBody :: fpMulFuns =
+    fpMulBodyFuns :=
+  fpMulBodyFuns_eq
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpMulBody_eq' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms fpMulBody_eq
@@ -22,6 +26,10 @@ example : hoist Challenge.EvmProof.modexpExec.toDialect fpMulBody = [] :=
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.hoist_fpMulBody' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms hoist_fpMulBody
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpMulBodyFuns_eq' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms fpMulBodyFuns_eq
 
 example (ahi alo bhi blo : U256) (yst final : EvmState)
     (Vend : VEnv Challenge.EvmProof.modexpExec.toDialect)

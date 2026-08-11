@@ -21,7 +21,7 @@ def fpMulReturnEnv (yst : EvmState) (ahi alo bhi blo : U256) :
 /-- The final two source statements load the returned high and low limbs in
 their exact order and update both memory high-water marks. -/
 theorem exec_fpMulOutput (ahi alo bhi blo : U256) (yst : EvmState) :
-    Interp.execStmts Challenge.EvmProof.modexpExec 56 fpMulFuns
+    Interp.execStmts Challenge.EvmProof.modexpExec 56 fpMulBodyFuns
       (fpMulProductEnv ahi alo bhi blo)
       (fpMulCallState yst ahi alo bhi blo) [fpMulStmt10, fpMulStmt11] =
     .ok (fpMulReturnEnv yst ahi alo bhi blo,
