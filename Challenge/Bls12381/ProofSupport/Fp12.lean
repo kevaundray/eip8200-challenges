@@ -15,6 +15,9 @@ deriving DecidableEq
 def toField (a : Repr) : EvmSemantics.Crypto.Bls12381.Fp12 :=
   { c0 := Fp6.toField a.c0, c1 := Fp6.toField a.c1 }
 
+def toLawful (a : Repr) : LawfulFp12.Carrier :=
+  { c0 := Fp6.toLawful a.c0, c1 := Fp6.toLawful a.c1 }
+
 def ofField (a : EvmSemantics.Crypto.Bls12381.Fp12) : Repr :=
   { c0 := Fp6.ofField a.c0, c1 := Fp6.ofField a.c1 }
 
@@ -50,6 +53,11 @@ def mul (a b : Repr) : Repr :=
   let t := Fp6.mul (Fp6.add a.c0 a.c1) (Fp6.add b.c0 b.c1)
   { c0 := Fp6.add v0 (Fp6.mulByV v1)
     c1 := Fp6.sub (Fp6.sub t v0) v1 }
+
+theorem toLawful_mul (a b : Repr) :
+    toLawful (mul a b) = LawfulFp12.mul (toLawful a) (toLawful b) := by
+  apply LawfulFp12.Carrier.ext <;>
+    simp [toLawful, mul, LawfulFp12.mul]
 
 /-- Complex squaring using two Fp6 multiplications. -/
 def square (a : Repr) : Repr :=

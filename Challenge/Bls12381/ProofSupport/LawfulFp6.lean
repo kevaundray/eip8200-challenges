@@ -12,6 +12,17 @@ namespace Challenge.Bls12381.ProofSupport.LawfulFp6
   c2 : LawfulFp2.Carrier
 deriving DecidableEq
 
+def zero : Carrier := { c0 := 0, c1 := 0, c2 := 0 }
+
+def add (a b : Carrier) : Carrier :=
+  { c0 := a.c0 + b.c0, c1 := a.c1 + b.c1, c2 := a.c2 + b.c2 }
+
+def sub (a b : Carrier) : Carrier :=
+  { c0 := a.c0 - b.c0, c1 := a.c1 - b.c1, c2 := a.c2 - b.c2 }
+
+def neg (a : Carrier) : Carrier :=
+  { c0 := -a.c0, c1 := -a.c1, c2 := -a.c2 }
+
 /-- The sextic non-residue `1 + u` in the lawful quadratic field. -/
 def xi : LawfulFp2.Carrier := ⟨1, 1⟩
 
@@ -20,6 +31,9 @@ def mul (a b : Carrier) : Carrier :=
   { c0 := a.c0 * b.c0 + xi * (a.c1 * b.c2 + a.c2 * b.c1)
     c1 := a.c0 * b.c1 + a.c1 * b.c0 + xi * (a.c2 * b.c2)
     c2 := a.c0 * b.c2 + a.c1 * b.c1 + a.c2 * b.c0 }
+
+def mulByV (a : Carrier) : Carrier :=
+  { c0 := xi * a.c2, c1 := a.c0, c2 := a.c1 }
 
 def one : Carrier := { c0 := 1, c1 := 0, c2 := 0 }
 

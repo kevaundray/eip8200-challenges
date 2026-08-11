@@ -80,7 +80,7 @@ def mul (a b : Repr) : Repr :=
     simp [mulByXi, LawfulFp6.xi, Fp2.toLawful, LawfulFp2.ofWire,
       Fp2.toField] <;> ring
 
-theorem toLawful_mul (a b : Repr) :
+@[simp] theorem toLawful_mul (a b : Repr) :
     toLawful (mul a b) = LawfulFp6.mul (toLawful a) (toLawful b) := by
   apply LawfulFp6.Carrier.ext
   · simp [mul, toLawful, LawfulFp6.mul]
@@ -90,6 +90,21 @@ theorem toLawful_mul (a b : Repr) :
     ring
   · simp [mul, toLawful, LawfulFp6.mul]
     ring
+
+@[simp] theorem toLawful_add (a b : Repr) :
+    toLawful (add a b) = LawfulFp6.add (toLawful a) (toLawful b) := by
+  apply LawfulFp6.Carrier.ext <;>
+    simp [toLawful, add, LawfulFp6.add]
+
+@[simp] theorem toLawful_sub (a b : Repr) :
+    toLawful (sub a b) = LawfulFp6.sub (toLawful a) (toLawful b) := by
+  apply LawfulFp6.Carrier.ext <;>
+    simp [toLawful, sub, LawfulFp6.sub]
+
+@[simp] theorem toLawful_neg (a : Repr) :
+    toLawful (neg a) = LawfulFp6.neg (toLawful a) := by
+  apply LawfulFp6.Carrier.ext <;>
+    simp [toLawful, neg, LawfulFp6.neg]
 
 def square (a : Repr) : Repr :=
   let s0 := Fp2.square a.c0
@@ -105,6 +120,11 @@ def square (a : Repr) : Repr :=
 /-- Multiplication by the cubic generator `v`. -/
 def mulByV (a : Repr) : Repr :=
   { c0 := mulByXi a.c2, c1 := a.c0, c2 := a.c1 }
+
+@[simp] theorem toLawful_mulByV (a : Repr) :
+    toLawful (mulByV a) = LawfulFp6.mulByV (toLawful a) := by
+  apply LawfulFp6.Carrier.ext <;>
+    simp [toLawful, mulByV, LawfulFp6.mulByV]
 
 def mulByFp2 (a : Repr) (k : Fp2.Repr) : Repr :=
   { c0 := Fp2.mul a.c0 k, c1 := Fp2.mul a.c1 k, c2 := Fp2.mul a.c2 k }
