@@ -2,39 +2,47 @@ import Challenge.Bls12381.ProofSupport.ScalarMul
 
 set_option warningAsError true
 
-/-! Shared lawful-affine list-fold algorithms for multi-scalar multiplication. -/
+/-! # Shared naive multi-scalar multiplication
+
+The executable boundary is a left fold of the approved proof-visible affine
+addition and scalar multiplication.  Each scalar is an exact unreduced EIP
+256-bit value; no silent truncation or subgroup-order reduction occurs here.
+-/
 
 namespace Challenge.Bls12381.ProofSupport.Msm
 
 open EvmSemantics.Crypto.Bls12381
 
-def foldG1 : G1Affine.Point → List (G1Affine.Point × Nat) →
+abbrev G1Term := G1Affine.Point × ScalarMul.Scalar256
+abbrev G2Term := G2Affine.Point × ScalarMul.Scalar256
+
+def foldG1 : G1Affine.Point → List G1Term →
     G1Affine.Point
   | acc, [] => acc
   | acc, (point, scalar) :: rest =>
-      foldG1 (G1Affine.add acc (ScalarMul.g1 scalar point)) rest
+      foldG1 (G1Affine.add acc (ScalarMul.g1Eip scalar point)) rest
 
-def g1 (terms : List (G1Affine.Point × Nat)) : G1Affine.Point :=
+def g1 (terms : List G1Term) : G1Affine.Point :=
   foldG1 G1Affine.infinity terms
 
-def foldG2 : G2Affine.Point → List (G2Affine.Point × Nat) →
+def foldG2 : G2Affine.Point → List G2Term →
     G2Affine.Point
   | acc, [] => acc
   | acc, (point, scalar) :: rest =>
-      foldG2 (G2Affine.add acc (ScalarMul.g2 scalar point)) rest
+      foldG2 (G2Affine.add acc (ScalarMul.g2Eip scalar point)) rest
 
-def g2 (terms : List (G2Affine.Point × Nat)) : G2Affine.Point :=
+def g2 (terms : List G2Term) : G2Affine.Point :=
   foldG2 G2Affine.infinity terms
 
 @[simp] theorem foldG1_nil (acc : G1Affine.Point) : foldG1 acc [] = acc := rfl
 
-@[simp] theorem foldG1_cons (acc point : G1Affine.Point) (scalar : Nat)
-    (rest : List (G1Affine.Point × Nat)) :
+@[simp] theorem foldG1_cons (acc point : G1Affine.Point)
+    (scalar : ScalarMul.Scalar256) (rest : List G1Term) :
     foldG1 acc ((point, scalar) :: rest) =
-      foldG1 (G1Affine.add acc (ScalarMul.g1 scalar point)) rest := rfl
+      foldG1 (G1Affine.add acc (ScalarMul.g1Eip scalar point)) rest := rfl
 
 theorem foldG1_append (acc : G1Affine.Point)
-    (left right : List (G1Affine.Point × Nat)) :
+    (left right : List G1Term) :
     foldG1 acc (left ++ right) = foldG1 (foldG1 acc left) right := by
   induction left generalizing acc with
   | nil => rfl
@@ -45,13 +53,13 @@ theorem foldG1_append (acc : G1Affine.Point)
 
 @[simp] theorem foldG2_nil (acc : G2Affine.Point) : foldG2 acc [] = acc := rfl
 
-@[simp] theorem foldG2_cons (acc point : G2Affine.Point) (scalar : Nat)
-    (rest : List (G2Affine.Point × Nat)) :
+@[simp] theorem foldG2_cons (acc point : G2Affine.Point)
+    (scalar : ScalarMul.Scalar256) (rest : List G2Term) :
     foldG2 acc ((point, scalar) :: rest) =
-      foldG2 (G2Affine.add acc (ScalarMul.g2 scalar point)) rest := rfl
+      foldG2 (G2Affine.add acc (ScalarMul.g2Eip scalar point)) rest := rfl
 
 theorem foldG2_append (acc : G2Affine.Point)
-    (left right : List (G2Affine.Point × Nat)) :
+    (left right : List G2Term) :
     foldG2 acc (left ++ right) = foldG2 (foldG2 acc left) right := by
   induction left generalizing acc with
   | nil => rfl
@@ -59,5 +67,81 @@ theorem foldG2_append (acc : G2Affine.Point)
       rcases pair with ⟨point, scalar⟩
       simp only [List.cons_append, foldG2_cons]
       exact ih _
+
+@[simp] theorem g1_nil : g1 [] = G1Affine.infinity := rfl
+
+@[simp] theorem g2_nil : g2 [] = G2Affine.infinity := rfl
+
+@[simp] theorem g1_single (point : G1Affine.Point)
+    (scalar : ScalarMul.Scalar256) :
+    g1 [(point, scalar)] = ScalarMul.g1Eip scalar point := by
+  simp [g1, G1Affine.add]
+
+@[simp] theorem g2_single (point : G2Affine.Point)
+    (scalar : ScalarMul.Scalar256) :
+    g2 [(point, scalar)] = ScalarMul.g2Eip scalar point := by
+  simp [g2, G2Affine.add]
+
+theorem g1_cons (point : G1Affine.Point) (scalar : ScalarMul.Scalar256)
+    (rest : List G1Term) :
+    g1 ((point, scalar) :: rest) =
+      foldG1 (ScalarMul.g1Eip scalar point) rest := by
+  simp [g1, G1Affine.add]
+
+theorem g2_cons (point : G2Affine.Point) (scalar : ScalarMul.Scalar256)
+    (rest : List G2Term) :
+    g2 ((point, scalar) :: rest) =
+      foldG2 (ScalarMul.g2Eip scalar point) rest := by
+  simp [g2, G2Affine.add]
+
+theorem g1_append (left right : List G1Term) :
+    g1 (left ++ right) = foldG1 (g1 left) right := by
+  exact foldG1_append G1Affine.infinity left right
+
+theorem g2_append (left right : List G2Term) :
+    g2 (left ++ right) = foldG2 (g2 left) right := by
+  exact foldG2_append G2Affine.infinity left right
+
+theorem foldG1_onCurve (acc : G1Affine.Point) (terms : List G1Term)
+    (hacc : G1Affine.OnCurve acc)
+    (hterms : ∀ term ∈ terms, G1Affine.OnCurve term.1) :
+    G1Affine.OnCurve (foldG1 acc terms) := by
+  induction terms generalizing acc with
+  | nil => exact hacc
+  | cons term rest ih =>
+      rcases term with ⟨point, scalar⟩
+      apply ih
+      · exact G1Affine.onCurve_add acc (ScalarMul.g1Eip scalar point) hacc
+          (ScalarMul.g1_onCurve scalar.val point
+            (hterms (point, scalar) (by simp)))
+      · intro term hterm
+        exact hterms term (by simp [hterm])
+
+theorem foldG2_onCurve (acc : G2Affine.Point) (terms : List G2Term)
+    (hacc : G2Affine.OnCurve acc)
+    (hterms : ∀ term ∈ terms, G2Affine.OnCurve term.1) :
+    G2Affine.OnCurve (foldG2 acc terms) := by
+  induction terms generalizing acc with
+  | nil => exact hacc
+  | cons term rest ih =>
+      rcases term with ⟨point, scalar⟩
+      apply ih
+      · exact G2Affine.onCurve_add acc (ScalarMul.g2Eip scalar point) hacc
+          (ScalarMul.g2_onCurve scalar.val point
+            (hterms (point, scalar) (by simp)))
+      · intro term hterm
+        exact hterms term (by simp [hterm])
+
+theorem g1_onCurve (terms : List G1Term)
+    (hterms : ∀ term ∈ terms, G1Affine.OnCurve term.1) :
+    G1Affine.OnCurve (g1 terms) :=
+  foldG1_onCurve G1Affine.infinity terms
+    (LawfulAffine.onCurve_infinity G1Affine.curve) hterms
+
+theorem g2_onCurve (terms : List G2Term)
+    (hterms : ∀ term ∈ terms, G2Affine.OnCurve term.1) :
+    G2Affine.OnCurve (g2 terms) :=
+  foldG2_onCurve G2Affine.infinity terms
+    (LawfulAffine.onCurve_infinity G2Affine.curve) hterms
 
 end Challenge.Bls12381.ProofSupport.Msm
