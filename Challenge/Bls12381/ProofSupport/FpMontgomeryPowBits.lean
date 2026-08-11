@@ -194,4 +194,12 @@ theorem scanExponent_value {bytes : List UInt8} {first : UInt8}
       simp only [exponentBits, hdrop, hsig, List.tail_cons, List.cons_append,
         binaryValue, Bool.toNat_true, Nat.one_mul, List.length_append]
 
+theorem scanExponent_none_value {bytes : List UInt8}
+    (hscan : scanExponent bytes = none) : bytesValue bytes = 0 := by
+  rw [← bytesValue_dropLeadingZeroBytes bytes]
+  generalize hdrop : dropLeadingZeroBytes bytes = stripped
+  cases stripped with
+  | nil => rfl
+  | cons first rest => simp [scanExponent, hdrop] at hscan
+
 end Challenge.Bls12381.ProofSupport.Fp

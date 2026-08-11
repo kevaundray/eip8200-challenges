@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryPow
+import Challenge.Bls12381.ProofSupport.FpMontgomeryPowLawful
 
 set_option warningAsError true
 
@@ -42,6 +42,10 @@ example {bytes : List UInt8} {first : UInt8} {remaining : List Bool}
     Fp.bytesValue bytes = 2 ^ remaining.length + Fp.binaryValue remaining :=
   Fp.scanExponent_value hscan
 
+example {bytes : List UInt8} (hscan : Fp.scanExponent bytes = none) :
+    Fp.bytesValue bytes = 0 :=
+  Fp.scanExponent_none_value hscan
+
 /-! The loop squares before its conditional multiply and consumes bits in
 source order after the initial most-significant one. -/
 
@@ -63,6 +67,87 @@ example (base : Fp.Limbs) : Fp.montgomeryPow base [0, 0] = Fp.montgomeryOne :=
 example (base : Fp.Limbs) :
     Fp.montgomeryPow base [1] = Fp.montgomeryEncode base :=
   rfl
+
+/-! Lawful accumulator and decoded-result refinement. -/
+
+example {baseM acc : Fp.Limbs} (hbaseM : Fp.Canonical baseM)
+    (hacc : Fp.Canonical acc) {baseValue : PrimeField.LawfulFp}
+    {power : Nat}
+    (hbase : (Fp.value baseM : PrimeField.LawfulFp) =
+      baseValue * (Fp.montgomeryRadix : PrimeField.LawfulFp))
+    (haccValue : (Fp.value acc : PrimeField.LawfulFp) =
+      baseValue ^ power * (Fp.montgomeryRadix : PrimeField.LawfulFp))
+    (bit : Bool) :
+    (Fp.value (Fp.montgomeryBitStep baseM acc bit) : PrimeField.LawfulFp) =
+      baseValue ^ (2 * power + bit.toNat) *
+        (Fp.montgomeryRadix : PrimeField.LawfulFp) :=
+  Fp.lawful_montgomeryBitStep hbaseM hacc hbase haccValue bit
+
+example {baseM acc : Fp.Limbs} (hbaseM : Fp.Canonical baseM)
+    (hacc : Fp.Canonical acc) {baseValue : PrimeField.LawfulFp}
+    {power : Nat}
+    (hbase : (Fp.value baseM : PrimeField.LawfulFp) =
+      baseValue * (Fp.montgomeryRadix : PrimeField.LawfulFp))
+    (haccValue : (Fp.value acc : PrimeField.LawfulFp) =
+      baseValue ^ power * (Fp.montgomeryRadix : PrimeField.LawfulFp))
+    (bits : List Bool) :
+    (Fp.value (Fp.foldMontgomeryBits baseM acc bits) :
+      PrimeField.LawfulFp) =
+      baseValue ^ (power * 2 ^ bits.length + Fp.binaryValue bits) *
+        (Fp.montgomeryRadix : PrimeField.LawfulFp) :=
+  Fp.lawful_foldMontgomeryBits hbaseM hacc hbase haccValue bits
+
+example {base : Fp.Limbs} (hbase : Fp.Canonical base)
+    (exponent : List UInt8) :
+    (Fp.value (Fp.montgomeryPow base exponent) : PrimeField.LawfulFp) =
+      (Fp.value base : PrimeField.LawfulFp) ^ Fp.bytesValue exponent *
+        (Fp.montgomeryRadix : PrimeField.LawfulFp) :=
+  Fp.lawful_montgomeryPow hbase exponent
+
+example {base : Fp.Limbs} (hbase : Fp.Canonical base)
+    (exponent : List UInt8) :
+    (Fp.value (Fp.montgomeryPowDecoded base exponent) :
+      PrimeField.LawfulFp) =
+      (Fp.value base : PrimeField.LawfulFp) ^ Fp.bytesValue exponent :=
+  Fp.lawful_montgomeryPowDecoded hbase exponent
+
+example {base : Fp.Limbs} (hbase : Fp.Canonical base)
+    (exponent : List UInt8) :
+    Fp.Canonical (Fp.montgomeryPowDecoded base exponent) :=
+  Fp.canonical_montgomeryPowDecoded hbase exponent
+
+example (base : Fp.Limbs) (exponent : ByteArray) :
+    Fp.montgomeryPowBytes base exponent =
+      Fp.montgomeryPow base exponent.toList :=
+  rfl
+
+example (exponent : ByteArray) :
+    Fp.bytesValueArray exponent = Fp.bytesValue exponent.toList :=
+  rfl
+
+example {base : Fp.Limbs} (hbase : Fp.Canonical base)
+    (exponent : ByteArray) :
+    Fp.Canonical (Fp.montgomeryPowBytes base exponent) :=
+  Fp.canonical_montgomeryPowBytes hbase exponent
+
+example {base : Fp.Limbs} (hbase : Fp.Canonical base)
+    (exponent : ByteArray) :
+    (Fp.value (Fp.montgomeryPowBytes base exponent) : PrimeField.LawfulFp) =
+      (Fp.value base : PrimeField.LawfulFp) ^ Fp.bytesValueArray exponent *
+        (Fp.montgomeryRadix : PrimeField.LawfulFp) :=
+  Fp.lawful_montgomeryPowBytes hbase exponent
+
+example {base : Fp.Limbs} (hbase : Fp.Canonical base)
+    (exponent : ByteArray) :
+    Fp.Canonical (Fp.montgomeryPowDecodedBytes base exponent) :=
+  Fp.canonical_montgomeryPowDecodedBytes hbase exponent
+
+example {base : Fp.Limbs} (hbase : Fp.Canonical base)
+    (exponent : ByteArray) :
+    (Fp.value (Fp.montgomeryPowDecodedBytes base exponent) :
+      PrimeField.LawfulFp) =
+      (Fp.value base : PrimeField.LawfulFp) ^ Fp.bytesValueArray exponent :=
+  Fp.lawful_montgomeryPowDecodedBytes hbase exponent
 
 example {baseM acc : Fp.Limbs} (hbaseM : Fp.Canonical baseM)
     (hacc : Fp.Canonical acc) (bit : Bool) :
@@ -170,5 +255,93 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_foldMontgomeryBits' depends 
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_montgomeryPow' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp.canonical_montgomeryPow
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.scanExponent_none_value' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.scanExponent_none_value
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.mul_mul_inv_scale' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.mul_mul_inv_scale
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_montgomeryBitStep' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.lawful_montgomeryBitStep
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_foldMontgomeryBits' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.lawful_foldMontgomeryBits
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_foldMontgomeryBits_same' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.lawful_foldMontgomeryBits_same
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_foldMontgomeryBits_from_base' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.lawful_foldMontgomeryBits_from_base
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_montgomeryPow' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.lawful_montgomeryPow
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_montgomeryPowDecoded' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.canonical_montgomeryPowDecoded
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_montgomeryPowDecoded' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.lawful_montgomeryPowDecoded
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_montgomeryPowBytes' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.canonical_montgomeryPowBytes
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_montgomeryPowBytes' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.lawful_montgomeryPowBytes
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_montgomeryPowDecodedBytes' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.canonical_montgomeryPowDecodedBytes
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_montgomeryPowDecodedBytes' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.lawful_montgomeryPowDecodedBytes
 
 end Checks.Bls12381FpMontgomeryPow
