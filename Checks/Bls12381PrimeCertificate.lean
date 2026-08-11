@@ -14,5 +14,17 @@ open Challenge.Bls12381.ProofSupport.PrimeCertificate
 #print axioms prime582767
 #print axioms prime8101
 #print axioms prime1151
+#print axioms prime1686913
+#print axioms prime16447
+#print axioms prime43591
+#print axioms prime927093389
+#print axioms prime51376543
+#print axioms prime755057
+#print axioms prime421987
+#print axioms prime47737
+#print axioms prime609743
+#print axioms prime10177
+#print axioms prime859267
+#print axioms prime52437899
 
 end Checks.Bls12381PrimeCertificate
