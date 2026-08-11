@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.Codec
+import Challenge.Bls12381.ProofSupport.CodecFp
 import Challenge.Bls12381.ProofSupport.Fp
 import Challenge.Bls12381.ProofSupport.FpRepresentation
 import Challenge.Bls12381.ProofSupport.FpPredicates
