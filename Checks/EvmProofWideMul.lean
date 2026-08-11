@@ -70,6 +70,10 @@ example (x y z : UInt256) :
     (Limbs.addThree256 x y z).value = x.toNat + y.toNat + z.toNat :=
   Limbs.addThree256_value x y z
 
+example (x y : UInt256) :
+    (Limbs.addTwo256 x y).value = x.toNat + y.toNat :=
+  Limbs.addTwo256_value x y
+
 example (x y z : UInt256) :
     (Limbs.addThree256 x y z).carry.toNat < 3 :=
   Limbs.addThree256_carry_lt_three x y z
@@ -168,5 +172,9 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.doubleWide256_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Limbs.doubleWide256_value
+
+/-- info: 'Challenge.EvmProof.Limbs.addTwo256_value' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.addTwo256_value
 
 end Checks.EvmProofWideMul

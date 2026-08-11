@@ -101,6 +101,12 @@ def add (sum : WordSum) (term : UInt256) : WordSum :=
 
 end WordSum
 
+/-- Add two EVM words using one wrapped `ADD` and the source's `LT` overflow
+test. -/
+def addTwo256 (x y : UInt256) : WordSum :=
+  let result := x + y
+  { word := result, carry := UInt256.lt result x }
+
 /-- Add three EVM words exactly as the source does: two wrapped `ADD`s and the
 sum of their two `LT` overflow bits. -/
 def addThree256 (x y z : UInt256) : WordSum :=
@@ -484,6 +490,28 @@ theorem addThree256_value (x y z : UInt256) :
   convert join_addThreeAt (base := radix) radix_pos
       x.val.isLt y.val.isLt z.val.isLt using 1 <;>
     simp [joinAt, addThreeAt, UInt256.toNat]
+
+/-- The wrapped result word and overflow bit reconstruct ordinary addition. -/
+theorem addTwo256_value (x y : UInt256) :
+    (addTwo256 x y).value = x.toNat + y.toNat := by
+  unfold addTwo256 WordSum.value
+  dsimp only
+  simp only [Challenge.EvmProof.Word.word_toNat_add,
+    Challenge.EvmProof.Word.word_toNat_lt]
+  rw [show 2 ^ 256 = radix by rfl]
+  have hx := x.val.isLt
+  have hy := y.val.isLt
+  change x.toNat < radix at hx
+  change y.toNat < radix at hy
+  have hsum : x.toNat + y.toNat < 2 * radix := by omega
+  rw [mod_eq_cond_sub hsum]
+  by_cases hoverflow : x.toNat + y.toNat < radix
+  · rw [if_pos hoverflow, if_neg (by omega)]
+    simp
+  · rw [if_neg hoverflow, if_pos (by omega)]
+    norm_num [radix]
+    exact Nat.sub_add_cancel (by
+      simpa [radix] using (Nat.le_of_not_gt hoverflow))
 
 theorem addThree256_carry_lt_three (x y z : UInt256) :
     (addThree256 x y z).carry.toNat < 3 := by
