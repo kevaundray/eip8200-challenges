@@ -24,6 +24,14 @@ theorem canonical_negSource {a : Repr} (ha : Canonical a) :
     ⟨Fp.canonical_negSource ha.c0.proof⟩
     ⟨Fp.canonical_negSource ha.c1.proof⟩
 
+theorem canonical_mulV0Source {a b : Repr} (ha : Canonical a)
+    (hb : Canonical b) : ComponentCanonical (mulV0Source a b) :=
+  ⟨Fp.canonical_mulCanonical ha.c0.proof hb.c0.proof⟩
+
+theorem canonical_mulV1Source {a b : Repr} (ha : Canonical a)
+    (hb : Canonical b) : ComponentCanonical (mulV1Source a b) :=
+  ⟨Fp.canonical_mulCanonical ha.c1.proof hb.c1.proof⟩
+
 theorem canonical_mulRealSource {v0 v1 : Fp.Limbs}
     (hv0 : ComponentCanonical v0) (hv1 : ComponentCanonical v1) :
     ComponentCanonical (mulRealSource v0 v1) :=
@@ -65,6 +73,10 @@ theorem canonical_sqrImaginarySource {product : Fp.Limbs}
     (hproduct : ComponentCanonical product) :
     ComponentCanonical (sqrImaginarySource product) :=
   ⟨Fp.canonical_addSource hproduct.proof hproduct.proof⟩
+
+theorem canonical_sqrProductSource {a : Repr} (ha : Canonical a) :
+    ComponentCanonical (sqrProductSource a) :=
+  ⟨Fp.canonical_mulCanonical ha.c0.proof ha.c1.proof⟩
 
 theorem canonical_sqrC1Source {a : Repr} (ha : Canonical a) :
     ComponentCanonical (sqrC1Source a) := by
