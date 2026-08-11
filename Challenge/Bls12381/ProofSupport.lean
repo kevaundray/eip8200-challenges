@@ -64,6 +64,9 @@ import Challenge.Bls12381.ProofSupport.ScalarMulSemantics
 import Challenge.Bls12381.ProofSupport.Msm
 import Challenge.Bls12381.ProofSupport.MsmSemantics
 import Challenge.Bls12381.ProofSupport.MsmSubgroup
+import Challenge.Bls12381.ProofSupport.MapToG1
+import Challenge.Bls12381.ProofSupport.MapToG1SqrtRatio
+import Challenge.Bls12381.ProofSupport.MapToG1Sswu
 import Challenge.Bls12381.ProofSupport.PrimeField
 import Challenge.Bls12381.ProofSupport.PrimeCertificate
 import Challenge.Bls12381.ProofSupport.Subgroup

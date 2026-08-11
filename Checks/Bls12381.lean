@@ -52,6 +52,8 @@ import Checks.Bls12381Msm
 import Checks.Bls12381MsmSemantics
 import Checks.Bls12381MsmSubgroup
 import Checks.Bls12381MsmConformance
+import Checks.Bls12381MapToG1Support
+import Checks.Bls12381MapToG1SqrtRatio
 import Checks.Bls12381Subgroup
 import Checks.Bls12381SubgroupSemantics
 
