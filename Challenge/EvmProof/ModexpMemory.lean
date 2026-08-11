@@ -1,4 +1,5 @@
 import Challenge.EvmProof.Bytes
+import Challenge.EvmProof.Memory
 
 set_option warningAsError true
 
@@ -67,5 +68,68 @@ theorem bytesToNatPadded_readWindow96 (memory : Nat → UInt8)
       Challenge.EvmProof.Bytes.bytesNat
         (YulSemantics.EVM.readBytes memory (start + offset) 96) :=
   bytesToNatPadded_readWindow memory start size offset 96 hfit
+
+private def storedWordBytes (value : YulSemantics.EVM.U256) : List UInt8 :=
+  (List.range 32).map (fun i => YulSemantics.EVM.byteAt value (31 - i))
+
+private theorem readBytes_storeWord (memory : Nat → UInt8) (start : Nat)
+    (value : YulSemantics.EVM.U256) :
+    YulSemantics.EVM.readBytes
+        (YulSemantics.EVM.storeWord memory start value) start 32 =
+      storedWordBytes value := by
+  unfold YulSemantics.EVM.readBytes storedWordBytes
+  apply List.map_congr_left
+  intro i hi
+  have hi' : i < 32 := by simpa using hi
+  simp only [YulSemantics.EVM.storeWord]
+  rw [if_pos]
+  · congr 1
+    omega
+  · constructor <;> omega
+
+private theorem bytesNat_storedWordBytes (value : YulSemantics.EVM.U256) :
+    Challenge.EvmProof.Bytes.bytesNat (storedWordBytes value) = value.toNat := by
+  have decodePrefix : ∀ n, n ≤ 32 →
+      ((List.range n).map
+          (fun i => YulSemantics.EVM.byteAt value (31 - i))).foldl
+          (fun acc b => acc * 256 + b.toNat) 0 =
+        value.toNat / 256 ^ (32 - n) := by
+    intro n hn
+    induction n with
+    | zero =>
+      simp
+      symm
+      apply Nat.div_eq_of_lt
+      simpa [show (256 : Nat) = 2 ^ 8 by norm_num, ← pow_mul] using value.isLt
+    | succ n ih =>
+      rw [List.range_succ, List.map_append, List.foldl_append]
+      simp only [List.map_singleton, List.foldl_cons, List.foldl_nil]
+      rw [ih (by omega), YulEvmCompiler.byteAt_eq]
+      rw [UInt8.toNat_ofNat', Nat.mod_eq_of_lt (Nat.mod_lt _ (by norm_num))]
+      have hsub : 31 - n = 32 - (n + 1) := by omega
+      rw [hsub]
+      have hpow : 256 ^ (32 - n) = 256 ^ (32 - (n + 1)) * 256 := by
+        rw [← Nat.pow_succ]
+        congr 1
+        omega
+      rw [hpow, ← Nat.div_div_eq_div_mul]
+      have hdiv := Nat.mod_add_div
+        (value.toNat / 256 ^ (32 - (n + 1))) 256
+      omega
+  unfold storedWordBytes
+  unfold Challenge.EvmProof.Bytes.bytesNat Challenge.EvmProof.Bytes.step
+  rw [decodePrefix 32 (by omega)]
+  simp
+
+/-- Reading back the exact 32-byte window written by Yul `MSTORE` recovers
+the source word's unsigned value. -/
+theorem bytesNat_readBytes_storeWord (memory : Nat → UInt8) (start : Nat)
+    (value : YulSemantics.EVM.U256) :
+    Challenge.EvmProof.Bytes.bytesNat
+        (YulSemantics.EVM.readBytes
+          (YulSemantics.EVM.storeWord memory start value) start 32) =
+      value.toNat := by
+  rw [readBytes_storeWord]
+  exact bytesNat_storedWordBytes value
 
 end Challenge.EvmProof.ModexpMemory

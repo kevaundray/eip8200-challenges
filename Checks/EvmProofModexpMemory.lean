@@ -42,6 +42,19 @@ example (memory : Nat → UInt8) (start size offset : Nat)
         (YulSemantics.EVM.readBytes memory (start + offset) 96) :=
   bytesToNatPadded_readWindow96 memory start size offset hfit
 
+example (memory : Nat → UInt8) (start : Nat) (value : YulSemantics.EVM.U256) :
+    Challenge.EvmProof.Bytes.bytesNat
+        (YulSemantics.EVM.readBytes
+          (YulSemantics.EVM.storeWord memory start value) start 32) =
+      value.toNat :=
+  bytesNat_readBytes_storeWord memory start value
+
+/-- info: 'Challenge.EvmProof.ModexpMemory.bytesNat_readBytes_storeWord' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms bytesNat_readBytes_storeWord
+
 /-- info: 'Challenge.EvmProof.ModexpMemory.readWindow_size' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms readWindow_size
