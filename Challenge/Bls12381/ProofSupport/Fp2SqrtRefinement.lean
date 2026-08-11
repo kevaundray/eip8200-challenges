@@ -41,7 +41,7 @@ def SqrtCellRel (a : Fp.Limbs) (b : LawfulFp2.Base) : Prop :=
 def SqrtPairRel (a : Repr) (b : LawfulFp2.Carrier) : Prop :=
   Canonical a ∧ toLawful a = b
 
-theorem canonical_zero_repr : Canonical zero := by
+private theorem canonical_zero_repr : Canonical zero := by
   constructor <;> exact ⟨Fp.canonical_normalize 0⟩
 
 theorem toLawful_zero_repr : toLawful zero = 0 := by

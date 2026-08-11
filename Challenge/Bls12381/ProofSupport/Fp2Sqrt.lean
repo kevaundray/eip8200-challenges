@@ -8,7 +8,7 @@ set_option warningAsError true
 
 namespace Challenge.Bls12381.ProofSupport.Fp2
 
-theorem canonical_zero : Canonical zero := by
+private theorem canonical_zero : Canonical zero := by
   constructor <;> exact ⟨Fp.canonical_normalize 0⟩
 
 theorem canonical_sqrtSource {a : Repr} (ha : Canonical a) :

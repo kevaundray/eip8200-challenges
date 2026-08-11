@@ -34,17 +34,13 @@ theorem lawfulSqrt_isSquare {x : LawfulFp2.Base} (hx : IsSquare x) :
   refine ⟨y ^ ((EvmSemantics.Crypto.Bls12381.p + 1) / 4), ?_⟩
   simp only [lawfulSqrt_eq, mul_pow]
 
-theorem lawful_two_ne_zero : (2 : LawfulFp2.Base) ≠ 0 := by
+private theorem lawful_two_ne_zero : (2 : LawfulFp2.Base) ≠ 0 := by
   intro h
   have hdiv : EvmSemantics.Crypto.Bls12381.p ∣ 2 :=
     (CharP.cast_eq_zero_iff LawfulFp2.Base
       EvmSemantics.Crypto.Bls12381.p 2).mp h
   norm_num [EvmSemantics.Crypto.Bls12381.p,
     EvmSemantics.Crypto.Bls12381.absU] at hdiv
-
-theorem lawful_four_ne_zero : (4 : LawfulFp2.Base) ≠ 0 := by
-  rw [show (4 : LawfulFp2.Base) = 2 * 2 by norm_num]
-  exact mul_ne_zero lawful_two_ne_zero lawful_two_ne_zero
 
 theorem norm_isSquare_of_isSquare {a : LawfulFp2.Carrier}
     (ha : IsSquare a) : IsSquare (QuadraticAlgebra.norm a) := by
@@ -78,11 +74,11 @@ theorem alpha_or_beta_isSquare {a : LawfulFp2.Carrier}
     field_simp [htwo]
     ring
 
-theorem double_ne_zero {x : LawfulFp2.Base} (hx : x ≠ 0) : x + x ≠ 0 := by
+private theorem double_ne_zero {x : LawfulFp2.Base} (hx : x ≠ 0) : x + x ≠ 0 := by
   rw [← two_mul]
   exact mul_ne_zero lawful_two_ne_zero hx
 
-theorem quotient_square_plus (a₀ a₁ t x₀ : LawfulFp2.Base)
+private theorem quotient_square_plus (a₀ a₁ t x₀ : LawfulFp2.Base)
     (ht : t ^ 2 = a₀ ^ 2 + a₁ ^ 2)
     (hx₀ : x₀ ^ 2 = (a₀ + t) * lawfulInvTwo) (hx₀ne : x₀ ≠ 0) :
     (a₁ * (x₀ + x₀)⁻¹) ^ 2 = (t - a₀) * lawfulInvTwo := by
@@ -97,7 +93,7 @@ theorem quotient_square_plus (a₀ a₁ t x₀ : LawfulFp2.Base)
       field_simp [lawful_two_ne_zero] at hx₀ ⊢
       linear_combination -2 * ht + 2 * (a₀ - t) * hx₀
 
-theorem quotient_square_minus (a₀ a₁ t x₀ : LawfulFp2.Base)
+private theorem quotient_square_minus (a₀ a₁ t x₀ : LawfulFp2.Base)
     (ht : t ^ 2 = a₀ ^ 2 + a₁ ^ 2)
     (hx₀ : x₀ ^ 2 = (a₀ - t) * lawfulInvTwo) (hx₀ne : x₀ ≠ 0) :
     (a₁ * (x₀ + x₀)⁻¹) ^ 2 = -(t + a₀) * lawfulInvTwo := by
