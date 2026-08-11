@@ -44,6 +44,8 @@ import Checks.Bls12381LawfulAffine
 import Checks.Bls12381G1Affine
 import Checks.Bls12381G2Affine
 import Checks.Bls12381LawfulAffineConformance
+import Checks.Bls12381ScalarMul
+import Checks.Bls12381ScalarMulConformance
 
 set_option warningAsError true
 
