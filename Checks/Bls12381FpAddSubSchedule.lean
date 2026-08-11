@@ -26,6 +26,11 @@ example (sum : Fp.Limbs) :
         lo := newLo : Fp.Limbs } := rfl
 
 example (a b : Fp.Limbs) :
+    Fp.addSource a b =
+      let sum := Fp.addRaw a b
+      if (Fp.addNeedsCorrection sum).toNat ≠ 0 then Fp.addCorrect sum else sum := rfl
+
+example (a b : Fp.Limbs) :
     Fp.subRaw a b =
       { hi := a.hi - b.hi - UInt256.gt b.lo a.lo
         lo := a.lo - b.lo : Fp.Limbs } := rfl
@@ -35,6 +40,12 @@ example (diff : Fp.Limbs) :
       let newLo := diff.lo + Fp.modulusLo
       { hi := diff.hi + Fp.modulusHi + UInt256.lt newLo diff.lo
         lo := newLo : Fp.Limbs } := rfl
+
+example (a b : Fp.Limbs) :
+    Fp.subSource a b =
+      let diff := Fp.subRaw a b
+      if (UInt256.gt diff.hi Fp.modulusHi).toNat ≠ 0 then
+        Fp.subRepair diff else diff := rfl
 
 example (a : Fp.Limbs) :
     Fp.negNonzero a =
