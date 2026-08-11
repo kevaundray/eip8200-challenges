@@ -1,6 +1,5 @@
 import Challenge.Bls12381.ProofSupport.LawfulAffine
 import Challenge.Bls12381.ProofSupport.PrimeCertificate
-import Challenge.Bls12381.ProofSupport.AffineGroup
 
 set_option warningAsError true
 
@@ -22,20 +21,6 @@ abbrev OnCurve : Point → Prop := LawfulAffine.OnCurve curve
 def neg : Point → Point := LawfulAffine.neg
 def double : Point → Point := LawfulAffine.double curve
 def add : Point → Point → Point := LawfulAffine.add curve
-
-theorem mathCurve_discriminant_ne_zero :
-    (AffineGroup.mathCurve curve).toAffine.Δ ≠ 0 := by
-  rw [AffineGroup.mathCurve_discriminant]
-  change (-6912 : Field) ≠ 0
-  intro hzero
-  have hpositive : (6912 : Field) = 0 := neg_eq_zero.mp hzero
-  have hdiv : p ∣ 6912 :=
-    (CharP.cast_eq_zero_iff Field p 6912).mp hpositive
-  norm_num [p, absU] at hdiv
-
-noncomputable instance mathCurveIsElliptic :
-    WeierstrassCurve.IsElliptic (AffineGroup.mathCurve curve) :=
-  ⟨isUnit_iff_ne_zero.mpr mathCurve_discriminant_ne_zero⟩
 
 /-- Inverse-free conversion from the decoded EIP wire carrier. -/
 def ofWire : EvmSemantics.Crypto.Bls12381.Point → Point

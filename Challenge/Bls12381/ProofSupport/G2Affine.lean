@@ -1,6 +1,5 @@
 import Challenge.Bls12381.ProofSupport.LawfulAffine
 import Challenge.Bls12381.ProofSupport.LawfulFp2
-import Challenge.Bls12381.ProofSupport.AffineGroup
 
 set_option warningAsError true
 
@@ -53,36 +52,6 @@ theorem two_ne_zero : (2 : Field) ≠ 0 := by
   apply hbase
   have hre := congrArg QuadraticAlgebra.re hzero
   simpa only [QuadraticAlgebra.re_ofNat, QuadraticAlgebra.re_zero] using hre
-
-theorem mathCurve_discriminant_ne_zero :
-    (AffineGroup.mathCurve curve).toAffine.Δ ≠ 0 := by
-  have hconstant : (-432 : Field) ≠ 0 := by
-    intro hzero
-    have hbase : (-432 : LawfulFp2.Base) = 0 := by
-      have hre := congrArg QuadraticAlgebra.re hzero
-      simpa only [QuadraticAlgebra.re_neg, QuadraticAlgebra.re_ofNat,
-        QuadraticAlgebra.re_zero] using hre
-    have hpositive : (432 : LawfulFp2.Base) = 0 := neg_eq_zero.mp hbase
-    have hdiv : p ∣ 432 :=
-      (CharP.cast_eq_zero_iff LawfulFp2.Base p 432).mp hpositive
-    norm_num [p, absU] at hdiv
-  have hb : curve.b ≠ 0 := by
-    intro hzero
-    have hbase : (4 : LawfulFp2.Base) = 0 := by
-      have hre := congrArg QuadraticAlgebra.re hzero
-      simp [curve, LawfulFp2.ofWire,
-        EvmSemantics.Crypto.Bls12381.g2TwistB] at hre
-    have hdiv : p ∣ 4 :=
-      (CharP.cast_eq_zero_iff LawfulFp2.Base p 4).mp hbase
-    norm_num [p, absU] at hdiv
-  rw [AffineGroup.mathCurve_discriminant]
-  convert mul_ne_zero hconstant (pow_ne_zero 2 hb) using 1
-  simp [curve]
-  ring
-
-noncomputable instance mathCurveIsElliptic :
-    WeierstrassCurve.IsElliptic (AffineGroup.mathCurve curve) :=
-  ⟨isUnit_iff_ne_zero.mpr mathCurve_discriminant_ne_zero⟩
 
 theorem onCurve_double (point : Point) :
     OnCurve point → OnCurve (double point) :=

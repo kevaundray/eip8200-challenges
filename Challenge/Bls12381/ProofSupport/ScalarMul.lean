@@ -1,6 +1,7 @@
 import Challenge.Bls12381.ProofSupport.G1Affine
 import Challenge.Bls12381.ProofSupport.G2Affine
 import Challenge.Bls12381.ProofSupport.AffineGroup
+import Challenge.Bls12381.ProofSupport.AffineGroupBls
 import Challenge.Bls12381.ProofSupport.CodecScalar
 import Challenge.Bls12381.ProofSupport.CodecG1Core
 import Challenge.Bls12381.ProofSupport.CodecG2Core
