@@ -13,15 +13,21 @@ def pairBytes : Nat := 160
 
 open Challenge.Bls12381.ProofSupport
 
+/-- Package the exact unsigned scalar window independently of the success
+proof used to establish that the complete window is present. -/
+def scalarAt (input : ByteArray) (offset : Nat) : ScalarMul.Scalar256 :=
+  ⟨Codec.scalarWindowValue input offset,
+    Codec.scalarWindowValue_lt input offset⟩
+
 /-- Decode one exact EIP-2537 `(G1, scalar)` term.  The point decoder includes
 the mandatory subgroup check, while the scalar is retained as the full
 unreduced unsigned 256-bit wire value. -/
 def decodeTerm (input : ByteArray) (offset : Nat) : Option Msm.G1WireTerm := do
-  let point ← Codec.decodeG1Subgroup input offset
-  match hscalar : Codec.decodeScalar input (offset + Codec.g1Bytes) with
-  | none => none
-  | some _ =>
-      some (point, ScalarMul.scalar256OfDecode hscalar)
+  (Codec.decodeG1Subgroup input offset).bind fun point =>
+    match Codec.decodeScalar input (offset + Codec.g1Bytes) with
+    | none => none
+    | some _ =>
+        some (point, scalarAt input (offset + Codec.g1Bytes))
 
 /-- Decode `count` consecutive terms, preserving their wire order. -/
 def decodeTerms (input : ByteArray) (offset : Nat) :
