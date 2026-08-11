@@ -152,4 +152,42 @@ theorem value_addSource {a b : Limbs} (ha : Canonical a) (hb : Canonical b) :
       omega
     exact (Nat.mod_eq_of_lt hlt).symm
 
+theorem asWide_subRaw (a b : Limbs) :
+    asWide (subRaw a b) = Challenge.EvmProof.Limbs.subWide256
+      (asWide a) (asWide b) := rfl
+
+theorem asWide_negNonzero (a : Limbs) :
+    asWide (negNonzero a) = Challenge.EvmProof.Limbs.subWide256
+      modulusWide (asWide a) := rfl
+
+theorem value_negSource {a : Limbs} (ha : Canonical a) :
+    value (negSource a) =
+      (EvmSemantics.Crypto.Bls12381.p - value a) %
+        EvmSemantics.Crypto.Bls12381.p := by
+  unfold negSource
+  by_cases hzero : a.hi.toNat = 0 ∧ a.lo.toNat = 0
+  · rw [if_pos hzero]
+    have havalue : value a = 0 := by simp [value, hzero.1, hzero.2]
+    rw [value_pack (by
+      norm_num [Challenge.EvmProof.Limbs.radix]), havalue]
+    simp
+  · rw [if_neg hzero]
+    have hapos : 0 < value a := by
+      unfold value
+      have hr := Challenge.EvmProof.Limbs.radix_pos
+      by_cases hhi : a.hi.toNat = 0
+      · have hlo : 0 < a.lo.toNat := by omega
+        omega
+      · have hterm : 0 < Challenge.EvmProof.Limbs.radix * a.hi.toNat :=
+          Nat.mul_pos hr (Nat.pos_of_ne_zero hhi)
+        omega
+    have hwide := congrArg Challenge.EvmProof.Limbs.WideProduct.value
+      (asWide_negNonzero a)
+    rw [asWide_value, Challenge.EvmProof.Limbs.subWide256_value,
+      modulusWide_value, asWide_value, if_pos ha.2.le] at hwide
+    have havalueLt := ha.2
+    have hred : EvmSemantics.Crypto.Bls12381.p - value a <
+        EvmSemantics.Crypto.Bls12381.p := by omega
+    rw [hwide, Nat.mod_eq_of_lt hred]
+
 end Challenge.Bls12381.ProofSupport.Fp
