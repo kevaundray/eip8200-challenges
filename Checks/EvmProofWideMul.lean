@@ -67,6 +67,13 @@ example {base t0 t1 m n0 n1 low0 carry low1 high1
       t0 + base * t1 + m * (n0 + base * n1) :=
   Limbs.ciosAccumulate_reconstruct hcarry hprod1 hsum1 hsum2
 
+example {base x0 x1 y modulus first second m0 m1 : Nat}
+    (hfirst : base * first = x0 * y + m0 * modulus)
+    (hsecond : base * second = first + x1 * y + m1 * modulus) :
+    base * base * second =
+      (x0 + base * x1) * y + (m0 + base * m1) * modulus :=
+  Limbs.ciosTwoStep_reconstruct hfirst hsecond
+
 example (a b : UInt256) :
     Limbs.WideProduct.value (Limbs.fullMul256 a b) = a.toNat * b.toNat :=
   Limbs.fullMul256_value a b
@@ -173,6 +180,10 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.ciosAccumulate_reconstruct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Limbs.ciosAccumulate_reconstruct
+
+/-- info: 'Challenge.EvmProof.Limbs.ciosTwoStep_reconstruct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.ciosTwoStep_reconstruct
 
 /-- info: 'Challenge.EvmProof.Limbs.addThree256_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

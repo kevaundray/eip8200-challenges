@@ -196,6 +196,16 @@ theorem ciosAccumulate_reconstruct
   ring_nf at *
   nlinarith
 
+/-- Width-generic algebra composing two CIOS multiply/reduce iterations. -/
+theorem ciosTwoStep_reconstruct
+    {base x0 x1 y modulus first second m0 m1 : Nat}
+    (hfirst : base * first = x0 * y + m0 * modulus)
+    (hsecond : base * second = first + x1 * y + m1 * modulus) :
+    base * base * second =
+      (x0 + base * x1) * y + (m0 + base * m1) * modulus := by
+  ring_nf at *
+  nlinarith
+
 /-! ## Source-faithful EVM full-word multiplication -/
 
 /-- Two EVM words holding a 512-bit product, low word first. -/
