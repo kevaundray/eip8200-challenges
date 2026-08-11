@@ -41,7 +41,7 @@ jobs:
         env:
           DEPENDENCY_HASH: ${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
           PACKAGE_TARGET_HASH: ${{ hashFiles('.github/lean-package-cache-targets') }}
-          SHARED_HASH: ${{ hashFiles('lakefile.toml', 'Challenge/EvmProof.lean', 'Challenge/EvmProof/**/*.lean', 'Checks/EvmProof.lean') }}
+          SHARED_HASH: ${{ hashFiles('lakefile.toml', 'Challenge/EvmProof.lean', 'Challenge/EvmProof/**/*.lean', 'Checks/EvmProof.lean', 'Challenge/Bls12381.lean', 'Challenge/Bls12381/**/*.lean', 'Checks/Bls12381.lean', 'Checks/Bls12381*.lean') }}
         run: |
           package_key="lake-packages-v4-${{ runner.os }}-${{ runner.arch }}-${DEPENDENCY_HASH}-${PACKAGE_TARGET_HASH}"
           shared_key="project-shared-v3-${{ runner.os }}-${{ runner.arch }}-${DEPENDENCY_HASH}-${PACKAGE_TARGET_HASH}-${SHARED_HASH}"
@@ -98,6 +98,16 @@ jobs:
             exit 1
           fi
           lake build +Checks.EvmProof
+
+      - name: Verify shared BLS12-381 proof support
+        run: |
+          if grep -rn --include='*.lean' -w 'sorry' \
+              Challenge/Bls12381/ProofSupport \
+              Challenge/Bls12381/ProofSupport.lean; then
+            echo "::error::found an unfinished proof in shared BLS12-381 support"
+            exit 1
+          fi
+          lake -Kjobs=1 build +Checks.Bls12381
 
   # Each matrix entry has its own job and source-keyed project cache. A RIPEMD
   # submission therefore neither rebuilds nor invalidates SHA-256 or MODEXP.
