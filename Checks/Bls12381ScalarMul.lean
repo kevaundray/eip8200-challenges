@@ -146,6 +146,42 @@ example (scalar : Nat) (point : G2Affine.Point)
     G2Affine.OnCurve (ScalarMul.g2 scalar point) :=
   ScalarMul.g2_onCurve scalar point hpoint
 
+example (scalar : Nat) (point : G1Affine.Point)
+    (hpoint : G1Affine.OnCurve point) :
+    AffineGroup.toMathlib G1Affine.curve
+        ⟨ScalarMul.g1 scalar point,
+          ScalarMul.g1_onCurve scalar point hpoint⟩ =
+      scalar • AffineGroup.toMathlib G1Affine.curve ⟨point, hpoint⟩ :=
+  ScalarMul.g1_nsmul scalar point hpoint
+
+example (scalar : Nat) (point : G2Affine.Point)
+    (hpoint : G2Affine.OnCurve point) :
+    AffineGroup.toMathlib G2Affine.curve
+        ⟨ScalarMul.g2 scalar point,
+          ScalarMul.g2_onCurve scalar point hpoint⟩ =
+      scalar • AffineGroup.toMathlib G2Affine.curve ⟨point, hpoint⟩ :=
+  ScalarMul.g2_nsmul scalar point hpoint
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_onCurve_nsmul' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.binary_onCurve_nsmul
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g1_nsmul' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g1_nsmul
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g2_nsmul' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g2_nsmul
+
 example (scalar : Nat) (point : EvmSemantics.Crypto.Bls12381.Point) :
     G1Affine.ofWire (ScalarMul.g1Wire scalar point) =
       ScalarMul.g1 scalar (G1Affine.ofWire point) :=

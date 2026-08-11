@@ -1,5 +1,6 @@
 import Challenge.Bls12381.ProofSupport.G1Affine
 import Challenge.Bls12381.ProofSupport.G2Affine
+import Challenge.Bls12381.ProofSupport.AffineGroup
 import Challenge.Bls12381.ProofSupport.CodecScalar
 import Challenge.Bls12381.ProofSupport.CodecG1Core
 import Challenge.Bls12381.ProofSupport.CodecG2Core
@@ -189,6 +190,56 @@ theorem binary_map_nsmul {Point Target : Type} [AddCommMonoid Target]
               simp only [nsmul_add, two_mul, add_nsmul]
             _ = scalar • mapPoint point := by rw [← hscalarEven]
 
+/-- The local on-curve binary recursion maps to Mathlib's independently
+proved affine-group `nsmul`. -/
+theorem binary_onCurve_nsmul {F : Type} [Field F] [DecidableEq F]
+    (curve : LawfulAffine.Curve F) (h2 : (2 : F) ≠ 0)
+    [WeierstrassCurve.IsElliptic (AffineGroup.mathCurve curve)]
+    (scalar : Nat) (point : LawfulAffine.Point F)
+    (hpoint : LawfulAffine.OnCurve curve point) :
+    AffineGroup.toMathlib curve
+        ⟨binary .infinity (LawfulAffine.add curve)
+            (LawfulAffine.double curve) scalar point,
+          binary_preserves .infinity (LawfulAffine.add curve)
+            (LawfulAffine.double curve) (LawfulAffine.OnCurve curve)
+            (LawfulAffine.onCurve_infinity curve)
+            (fun left right => LawfulAffine.onCurve_add curve left right h2)
+            (fun lifted => LawfulAffine.onCurve_double curve lifted h2)
+            scalar point hpoint⟩ =
+      scalar • AffineGroup.toMathlib curve ⟨point, hpoint⟩ := by
+  let zeroPoint : AffineGroup.Point curve := AffineGroup.infinity curve
+  let addPoint : AffineGroup.Point curve → AffineGroup.Point curve →
+      AffineGroup.Point curve := AffineGroup.add curve h2
+  let doublePoint : AffineGroup.Point curve → AffineGroup.Point curve :=
+    AffineGroup.double curve h2
+  have hmap := binary_map_nsmul zeroPoint addPoint doublePoint
+    (AffineGroup.toMathlib curve)
+    (AffineGroup.toMathlib_infinity curve)
+    (AffineGroup.toMathlib_add curve h2)
+    (AffineGroup.toMathlib_double curve h2)
+    scalar (⟨point, hpoint⟩ : AffineGroup.Point curve)
+  have hval := binary_lift_val .infinity (LawfulAffine.add curve)
+    (LawfulAffine.double curve) (LawfulAffine.OnCurve curve)
+    (LawfulAffine.onCurve_infinity curve)
+    (fun left right => LawfulAffine.onCurve_add curve left right h2)
+    (fun lifted => LawfulAffine.onCurve_double curve lifted h2)
+    scalar point hpoint
+  have heq :
+      binary zeroPoint addPoint doublePoint scalar
+          (⟨point, hpoint⟩ : AffineGroup.Point curve) =
+        ⟨binary .infinity (LawfulAffine.add curve)
+            (LawfulAffine.double curve) scalar point,
+          binary_preserves .infinity (LawfulAffine.add curve)
+            (LawfulAffine.double curve) (LawfulAffine.OnCurve curve)
+            (LawfulAffine.onCurve_infinity curve)
+            (fun left right => LawfulAffine.onCurve_add curve left right h2)
+            (fun lifted => LawfulAffine.onCurve_double curve lifted h2)
+            scalar point hpoint⟩ := by
+    apply Subtype.ext
+    exact hval
+  rw [heq] at hmap
+  exact hmap
+
 /-! ## BLS12-381 curve instantiations -/
 
 /-- Local binary G1 scalar operation used by the EIP adapter. -/
@@ -262,6 +313,28 @@ theorem g2_onCurve (scalar : Nat) (point : G2Affine.Point)
   binary_preserves _ _ _ G2Affine.OnCurve
     (LawfulAffine.onCurve_infinity G2Affine.curve)
     G2Affine.onCurve_add G2Affine.onCurve_double scalar point hpoint
+
+/-- G1 scalar multiplication agrees with the independent Mathlib affine
+group's natural-number scalar action. -/
+theorem g1_nsmul (scalar : Nat) (point : G1Affine.Point)
+    (hpoint : G1Affine.OnCurve point) :
+    AffineGroup.toMathlib G1Affine.curve
+        ⟨g1 scalar point, g1_onCurve scalar point hpoint⟩ =
+      scalar • AffineGroup.toMathlib G1Affine.curve ⟨point, hpoint⟩ := by
+  simpa [g1, G1Affine.add, G1Affine.double] using
+    binary_onCurve_nsmul G1Affine.curve G1Affine.two_ne_zero
+      scalar point hpoint
+
+/-- G2 scalar multiplication agrees with the independent Mathlib affine
+group's natural-number scalar action. -/
+theorem g2_nsmul (scalar : Nat) (point : G2Affine.Point)
+    (hpoint : G2Affine.OnCurve point) :
+    AffineGroup.toMathlib G2Affine.curve
+        ⟨g2 scalar point, g2_onCurve scalar point hpoint⟩ =
+      scalar • AffineGroup.toMathlib G2Affine.curve ⟨point, hpoint⟩ := by
+  simpa [g2, G2Affine.add, G2Affine.double] using
+    binary_onCurve_nsmul G2Affine.curve G2Affine.two_ne_zero
+      scalar point hpoint
 
 @[simp] theorem g1_infinity (scalar : Nat) :
     g1 scalar G1Affine.infinity = G1Affine.infinity := by
