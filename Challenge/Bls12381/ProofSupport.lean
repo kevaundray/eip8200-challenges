@@ -65,6 +65,7 @@ import Challenge.Bls12381.ProofSupport.MsmSemantics
 import Challenge.Bls12381.ProofSupport.PrimeField
 import Challenge.Bls12381.ProofSupport.PrimeCertificate
 import Challenge.Bls12381.ProofSupport.Subgroup
+import Challenge.Bls12381.ProofSupport.SubgroupSemantics
 
 set_option warningAsError true
 

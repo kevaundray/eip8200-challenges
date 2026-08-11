@@ -51,6 +51,7 @@ import Checks.Bls12381ScalarMulConformance
 import Checks.Bls12381Msm
 import Checks.Bls12381MsmSemantics
 import Checks.Bls12381Subgroup
+import Checks.Bls12381SubgroupSemantics
 
 set_option warningAsError true
 
