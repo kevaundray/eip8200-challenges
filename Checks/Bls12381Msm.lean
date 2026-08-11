@@ -56,6 +56,24 @@ example (terms : List (G2Affine.Point × ScalarMul.Scalar256))
     (hterms : ∀ term ∈ terms, G2Affine.OnCurve term.1) :
     G2Affine.OnCurve (Msm.g2 terms) := Msm.g2_onCurve terms hterms
 
+example (terms : List Msm.G1WireTerm) :
+    G1Affine.ofWire (Msm.g1Wire terms) =
+      Msm.g1 (terms.map Msm.g1TermOfWire) :=
+  Msm.g1Wire_refines terms
+
+example (terms : List Msm.G2WireTerm) :
+    G2Affine.ofWire (Msm.g2Wire terms) =
+      Msm.g2 (terms.map Msm.g2TermOfWire) :=
+  Msm.g2Wire_refines terms
+
+example (terms : List Msm.G1WireTerm)
+    (hterms : ∀ term ∈ terms, Codec.ValidG1 term.1) :
+    Codec.ValidG1 (Msm.g1Wire terms) := Msm.g1Wire_valid terms hterms
+
+example (terms : List Msm.G2WireTerm)
+    (hterms : ∀ term ∈ terms, Codec.ValidG2 term.1) :
+    Codec.ValidG2 (Msm.g2Wire terms) := Msm.g2Wire_valid terms hterms
+
 /--
 info: 'Challenge.Bls12381.ProofSupport.Msm.foldG1_nil' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
@@ -139,5 +157,21 @@ info: 'Challenge.Bls12381.ProofSupport.Msm.foldG2_append' depends on axioms: [pr
 /-- info: 'Challenge.Bls12381.ProofSupport.Msm.g2_onCurve' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Msm.g2_onCurve
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Msm.g1Wire_refines' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Msm.g1Wire_refines
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Msm.g2Wire_refines' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Msm.g2Wire_refines
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Msm.g1Wire_valid' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Msm.g1Wire_valid
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Msm.g2Wire_valid' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Msm.g2Wire_valid
 
 end Checks.Bls12381Msm

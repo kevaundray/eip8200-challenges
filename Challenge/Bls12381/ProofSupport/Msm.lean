@@ -15,6 +15,14 @@ open EvmSemantics.Crypto.Bls12381
 
 abbrev G1Term := G1Affine.Point × ScalarMul.Scalar256
 abbrev G2Term := G2Affine.Point × ScalarMul.Scalar256
+abbrev G1WireTerm := Point × ScalarMul.Scalar256
+abbrev G2WireTerm := G2Point × ScalarMul.Scalar256
+
+def g1TermOfWire (term : G1WireTerm) : G1Term :=
+  (G1Affine.ofWire term.1, term.2)
+
+def g2TermOfWire (term : G2WireTerm) : G2Term :=
+  (G2Affine.ofWire term.1, term.2)
 
 def foldG1 : G1Affine.Point → List G1Term →
     G1Affine.Point
@@ -143,5 +151,69 @@ theorem g2_onCurve (terms : List G2Term)
     G2Affine.OnCurve (g2 terms) :=
   foldG2_onCurve G2Affine.infinity terms
     (LawfulAffine.onCurve_infinity G2Affine.curve) hterms
+
+/-! ## Decoded-wire adapters -/
+
+def g1Wire (terms : List G1WireTerm) : Point :=
+  G1Affine.toWire (g1 (terms.map g1TermOfWire))
+
+def g2Wire (terms : List G2WireTerm) : G2Point :=
+  G2Affine.toWire (g2 (terms.map g2TermOfWire))
+
+@[simp] theorem g1Wire_refines (terms : List G1WireTerm) :
+    G1Affine.ofWire (g1Wire terms) = g1 (terms.map g1TermOfWire) := by
+  simp [g1Wire]
+
+@[simp] theorem g2Wire_refines (terms : List G2WireTerm) :
+    G2Affine.ofWire (g2Wire terms) = g2 (terms.map g2TermOfWire) := by
+  simp [g2Wire]
+
+private theorem g1TermOfWire_onCurve (term : G1WireTerm)
+    (hvalid : Codec.ValidG1 term.1) :
+    G1Affine.OnCurve (g1TermOfWire term).1 := by
+  rcases term with ⟨point, scalar⟩
+  cases point with
+  | infinity => exact LawfulAffine.onCurve_infinity G1Affine.curve
+  | affine x y => exact G1Affine.onCurve_ofWire hvalid
+
+private theorem g2TermOfWire_onCurve (term : G2WireTerm)
+    (hvalid : Codec.ValidG2 term.1) :
+    G2Affine.OnCurve (g2TermOfWire term).1 := by
+  rcases term with ⟨point, scalar⟩
+  cases point with
+  | infinity => exact LawfulAffine.onCurve_infinity G2Affine.curve
+  | affine x y => exact G2Affine.onCurve_ofWire hvalid
+
+theorem g1Wire_valid (terms : List G1WireTerm)
+    (hterms : ∀ term ∈ terms, Codec.ValidG1 term.1) :
+    Codec.ValidG1 (g1Wire terms) := by
+  have hmap : ∀ term ∈ terms.map g1TermOfWire,
+      G1Affine.OnCurve term.1 := by
+    intro term hterm
+    obtain ⟨wireTerm, hwireTerm, rfl⟩ := List.mem_map.mp hterm
+    exact g1TermOfWire_onCurve wireTerm (hterms wireTerm hwireTerm)
+  have houtput := g1_onCurve (terms.map g1TermOfWire) hmap
+  unfold g1Wire
+  cases hresult : g1 (List.map g1TermOfWire terms) with
+  | infinity => trivial
+  | affine x y =>
+      rw [hresult] at houtput
+      exact G1Affine.onCurve_toWire houtput
+
+theorem g2Wire_valid (terms : List G2WireTerm)
+    (hterms : ∀ term ∈ terms, Codec.ValidG2 term.1) :
+    Codec.ValidG2 (g2Wire terms) := by
+  have hmap : ∀ term ∈ terms.map g2TermOfWire,
+      G2Affine.OnCurve term.1 := by
+    intro term hterm
+    obtain ⟨wireTerm, hwireTerm, rfl⟩ := List.mem_map.mp hterm
+    exact g2TermOfWire_onCurve wireTerm (hterms wireTerm hwireTerm)
+  have houtput := g2_onCurve (terms.map g2TermOfWire) hmap
+  unfold g2Wire
+  cases hresult : g2 (List.map g2TermOfWire terms) with
+  | infinity => trivial
+  | affine x y =>
+      rw [hresult] at houtput
+      exact G2Affine.onCurve_toWire houtput
 
 end Challenge.Bls12381.ProofSupport.Msm
