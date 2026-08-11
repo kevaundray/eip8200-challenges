@@ -1,4 +1,5 @@
 import Challenge.Bls12381G1Add.Reference.Proofs.Compilation
+import Challenge.Bls12381.ProofSupport.FpAddSub
 import Challenge.EvmProof.ModexpExec
 
 set_option warningAsError true
@@ -18,6 +19,36 @@ open EvmSemantics
 open YulSemantics YulSemantics.EVM
 open Challenge.EvmProof
 open Challenge.Bls12381G1Add.Reference.Proofs.Compilation
+
+/-- Source-word form of the high-first BLS modulus comparison. -/
+def fpGeModulusValue (hi lo : U256) : U256 :=
+  b2w (BitVec.ult
+      (BitVec.ofNat 256 34565483545414906068789196026815425751) hi) |||
+    (b2w (hi = BitVec.ofNat 256
+      34565483545414906068789196026815425751) &&&
+      b2w (b2w (BitVec.ult lo
+        (BitVec.ofNat 256
+          45442060874369865957053122457065728162598490762543039060009208264153100167851)) = 0))
+
+theorem conv_fpGeModulusValue (hi lo : U256) :
+    YulEvmCompiler.conv (fpGeModulusValue hi lo) =
+    Challenge.Bls12381.ProofSupport.Fp.addNeedsCorrection
+      { hi := YulEvmCompiler.conv hi, lo := YulEvmCompiler.conv lo } := by
+  have hhi : YulEvmCompiler.conv (BitVec.ofNat 256
+      34565483545414906068789196026815425751) =
+      Challenge.Bls12381.ProofSupport.Fp.modulusHi := by
+    rw [YulEvmCompiler.conv_eq_ofNat]
+    rfl
+  have hlo : YulEvmCompiler.conv (BitVec.ofNat 256
+      45442060874369865957053122457065728162598490762543039060009208264153100167851) =
+      Challenge.Bls12381.ProofSupport.Fp.modulusLo := by
+    rw [YulEvmCompiler.conv_eq_ofNat]
+    rfl
+  unfold fpGeModulusValue
+  rw [YulEvmCompiler.conv_or, YulEvmCompiler.conv_gt,
+    YulEvmCompiler.conv_and, YulEvmCompiler.conv_eq,
+    YulEvmCompiler.conv_iszero, YulEvmCompiler.conv_lt, hhi, hlo]
+  rfl
 
 private def isFunctionDefinition {Op : Type} : Stmt Op → Bool
   | .funDef .. => true
@@ -87,6 +118,20 @@ private theorem exec_reference_function_prefix (funs V st) :
     _ = Interp.execStmts modexpExec 114 funs V st
           (invalidLengthStmt :: referenceCompiledBlock.drop 14) := by
       rw [reference_after_functions]
+
+/-- The first frozen helper implements the high-first modulus comparison used
+by the approved source-faithful Fp schedules. -/
+theorem eval_fpGeModulus (hi lo : U256) (yst : EvmState) :
+    Interp.evalExpr modexpExec 64
+      [hoist modexpExec.toDialect referenceCompiledBlock]
+      [("hi", hi), ("lo", lo)] yst
+      (.call "\x000" [.var "hi", .var "lo"]) =
+    .ok (.vals [fpGeModulusValue hi lo] yst) := by
+  simp [Interp.evalExpr, Interp.evalArgs, Interp.execStmt, Interp.execStmts,
+    lookupFun, hoist, referenceCompiledBlock, frozenReferenceBlock,
+    modexpExec, modexpBuiltinFn, stepOp, bin, un, fpGeModulusValue,
+    Dialect.zero, restore]
+  rfl
 
 private theorem calldataSizeWord_ne {yst : EvmState}
     (hfit : yst.env.calldata.length < 2 ^ 256)
