@@ -7,6 +7,7 @@ import Challenge.Bls12381.ProofSupport.FpBarrettSubtract
 import Challenge.Bls12381.ProofSupport.FpBarrettReduce
 import Challenge.Bls12381.ProofSupport.FpMul
 import Challenge.Bls12381.ProofSupport.FpSquare
+import Challenge.Bls12381.ProofSupport.FpMontgomeryLawful
 import Challenge.Bls12381.ProofSupport.LawfulFp2
 import Challenge.Bls12381.ProofSupport.Fp2
 import Challenge.Bls12381.ProofSupport.LawfulFp6

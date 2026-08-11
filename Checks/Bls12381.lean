@@ -4,6 +4,7 @@ import Checks.Bls12381FpBarrett
 import Checks.Bls12381FpBarrettSubtract
 import Checks.Bls12381FpBarrettReduce
 import Checks.Bls12381FpMul
+import Checks.Bls12381FpMontgomery
 
 set_option warningAsError true
 
