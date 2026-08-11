@@ -1,4 +1,5 @@
 import Challenge.Bls12381G1Add.Reference.Proofs.SourceMul
+import Challenge.EvmProof.ModexpMemory
 
 set_option warningAsError true
 
@@ -35,6 +36,64 @@ theorem storeFpState_memory (ptr hi lo : U256) (yst : EvmState)
         (storeWord yst.memory ptr.toNat (hi <<< 128))
         (ptr + BitVec.ofNat 256 16).toNat lo address := by
   rfl
+
+/-- The exact 48-byte window produced by `storeFp` is the big-endian
+concatenation of the 128-bit high limb and the 256-bit low limb. -/
+theorem bytesNat_readBytes_storeFpState (ptr hi lo : U256) (yst : EvmState)
+    (hptr : ptr.toNat + 16 < 2 ^ 256)
+    (hhi : hi.toNat < 2 ^ 128) :
+    Challenge.EvmProof.Bytes.bytesNat
+        (readBytes (storeFpState yst ptr hi lo).memory ptr.toNat 48) =
+      hi.toNat * 2 ^ 256 + lo.toNat := by
+  have hnext : (ptr + BitVec.ofNat 256 16).toNat = ptr.toNat + 16 := by
+    rw [BitVec.toNat_add, BitVec.toNat_ofNat]
+    exact Nat.mod_eq_of_lt hptr
+  have hfirst :
+      readBytes
+          (storeWord
+            (storeWord yst.memory ptr.toNat (hi <<< 128))
+            (ptr.toNat + 16) lo)
+          ptr.toNat 16 =
+        readBytes
+          (storeWord yst.memory ptr.toNat (hi <<< 128)) ptr.toNat 16 := by
+    unfold readBytes
+    apply List.map_congr_left
+    intro i hiIndex
+    have hiIndex' : i < 16 := by simpa using hiIndex
+    simp only [storeWord]
+    rw [if_neg]
+    omega
+  have hshift : (hi <<< 128).toNat / 256 ^ 16 = hi.toNat := by
+    rw [BitVec.toNat_shiftLeft, Nat.shiftLeft_eq]
+    have hproduct : hi.toNat * 2 ^ 128 < 2 ^ 256 := by
+      calc
+        hi.toNat * 2 ^ 128 < 2 ^ 128 * 2 ^ 128 :=
+          (Nat.mul_lt_mul_right (by positivity : 0 < 2 ^ 128)).2 hhi
+        _ = 2 ^ 256 := by rw [← pow_add]
+    rw [Nat.mod_eq_of_lt hproduct]
+    have hpow : 256 ^ 16 = 2 ^ 128 := by
+      norm_num [← pow_mul]
+    rw [hpow, Nat.mul_comm hi.toNat,
+      Nat.mul_div_right _ (by positivity : 0 < 2 ^ 128)]
+  have hmemory : (storeFpState yst ptr hi lo).memory =
+      storeWord
+        (storeWord yst.memory ptr.toNat (hi <<< 128))
+        (ptr + BitVec.ofNat 256 16).toNat lo := by
+    funext address
+    exact storeFpState_memory ptr hi lo yst address
+  rw [hmemory, hnext]
+  rw [show 48 = 16 + 32 by omega,
+    Challenge.EvmProof.ModexpMemory.readBytes_add]
+  rw [Challenge.EvmProof.Bytes.bytesNat_append]
+  rw [hfirst]
+  rw [Challenge.EvmProof.ModexpMemory.bytesNat_readBytes_storeWord_prefix
+    yst.memory ptr.toNat 16 (hi <<< 128) (by omega)]
+  rw [Challenge.EvmProof.ModexpMemory.bytesNat_readBytes_storeWord]
+  simp only [readBytes]
+  rw [List.length_map, List.length_range, hshift]
+  have hbase : 256 ^ 32 = 2 ^ 256 := by
+    norm_num [← pow_mul]
+  rw [hbase]
 
 /-- The eighth frozen helper executes the two source-ordered field stores. -/
 theorem eval_storeFp (ptr hi lo : U256) (yst : EvmState) :
