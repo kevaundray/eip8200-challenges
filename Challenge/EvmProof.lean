@@ -1,4 +1,5 @@
 import Challenge.EvmProof.Bytecode
+import Challenge.EvmProof.ByteWindow
 import Challenge.EvmProof.Execution
 import Challenge.EvmProof.Gas
 import Challenge.EvmProof.GasFormula
