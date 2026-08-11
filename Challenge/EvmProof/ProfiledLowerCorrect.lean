@@ -179,4 +179,35 @@ theorem profiled_astep_sim [model : ExternalModel] {config : PrecompileConfig}
       exact closed_astep_profiled hlow hsmall
         (.dynJump (model := closedModel) hfind) hsuf hcap
 
+/-- Profile-preserving simulation of a finite assembly execution. -/
+theorem profiled_asteps_sim [model : ExternalModel] {config : PrecompileConfig}
+    (hcalls : ProfiledCallsRealized model.calls config)
+    (hcreates : model.creates = YulSemantics.EVM.ExternalCreates.none)
+    {prog : List Asm} {is : List Instr} {payload : List UInt8}
+    (hlow : lowerProg prog = some is)
+    (hsmall : codeSize prog < 256 ^ labelWidth)
+    {a b : AConf} (hsteps : ASteps prog a b) (hsuf : a.code <:+ prog)
+    (hbound : ∀ mid, ASteps prog a mid → mid.stk.length ≤ 1023) :
+    ∃ bnd : Nat, ∀ s : State, ConfMatch (payload := payload) prog is a s →
+      CallerProfile config s → bnd ≤ s.gasAvailable →
+      ∃ s', Steps s s' ∧ ConfMatch (payload := payload) prog is b s' ∧
+        CallerProfile config s' ∧
+        s.gasAvailable - bnd ≤ s'.gasAvailable := by
+  induction hsteps with
+  | refl a =>
+      exact ⟨0, fun s hm hprofile _ =>
+        ⟨s, .refl _, hm, hprofile, by omega⟩⟩
+  | @head a₁ a₂ a₃ hstep hrest ih =>
+      obtain ⟨b₁, H₁⟩ := profiled_astep_sim hcalls hcreates hlow hsmall
+        hstep hsuf (hbound a₁ (.refl a₁))
+      obtain ⟨b₂, H₂⟩ := ih (hstep.suffix hsuf)
+        (fun mid h => hbound mid (.head hstep h))
+      refine ⟨b₁ + b₂, ?_⟩
+      intro s hm hprofile hgas
+      obtain ⟨s₁, htarget₁, hm₁, hprofile₁, hgas₁⟩ :=
+        H₁ s hm hprofile (by omega)
+      obtain ⟨s₂, htarget₂, hm₂, hprofile₂, hgas₂⟩ :=
+        H₂ s₁ hm₁ hprofile₁ (by omega)
+      exact ⟨s₂, htarget₁.append htarget₂, hm₂, hprofile₂, by omega⟩
+
 end Challenge.EvmProof
