@@ -44,6 +44,11 @@ example (a b : Limbs.WideProduct) :
   Limbs.subWide256_value a b
 
 example (a b : Limbs.WideProduct) :
+    (Limbs.subWide256 a b).value =
+      (a.value + Limbs.radix ^ 2 - b.value) % Limbs.radix ^ 2 :=
+  Limbs.subWide256_value_mod a b
+
+example (a b : Limbs.WideProduct) :
     (Limbs.mulWideLow256 a b).value =
       (a.value * b.value) % Limbs.radix ^ 2 :=
   Limbs.mulWideLow256_value a b
@@ -114,6 +119,10 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.subWide256_value' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Limbs.subWide256_value
+
+/-- info: 'Challenge.EvmProof.Limbs.subWide256_value_mod' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.subWide256_value_mod
 
 /-- info: 'Challenge.EvmProof.Word.word_toNat_mul' depends on axioms: [propext] -/
 #guard_msgs in

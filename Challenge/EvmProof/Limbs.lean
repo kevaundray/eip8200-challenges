@@ -207,6 +207,38 @@ theorem radix_gt_one : 1 < radix := by
 theorem radix_pos : 0 < radix := by
   exact Nat.zero_lt_of_lt radix_gt_one
 
+/-- Two-word subtraction is subtraction modulo the two-word radix. -/
+theorem subWide256_value_mod (a b : WideProduct) :
+    (subWide256 a b).value =
+      (a.value + radix ^ 2 - b.value) % radix ^ 2 := by
+  have ha : a.value < radix ^ 2 := by
+    have hlo := a.lo.val.isLt
+    have hhi := a.hi.val.isLt
+    change a.lo.toNat < radix at hlo
+    change a.hi.toNat < radix at hhi
+    unfold WideProduct.value
+    nlinarith
+  have hb : b.value < radix ^ 2 := by
+    have hlo := b.lo.val.isLt
+    have hhi := b.hi.val.isLt
+    change b.lo.toNat < radix at hlo
+    change b.hi.toNat < radix at hhi
+    unfold WideProduct.value
+    nlinarith
+  rw [subWide256_value]
+  split_ifs with hle
+  · have hdifference : a.value - b.value < radix ^ 2 :=
+      (Nat.sub_le _ _).trans_lt ha
+    have hrearrange : a.value + radix ^ 2 - b.value =
+        radix ^ 2 + (a.value - b.value) := by omega
+    rw [hrearrange, Nat.add_mod, Nat.mod_self, Nat.zero_add]
+    simpa using (Nat.mod_eq_of_lt hdifference).symm
+  · have hwrapped : radix ^ 2 + a.value - b.value < radix ^ 2 := by omega
+    have hrearrange : a.value + radix ^ 2 - b.value =
+        radix ^ 2 + a.value - b.value := by omega
+    rw [hrearrange]
+    exact (Nat.mod_eq_of_lt hwrapped).symm
+
 /-- Three EVM words always reconstruct below the three-word radix bound. -/
 theorem threeWords_lt (x y z : UInt256) :
     x.toNat + radix * y.toNat + radix ^ 2 * z.toNat < radix ^ 3 := by
