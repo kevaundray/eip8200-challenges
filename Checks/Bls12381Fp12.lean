@@ -43,6 +43,23 @@ example (a : LawfulFp12.Carrier)
 
 #print axioms LawfulFp12.inv_mul_of_norm_ne_zero
 
+example (a : LawfulFp12.Carrier) (ha : a ≠ LawfulFp12.zero) :
+    LawfulFp12.norm a ≠ LawfulFp6.zero :=
+  LawfulFp12.norm_ne_zero a ha
+
+#print axioms LawfulFp12.norm_ne_zero
+
+example (a : LawfulFp12.Carrier) (ha : a ≠ LawfulFp12.zero) :
+    LawfulFp12.mul a (LawfulFp12.inv a) = LawfulFp12.one :=
+  LawfulFp12.mul_inv_cancel a ha
+
+example (a : LawfulFp12.Carrier) (ha : a ≠ LawfulFp12.zero) :
+    LawfulFp12.mul (LawfulFp12.inv a) a = LawfulFp12.one :=
+  LawfulFp12.inv_mul_cancel a ha
+
+#print axioms LawfulFp12.mul_inv_cancel
+#print axioms LawfulFp12.inv_mul_cancel
+
 example : Challenge.Bls12381.ProofSupport.Fp12.toField
     Challenge.Bls12381.ProofSupport.Fp12.zero = 0 :=
   Challenge.Bls12381.ProofSupport.Fp12.toField_zero
