@@ -5,6 +5,7 @@ import Checks.EvmProofExecSound
 import Checks.EvmProofModexpCallGas
 import Checks.EvmProofModexpCalls
 import Checks.EvmProofModexpExec
+import Checks.EvmProofModexpMemory
 import Checks.EvmProofProfiledCorrectness
 import Checks.EvmProofProfiledCalls
 import Checks.EvmProofProfiledLower
