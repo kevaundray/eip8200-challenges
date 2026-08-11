@@ -177,4 +177,20 @@ example (a b : UInt256) :
 #guard_msgs in
 #print axioms Limbs.addTwo256_value
 
+/-- info: 'Challenge.EvmProof.Limbs.join_splitAt' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Limbs.join_splitAt
+
+/-- info: 'Challenge.EvmProof.Limbs.splitAt_low_lt' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Limbs.splitAt_low_lt
+
+/-- info: 'Challenge.EvmProof.Limbs.mulSplit_high_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.mulSplit_high_lt
+
+/-- info: 'Challenge.EvmProof.Limbs.fullMul256_words_lt' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Limbs.fullMul256_words_lt
+
 end Checks.EvmProofWideMul

@@ -94,4 +94,8 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.schoolbookProduct_r2_value' depends on
 #guard_msgs in
 #print axioms Fp.barrettMu_eq_floor
 
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.barrettMu_words' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.barrettMu_words
+
 end Checks.Bls12381Fp

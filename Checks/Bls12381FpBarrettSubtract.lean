@@ -44,4 +44,12 @@ example (product : Fp.SchoolbookProduct)
 #guard_msgs in
 #print axioms Fp.value_barrettRemainder
 
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.quotientWords_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.quotientWords_value
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.modulusWords_value' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.modulusWords_value
+
 end Checks.Bls12381FpBarrettSubtract
