@@ -60,4 +60,19 @@ theorem prime1125266252156850182658904441386709967 :
     exact ⟨by bls_norm_mod_pow, by bls_norm_mod_pow, by bls_norm_mod_pow,
       by bls_norm_mod_pow, by simp⟩
 
+theorem prime2584487767265781317813 : Nat.Prime 2584487767265781317813 := by
+  apply prime_of_modPow_lucas_factors 2584487767265781317813 2
+    [2, 2, 89, 7259797099061183477]
+  · norm_num
+  · norm_num
+  · simp only [List.mem_cons, forall_eq_or_imp]
+    exact ⟨Nat.prime_two, Nat.prime_two, prime89,
+      prime7259797099061183477, by simp⟩
+  · bls_norm_mod_pow
+  · simp only [List.mem_cons, forall_eq_or_imp]
+    have h2 : Precompile.modPow 2
+        ((2584487767265781317813 - 1) / 2) 2584487767265781317813 ≠ 1 := by
+      bls_norm_mod_pow
+    exact ⟨h2, h2, by bls_norm_mod_pow, by bls_norm_mod_pow, by simp⟩
+
 end Challenge.Bls12381.ProofSupport.PrimeCertificate
