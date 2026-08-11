@@ -1,5 +1,6 @@
 import Challenge.Bls12381
 import Checks.Bls12381CodecFp
+import Checks.Bls12381CodecFp2
 import Checks.Bls12381FpRepresentation
 import Checks.Bls12381FpPredicates
 import Checks.Bls12381FpWordBridge
