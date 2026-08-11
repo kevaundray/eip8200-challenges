@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryFirst
+import Challenge.Bls12381.ProofSupport.FpMontgomeryNext
 
 set_option warningAsError true
 
@@ -124,6 +124,21 @@ example (x0 : UInt256) {y : Fp.Limbs} (hy : Fp.Canonical y) :
       Fp.montgomeryReductionNumerator
         (Fp.montgomeryAccumulateZero x0 y.lo y.hi) :=
   Fp.montgomeryFirstReduce_scaled x0 hy
+
+example (state : Fp.MontgomeryState) (x1 : UInt256) (y : Fp.Limbs) :
+    Fp.montgomeryAccumulateNext state x1 y =
+      let lowSum := Challenge.EvmProof.Limbs.addTwo256 state.t0
+        (Challenge.EvmProof.Limbs.fullMul256 x1 y.lo).lo
+      let carry := (Challenge.EvmProof.Limbs.fullMul256 x1 y.lo).hi +
+        lowSum.carry
+      let highProduct := Challenge.EvmProof.Limbs.fullMul256 x1 y.hi
+      let highSum := Challenge.EvmProof.Limbs.addTwo256 state.t1 highProduct.lo
+      let shiftedSum := Challenge.EvmProof.Limbs.addTwo256 highSum.word carry
+      { t0 := lowSum.word
+        t1 := shiftedSum.word
+        t2 := highProduct.hi + (highSum.carry + shiftedSum.carry) :
+          Fp.MontgomeryState } :=
+  rfl
 
 example (state : Fp.MontgomeryState) :
     (Fp.montgomeryReductionMultiplier state).toNat =
