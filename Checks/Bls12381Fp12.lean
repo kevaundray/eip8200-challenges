@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.Fp12
+import Challenge.Bls12381.ProofSupport.LawfulFp12Norm
 
 set_option warningAsError true
 
