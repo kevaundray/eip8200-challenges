@@ -144,4 +144,31 @@ theorem encodeFp2_decodeFp2 {input : ByteArray} {offset : Nat} {a : Fp2}
   exact (ByteArray.extract_eq_extract_append_extract (offset + fpBytes)
     (by omega) (by simp [fpBytes])).symm
 
+theorem decodeFp2_encodeFp2 (a : Fp2) :
+    decodeFp2 (encodeFp2 a) 0 = some a := by
+  simpa using decodeFp2_framed ByteArray.empty ByteArray.empty a
+
+theorem decodeFp2_eq_none_of_short {input : ByteArray} {offset : Nat}
+    (hshort : input.size < offset + fp2Bytes) : decodeFp2 input offset = none := by
+  have hsecond : input.size < (offset + fpBytes) + fpBytes := by
+    simpa [fp2Bytes, fpBytes, Nat.add_assoc] using hshort
+  have hnone : decodeFp input (offset + fpBytes) = none :=
+    decodeFp_eq_none_of_short hsecond
+  unfold decodeFp2 EvmSemantics.Crypto.Bls12381Codec.decodeFp2
+  simp only [EvmSemantics.Crypto.Bls12381Codec.fpBytes]
+  have hnone' : EvmSemantics.Crypto.Bls12381Codec.decodeFp input
+      (offset + 64) = none := by
+    simpa [decodeFp, fpBytes] using hnone
+  rw [hnone']
+  cases EvmSemantics.Crypto.Bls12381Codec.decodeFp input offset <;> rfl
+
+theorem decodeFp2_first (a b : Fp2) :
+    decodeFp2 (encodeFp2 a ++ encodeFp2 b) 0 = some a := by
+  simpa using decodeFp2_framed ByteArray.empty (encodeFp2 b) a
+
+theorem decodeFp2_second (a b : Fp2) :
+    decodeFp2 (encodeFp2 a ++ encodeFp2 b) fp2Bytes = some b := by
+  simpa [fp2Bytes] using
+    decodeFp2_framed (encodeFp2 a) ByteArray.empty b
+
 end Challenge.Bls12381.ProofSupport.Codec

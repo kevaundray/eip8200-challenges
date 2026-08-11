@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.CodecFp
+import Challenge.Bls12381.ProofSupport.CodecG1Core
 
 set_option warningAsError true
 
@@ -192,5 +193,17 @@ theorem encodeG1_decodeG1 {input : ByteArray} {offset : Nat} {point : Point}
     rw [hex, hey]
     exact (ByteArray.extract_eq_extract_append_extract (offset + fpBytes)
       (by omega) (by simp [fpBytes])).symm
+
+theorem decodeG1_encodeG1 (point : Point) (hpoint : ValidG1 point) :
+    decodeG1 (encodeG1 point) 0 = some point := by
+  simpa using decodeG1_framed ByteArray.empty ByteArray.empty point hpoint
+
+theorem decodeG1_eq_none_of_short {input : ByteArray} {offset : Nat}
+    (hshort : input.size < offset + g1Bytes) : decodeG1 input offset = none := by
+  have hsecond : input.size < (offset + fpBytes) + fpBytes := by
+    simpa [g1Bytes, fpBytes, Nat.add_assoc] using hshort
+  have hnone : decodeFp input (offset + fpBytes) = none :=
+    decodeFp_eq_none_of_short hsecond
+  exact decodeG1_eq_none_of_second_field hnone
 
 end Challenge.Bls12381.ProofSupport.Codec

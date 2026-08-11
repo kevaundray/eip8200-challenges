@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.Codec
+import Challenge.Bls12381.ProofSupport.CodecCore
 import Challenge.EvmProof.ByteWindow
 
 set_option warningAsError true
@@ -86,6 +86,13 @@ theorem paddingZero_iff_forall (input : ByteArray) (offset : Nat) :
       h 11 (by omega), h 12 (by omega), h 13 (by omega), h 14 (by omega),
       h 15 (by omega)⟩
 
+theorem decodeFp_eq_none_of_short {input : ByteArray} {offset : Nat}
+    (hshort : input.size < offset + fpBytes) : decodeFp input offset = none := by
+  change input.size < offset + 64 at hshort
+  unfold decodeFp EvmSemantics.Crypto.Bls12381Codec.decodeFp
+  rw [if_pos (by
+    simpa [EvmSemantics.Crypto.Bls12381Codec.fpBytes] using hshort)]
+
 theorem decodeFp_eq_none_of_padding_nonzero {input : ByteArray} {offset i : Nat}
     (hsize : offset + fpBytes ≤ input.size) (hi : i < 16)
     (hnonzero : input[offset + i]! ≠ 0) : decodeFp input offset = none := by
@@ -99,6 +106,16 @@ theorem decodeFp_eq_none_of_padding_nonzero {input : ByteArray} {offset i : Nat}
   rw [if_neg (by simpa [EvmSemantics.Crypto.Bls12381Codec.fpBytes]
     using hsize)]
   simp [hcheck]
+
+theorem decodeFp_eq_none_of_first_padding_nonzero
+    {input : ByteArray} {offset : Nat}
+    (hsize : offset + fpBytes ≤ input.size) (hnonzero : input[offset]! ≠ 0) :
+    decodeFp input offset = none :=
+  decodeFp_eq_none_of_padding_nonzero (i := 0) hsize (by omega)
+    (by simpa using hnonzero)
+
+theorem decodeFp_some_isCanonical {input : ByteArray} {offset : Nat} {a : Fp}
+    (_hdecode : decodeFp input offset = some a) : a.val < p := a.isLt
 
 theorem decodeFp_eq_none_of_value_ge {input : ByteArray} {offset : Nat}
     (hsize : offset + fpBytes ≤ input.size)
@@ -236,5 +253,79 @@ theorem encodeFp_decodeFp {input : ByteArray} {offset : Nat} {a : Fp}
     have hbound : offset + i < input.size := by omega
     rw [getElem!_pos input (offset + i) hbound] at htop
     simpa [Nat.add_comm] using htop.symm
+
+/-- Decoding is local to its exact 64-byte window. -/
+theorem decodeFp_framed (pre suffix : ByteArray) (a : Fp) :
+    decodeFp (pre ++ encodeFp a ++ suffix) pre.size = some a := by
+  have hp : p < 256 ^ 48 := by norm_num [p, absU]
+  have ha48 : a.val < 256 ^ 48 := a.isLt.trans hp
+  let encoded := encodeFp a
+  let input := pre ++ encoded ++ suffix
+  have hencodedSize : encoded.size = 64 := by
+    exact YulEvmCompiler.BytesLemmas.natToBytesPadded_size _ _
+  have hinputSize : input.size = pre.size + 64 + suffix.size := by
+    simp [input, hencodedSize]
+  have hbyte : ∀ i, i < 64 →
+      input[pre.size + i]?.getD 0 = encoded[i]?.getD 0 := by
+    intro i hi
+    simp only [input, Challenge.EvmProof.Memory.getElem?_getD_append]
+    rw [if_pos (by simp [hencodedSize]; omega)]
+    rw [if_neg (by omega)]
+    congr 2
+    omega
+  have htop : ∀ i, i < 16 → input[pre.size + i]! = 0 := by
+    intro i hi
+    rw [← Challenge.EvmProof.Memory.getD0_eq_getElem!]
+    rw [hbyte i (by omega)]
+    change (EvmSemantics.Data.Bytes.natToBytesPadded a.val 64)[i]?.getD 0 = 0
+    rw [YulEvmCompiler.BytesLemmas.natToBytesPadded_getElem?_getD _ 64 i
+      (by omega)]
+    have hexp : 48 ≤ 64 - 1 - i := by omega
+    have hpow : 256 ^ 48 ≤ 256 ^ (64 - 1 - i) :=
+      Nat.pow_le_pow_right (by omega) hexp
+    rw [Nat.div_eq_of_lt (ha48.trans_le hpow)]
+    rfl
+  have htop0 : input[pre.size]! = 0 := by
+    simpa using htop 0 (by omega)
+  have htail : input.extract (pre.size + 16) (pre.size + 64) =
+      EvmSemantics.Data.Bytes.natToBytesPadded a.val 48 := by
+    apply ByteArray.ext_getElem
+    · rw [ByteArray.size_extract,
+        YulEvmCompiler.BytesLemmas.natToBytesPadded_size]
+      omega
+    · intro i hiLeft hiRight
+      have hi : i < 48 := by
+        rw [YulEvmCompiler.BytesLemmas.natToBytesPadded_size] at hiRight
+        exact hiRight
+      rw [ByteArray.getElem_extract]
+      rw [← Challenge.EvmProof.Memory.getD0_eq_getElem _ _ hiRight]
+      rw [← Challenge.EvmProof.Memory.getD0_eq_getElem _ _ (by
+        rw [hinputSize]
+        omega)]
+      rw [show pre.size + 16 + i = pre.size + (16 + i) by omega]
+      rw [hbyte (16 + i) (by omega)]
+      change (EvmSemantics.Data.Bytes.natToBytesPadded a.val 64)[16 + i]?.getD 0 = _
+      rw [YulEvmCompiler.BytesLemmas.natToBytesPadded_getElem?_getD _ 64
+        (16 + i) (by omega)]
+      rw [YulEvmCompiler.BytesLemmas.natToBytesPadded_getElem?_getD _ 48 i hi]
+      rw [show 64 - 1 - (16 + i) = 48 - 1 - i by omega]
+  change EvmSemantics.Crypto.Bls12381Codec.decodeFp input pre.size = some a
+  unfold EvmSemantics.Crypto.Bls12381Codec.decodeFp
+  rw [if_neg (by simp [EvmSemantics.Crypto.Bls12381Codec.fpBytes, hinputSize])]
+  simp only [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size]
+  norm_num [List.range', htop, htop0, htail]
+  rw [Challenge.EvmProof.Memory.bytesToBigEndianNat_natToBytesPadded _ 48 ha48]
+  exact ⟨a.isLt, by apply Fin.ext; simp⟩
+
+theorem decodeFp_encodeFp (a : Fp) : decodeFp (encodeFp a) 0 = some a := by
+  simpa using decodeFp_framed ByteArray.empty ByteArray.empty a
+
+theorem decodeFp_first (a b : Fp) :
+    decodeFp (encodeFp a ++ encodeFp b) 0 = some a := by
+  simpa using decodeFp_framed ByteArray.empty (encodeFp b) a
+
+theorem decodeFp_second (a b : Fp) :
+    decodeFp (encodeFp a ++ encodeFp b) fpBytes = some b := by
+  simpa [fpBytes] using decodeFp_framed (encodeFp a) ByteArray.empty b
 
 end Challenge.Bls12381.ProofSupport.Codec
