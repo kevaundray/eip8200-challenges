@@ -1,6 +1,8 @@
 import Challenge.Bls12381.ProofSupport.G1Affine
 import Challenge.Bls12381.ProofSupport.G2Affine
 import Challenge.Bls12381.ProofSupport.CodecScalar
+import Challenge.Bls12381.ProofSupport.CodecG1Core
+import Challenge.Bls12381.ProofSupport.CodecG2Core
 
 set_option warningAsError true
 
@@ -166,6 +168,32 @@ theorem g2_onCurve (scalar : Nat) (point : G2Affine.Point)
     (LawfulAffine.onCurve_infinity G2Affine.curve)
     G2Affine.onCurve_add G2Affine.onCurve_double scalar point hpoint
 
+@[simp] theorem g1_infinity (scalar : Nat) :
+    g1 scalar G1Affine.infinity = G1Affine.infinity := by
+  apply binary_preserves _ _ _ (fun point => point = G1Affine.infinity)
+  · rfl
+  · intro left right hleft hright
+    subst left
+    subst right
+    simp [G1Affine.add]
+  · intro point hpoint
+    subst point
+    simp [G1Affine.double]
+  · rfl
+
+@[simp] theorem g2_infinity (scalar : Nat) :
+    g2 scalar G2Affine.infinity = G2Affine.infinity := by
+  apply binary_preserves _ _ _ (fun point => point = G2Affine.infinity)
+  · rfl
+  · intro left right hleft hright
+    subst left
+    subst right
+    simp [G2Affine.add]
+  · intro point hpoint
+    subst point
+    simp [G2Affine.double]
+  · rfl
+
 /-- Decode-level wire adapter for lawful G1 scalar multiplication. -/
 def g1Wire (scalar : Nat) (point : EvmSemantics.Crypto.Bls12381.Point) :
     EvmSemantics.Crypto.Bls12381.Point :=
@@ -187,5 +215,35 @@ theorem g2Wire_refines (scalar : Nat)
     G2Affine.ofWire (g2Wire scalar point) =
       g2 scalar (G2Affine.ofWire point) := by
   simp [g2Wire]
+
+theorem g1Wire_valid (scalar : Nat)
+    (point : EvmSemantics.Crypto.Bls12381.Point)
+    (hpoint : Codec.ValidG1 point) : Codec.ValidG1 (g1Wire scalar point) := by
+  have hinput : G1Affine.OnCurve (G1Affine.ofWire point) := by
+    cases point with
+    | infinity => exact LawfulAffine.onCurve_infinity G1Affine.curve
+    | affine x y => exact G1Affine.onCurve_ofWire hpoint
+  have houtput := g1_onCurve scalar (G1Affine.ofWire point) hinput
+  unfold g1Wire
+  cases hresult : g1 scalar (G1Affine.ofWire point) with
+  | infinity => trivial
+  | affine x y =>
+      rw [hresult] at houtput
+      exact G1Affine.onCurve_toWire houtput
+
+theorem g2Wire_valid (scalar : Nat)
+    (point : EvmSemantics.Crypto.Bls12381.G2Point)
+    (hpoint : Codec.ValidG2 point) : Codec.ValidG2 (g2Wire scalar point) := by
+  have hinput : G2Affine.OnCurve (G2Affine.ofWire point) := by
+    cases point with
+    | infinity => exact LawfulAffine.onCurve_infinity G2Affine.curve
+    | affine x y => exact G2Affine.onCurve_ofWire hpoint
+  have houtput := g2_onCurve scalar (G2Affine.ofWire point) hinput
+  unfold g2Wire
+  cases hresult : g2 scalar (G2Affine.ofWire point) with
+  | infinity => trivial
+  | affine x y =>
+      rw [hresult] at houtput
+      exact G2Affine.onCurve_toWire houtput
 
 end Challenge.Bls12381.ProofSupport.ScalarMul

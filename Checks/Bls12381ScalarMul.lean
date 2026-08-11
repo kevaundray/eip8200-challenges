@@ -103,6 +103,22 @@ example (scalar : Nat) (point : EvmSemantics.Crypto.Bls12381.G2Point) :
       ScalarMul.g2 scalar (G2Affine.ofWire point) :=
   ScalarMul.g2Wire_refines scalar point
 
+example (scalar : Nat) : ScalarMul.g1 scalar G1Affine.infinity =
+    G1Affine.infinity := ScalarMul.g1_infinity scalar
+
+example (scalar : Nat) : ScalarMul.g2 scalar G2Affine.infinity =
+    G2Affine.infinity := ScalarMul.g2_infinity scalar
+
+example (scalar : Nat) (point : EvmSemantics.Crypto.Bls12381.Point)
+    (hpoint : Codec.ValidG1 point) :
+    Codec.ValidG1 (ScalarMul.g1Wire scalar point) :=
+  ScalarMul.g1Wire_valid scalar point hpoint
+
+example (scalar : Nat) (point : EvmSemantics.Crypto.Bls12381.G2Point)
+    (hpoint : Codec.ValidG2 point) :
+    Codec.ValidG2 (ScalarMul.g2Wire scalar point) :=
+  ScalarMul.g2Wire_valid scalar point hpoint
+
 /--
 info: 'Challenge.Bls12381.ProofSupport.ScalarMul.scalar256OfDecode_val' depends on axioms: [propext,
  Classical.choice,
@@ -182,5 +198,29 @@ info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g2Wire_refines' depends on axio
 -/
 #guard_msgs in
 #print axioms ScalarMul.g2Wire_refines
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g1_infinity' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g1_infinity
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g2_infinity' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g2_infinity
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g1Wire_valid' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g1Wire_valid
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.g2Wire_valid' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.g2Wire_valid
 
 end Checks.Bls12381ScalarMul
