@@ -167,6 +167,21 @@ theorem mul_add_lt_mul_self {base a b c : Nat} (hbase : 0 < base)
   rw [← pow_two]
   exact mul_add_lt_sq hbase ha hb hc
 
+/-- Width-generic algebra behind one coarsely integrated operand-scanning
+Montgomery reduction step.  All variables are unbounded naturals; concrete
+word-range and no-wrap obligations remain with the source adapter. -/
+theorem ciosReduction_reconstruct
+    {base t0 t1 t2 m n0 n1 carry low1 high1
+      sum1 carry1 sum2 carry2 : Nat}
+    (hcarry : base * carry = t0 + m * n0)
+    (hprod1 : low1 + base * high1 = m * n1)
+    (hsum1 : sum1 + base * carry1 = t1 + low1)
+    (hsum2 : sum2 + base * carry2 = sum1 + carry) :
+    base * (sum2 + base * (t2 + high1 + carry1 + carry2)) =
+      t0 + base * t1 + base * base * t2 + m * (n0 + base * n1) := by
+  ring_nf at *
+  nlinarith
+
 /-! ## Source-faithful EVM full-word multiplication -/
 
 /-- Two EVM words holding a 512-bit product, low word first. -/

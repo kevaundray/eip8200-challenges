@@ -43,6 +43,16 @@ example {base a b c : Nat} (hbase : 0 < base)
     a * b + c < base * base :=
   Limbs.mul_add_lt_mul_self hbase ha hb hc
 
+example {base t0 t1 t2 m n0 n1 carry low1 high1
+    sum1 carry1 sum2 carry2 : Nat}
+    (hcarry : base * carry = t0 + m * n0)
+    (hprod1 : low1 + base * high1 = m * n1)
+    (hsum1 : sum1 + base * carry1 = t1 + low1)
+    (hsum2 : sum2 + base * carry2 = sum1 + carry) :
+    base * (sum2 + base * (t2 + high1 + carry1 + carry2)) =
+      t0 + base * t1 + base * base * t2 + m * (n0 + base * n1) :=
+  Limbs.ciosReduction_reconstruct hcarry hprod1 hsum1 hsum2
+
 example (a b : UInt256) :
     Limbs.WideProduct.value (Limbs.fullMul256 a b) = a.toNat * b.toNat :=
   Limbs.fullMul256_value a b
@@ -137,6 +147,10 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.mul_add_lt_mul_self' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Limbs.mul_add_lt_mul_self
+
+/-- info: 'Challenge.EvmProof.Limbs.ciosReduction_reconstruct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.ciosReduction_reconstruct
 
 /-- info: 'Challenge.EvmProof.Limbs.addThree256_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
