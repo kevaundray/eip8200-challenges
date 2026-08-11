@@ -135,6 +135,30 @@ theorem mulSplit_high_lt {base a b : Nat} (hbase : 0 < base)
   rw [Nat.div_lt_iff_lt_mul hbase]
   nlinarith
 
+/-- A product of two base-bounded digits plus a third digit still fits in two
+base digits.  This generic carry bound avoids normalizing any concrete word
+radix. -/
+theorem mul_add_lt_sq {base a b c : Nat} (hbase : 0 < base)
+    (ha : a < base) (hb : b < base) (hc : c < base) :
+    a * b + c < base ^ 2 := by
+  have ha' : a ≤ base - 1 := Nat.le_pred_of_lt ha
+  have hb' : b ≤ base - 1 := Nat.le_pred_of_lt hb
+  have hc' : c ≤ base - 1 := Nat.le_pred_of_lt hc
+  have hbase' : base - 1 + 1 = base :=
+    Nat.sub_add_cancel (Nat.succ_le_of_lt hbase)
+  calc
+    a * b + c ≤ (base - 1) * (base - 1) + (base - 1) :=
+      Nat.add_le_add (Nat.mul_le_mul ha' hb') hc'
+    _ = (base - 1) * base := by
+      calc
+        (base - 1) * (base - 1) + (base - 1) =
+            (base - 1) * (base - 1) + (base - 1) * 1 := by rw [Nat.mul_one]
+        _ = (base - 1) * ((base - 1) + 1) := (Nat.mul_add _ _ _).symm
+        _ = (base - 1) * base := by rw [hbase']
+    _ < base * base := (Nat.mul_lt_mul_right hbase).2
+      (Nat.sub_lt hbase (by omega))
+    _ = base ^ 2 := by rw [pow_two]
+
 /-! ## Source-faithful EVM full-word multiplication -/
 
 /-- Two EVM words holding a 512-bit product, low word first. -/

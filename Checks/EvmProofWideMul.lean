@@ -33,6 +33,11 @@ example (base x y z : Nat) (hbase : 0 < base)
     Limbs.joinAt base (Limbs.addThreeAt base x y z) = x + y + z :=
   Limbs.join_addThreeAt hbase hx hy hz
 
+example {base a b c : Nat} (hbase : 0 < base)
+    (ha : a < base) (hb : b < base) (hc : c < base) :
+    a * b + c < base ^ 2 :=
+  Limbs.mul_add_lt_sq hbase ha hb hc
+
 example (a b : UInt256) :
     Limbs.WideProduct.value (Limbs.fullMul256 a b) = a.toNat * b.toNat :=
   Limbs.fullMul256_value a b
@@ -112,6 +117,10 @@ example (a b : UInt256) :
 /-- info: 'Challenge.EvmProof.Limbs.join_addThreeAt' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Limbs.join_addThreeAt
+
+/-- info: 'Challenge.EvmProof.Limbs.mul_add_lt_sq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Limbs.mul_add_lt_sq
 
 /-- info: 'Challenge.EvmProof.Limbs.addThree256_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
