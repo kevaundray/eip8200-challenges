@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.Fp2SqrtLawful
+import Challenge.Bls12381.ProofSupport.LawfulFp2
 import Mathlib.Tactic.Ring
 
 set_option warningAsError true

@@ -1,6 +1,6 @@
 import Challenge.Bls12381.ProofSupport.CodecG2
 import Challenge.Bls12381.ProofSupport.MapToG2Isogeny
-import Challenge.Bls12381.ProofSupport.MapToG2SqrtRatio
+import Challenge.Bls12381.ProofSupport.MapToG2SqrtRatioDefs
 import Challenge.Bls12381.ProofSupport.ScalarMul
 
 set_option warningAsError true

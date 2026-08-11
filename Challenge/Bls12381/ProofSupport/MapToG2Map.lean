@@ -1,10 +1,22 @@
 import Challenge.Bls12381.ProofSupport.MapToG2Executable
 import Challenge.Bls12381.ProofSupport.MapToG2IsogenyLawful
+import Challenge.Bls12381.ProofSupport.MapToG2SqrtRatio
 import Challenge.Bls12381.ProofSupport.ScalarMul
+import Challenge.Bls12381.ProofSupport.ScalarMulSemantics
 
 set_option warningAsError true
 
-/-! # Shared lawful MAP_FP2_TO_G2 operation -/
+/-!
+# Shared lawful MAP_FP2_TO_G2 operation
+
+The final cofactor stage is proved equal to `hEff` scalar multiplication in
+the independent Mathlib affine group model.  A further theorem that
+`N • map(u) = 0` would require a certified G2 group-exponent/order result (or
+equivalent point-count certificate), which is not supplied by the pinned
+dependencies.  We document that exact optional strengthening rather than
+postulating subgroup closure.  The associated checks still exercise the
+complete executable map against all official EIP vectors.
+-/
 
 namespace Challenge.Bls12381.ProofSupport.MapToG2
 
@@ -26,6 +38,16 @@ theorem map_toWire_valid (u : Field) :
   | infinity => trivial
   | affine x y =>
       exact G2Affine.onCurve_toWire (by simpa [hpoint] using hcurve)
+
+/-- The executable cofactor stage is exactly natural-number scalar
+multiplication in the independent Mathlib affine group model. -/
+theorem map_nsmul (u : Field) :
+    AffineGroup.toMathlib G2Affine.curve ⟨map u, map_onCurve u⟩ =
+      hEff • AffineGroup.toMathlib G2Affine.curve
+        ⟨mapBeforeCofactor u, mapBeforeCofactor_onCurve u⟩ := by
+  have h := ScalarMul.g2_nsmul hEff (mapBeforeCofactor u)
+    (mapBeforeCofactor_onCurve u)
+  simpa only [map_eq] using h
 
 theorem run_eq_some_iff (input output : ByteArray) :
     run input = some output ↔

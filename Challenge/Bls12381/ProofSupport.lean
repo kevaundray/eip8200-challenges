@@ -64,6 +64,8 @@ import Challenge.Bls12381.ProofSupport.ScalarMulSemantics
 import Challenge.Bls12381.ProofSupport.Msm
 import Challenge.Bls12381.ProofSupport.MsmSemantics
 import Challenge.Bls12381.ProofSupport.MsmSubgroup
+import Challenge.Bls12381.ProofSupport.MapPolynomial
+import Challenge.Bls12381.ProofSupport.MapPolynomialLawful
 import Challenge.Bls12381.ProofSupport.MapToG1
 import Challenge.Bls12381.ProofSupport.MapToG1SqrtRatio
 import Challenge.Bls12381.ProofSupport.MapToG1Sswu
@@ -72,6 +74,14 @@ import Challenge.Bls12381.ProofSupport.MapToG1IsogenyIdentity
 import Challenge.Bls12381.ProofSupport.MapToG1IsogenyLawful
 import Challenge.Bls12381.ProofSupport.MapToG1Executable
 import Challenge.Bls12381.ProofSupport.MapToG1Map
+import Challenge.Bls12381.ProofSupport.MapToG2
+import Challenge.Bls12381.ProofSupport.MapToG2SqrtRatioDefs
+import Challenge.Bls12381.ProofSupport.MapToG2SqrtRatio
+import Challenge.Bls12381.ProofSupport.MapToG2Isogeny
+import Challenge.Bls12381.ProofSupport.MapToG2IsogenyIdentity
+import Challenge.Bls12381.ProofSupport.MapToG2IsogenyLawful
+import Challenge.Bls12381.ProofSupport.MapToG2Executable
+import Challenge.Bls12381.ProofSupport.MapToG2Map
 import Challenge.Bls12381.ProofSupport.PrimeField
 import Challenge.Bls12381.ProofSupport.PrimeCertificate
 import Challenge.Bls12381.ProofSupport.Subgroup

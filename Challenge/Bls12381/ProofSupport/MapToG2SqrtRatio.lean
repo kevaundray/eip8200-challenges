@@ -1,4 +1,5 @@
-import Challenge.Bls12381.ProofSupport.MapToG2
+import Challenge.Bls12381.ProofSupport.Fp2SqrtLawful
+import Challenge.Bls12381.ProofSupport.MapToG2SqrtRatioDefs
 import Mathlib.NumberTheory.LegendreSymbol.QuadraticReciprocity
 
 set_option warningAsError true
@@ -73,16 +74,6 @@ theorem isSquareRatio_iff_isSquare_div (u v : Field) (hv : v ≠ 0) :
     rw [pow_two, ← hy]
     field_simp
 
-/-- Exact decoded-field schedule of the source Fp2 `sqrtRatio`: try
-`sqrt(u / v)`, then unconditionally use `sqrt(Z * u / v)` after failure. -/
-def sqrtRatioSource (u v : Field) : Bool × Field :=
-  let quotient := u * v⁻¹
-  let first := Fp2.SqrtProgram.run Fp2.lawfulSqrtOps quotient
-  if first.exists_ then (true, first.root)
-  else
-    let second := Fp2.SqrtProgram.run Fp2.lawfulSqrtOps (isoZ * quotient)
-    (false, second.root)
-
 /-- The exact source schedule satisfies the non-vacuous ratio contract for
 every nonzero denominator. -/
 theorem sqrtRatioSource_valid (u v : Field) (hv : v ≠ 0) :
@@ -123,13 +114,6 @@ theorem sqrtRatioSource_valid (u v : Field) (hv : v ≠ 0) :
 theorem sswuSource_onCurve (u : Field) :
     ProjectiveOnCurve (sswuProjective sqrtRatioSource u) :=
   sswuProjective_onCurve sqrtRatioSource sqrtRatioSource_valid u
-
-/-- Opaque source-SSWU stage boundary.  Keeping the already-proved schedule
-behind this equation prevents downstream isogeny proofs from repeatedly
-normalizing the complete Fp2 square-root program. -/
-irreducible_def sourceSswu (lemma := sourceSswu_eq)
-    (u : Field) : SswuResult :=
-  sswuProjective sqrtRatioSource u
 
 theorem sourceSswu_onCurve (u : Field) :
     ProjectiveOnCurve (sourceSswu u) := by
