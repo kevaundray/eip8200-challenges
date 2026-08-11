@@ -18,6 +18,14 @@ info: 'Challenge.Bls12381.ProofSupport.G2Affine.mathCurve_discriminant_ne_zero' 
 #guard_msgs in
 #print axioms G2Affine.mathCurve_discriminant_ne_zero
 
+/--
+info: 'Challenge.Bls12381.ProofSupport.G2Affine.mathCurveIsElliptic' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms G2Affine.mathCurveIsElliptic
+
 example (point : EvmSemantics.Crypto.Bls12381.G2Point) :
     G2Affine.toWire (G2Affine.ofWire point) = point :=
   G2Affine.toWire_ofWire point
