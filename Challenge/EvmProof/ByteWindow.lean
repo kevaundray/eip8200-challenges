@@ -1,4 +1,5 @@
 import Challenge.EvmProof.Memory
+import Challenge.EvmProof.Bytes
 import YulEvmCompiler.BytesLemmas
 
 set_option warningAsError true
@@ -91,5 +92,37 @@ theorem natToBytesPadded_prefix_zeros (n prefixWidth valueWidth : Nat)
             valueWidth - 1 - (i - prefixWidth) := by
         omega
       rw [hexponent]
+
+/-- Fixed-width big-endian encoding is a left inverse of decoding for every
+byte array. -/
+theorem natToBytesPadded_bytesToBigEndianNat (bytes : ByteArray) :
+    Data.Bytes.natToBytesPadded (Data.Bytes.bytesToBigEndianNat bytes)
+        bytes.size = bytes := by
+  have hvalue :
+      Data.Bytes.bytesToBigEndianNat
+          (Data.Bytes.natToBytesPadded
+            (Data.Bytes.bytesToBigEndianNat bytes) bytes.size) =
+        Data.Bytes.bytesToBigEndianNat bytes := by
+    apply Challenge.EvmProof.Memory.bytesToBigEndianNat_natToBytesPadded
+    rw [← Challenge.EvmProof.Bytes.bytesNat_toList]
+    simpa [YulEvmCompiler.ByteArray.toList_eq_data, Array.length_toList] using
+      Challenge.EvmProof.Bytes.bytesNat_lt_pow bytes.toList
+  have hlength :
+      (Data.Bytes.natToBytesPadded
+          (Data.Bytes.bytesToBigEndianNat bytes) bytes.size).toList.length =
+        bytes.toList.length := by
+    simp [YulEvmCompiler.ByteArray.toList_eq_data, Array.length_toList,
+      YulEvmCompiler.BytesLemmas.natToBytesPadded_size]
+  have hlist := Challenge.EvmProof.Bytes.bytesNat_injective_of_length hlength
+    (by simpa only [Challenge.EvmProof.Bytes.bytesNat_toList] using hvalue)
+  apply ByteArray.ext
+  apply Array.ext
+  · simpa [YulEvmCompiler.ByteArray.toList_eq_data, Array.length_toList] using
+      congrArg List.length hlist
+  · intro i hiLeft hiRight
+    have hget := congrArg (fun xs : List UInt8 => xs[i]?) hlist
+    simpa [YulEvmCompiler.ByteArray.toList_eq_data, Array.getElem?_toList,
+      Array.getElem?_eq_getElem hiLeft,
+      Array.getElem?_eq_getElem hiRight] using hget
 
 end Challenge.EvmProof.ByteWindow

@@ -26,6 +26,23 @@ example (n prefixWidth valueWidth : Nat) (h : n < 256 ^ valueWidth) :
   Challenge.EvmProof.ByteWindow.natToBytesPadded_prefix_zeros
     n prefixWidth valueWidth h
 
+example (bytes : ByteArray) :
+    Data.Bytes.natToBytesPadded (Data.Bytes.bytesToBigEndianNat bytes)
+        bytes.size = bytes :=
+  Challenge.EvmProof.ByteWindow.natToBytesPadded_bytesToBigEndianNat bytes
+
+/-- info: 'Challenge.EvmProof.Bytes.bytesNat_injective_of_length' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.EvmProof.Bytes.bytesNat_injective_of_length
+
+/--
+info: 'Challenge.EvmProof.ByteWindow.natToBytesPadded_bytesToBigEndianNat' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Challenge.EvmProof.ByteWindow.natToBytesPadded_bytesToBigEndianNat
+
 /-- info: 'Challenge.EvmProof.ByteWindow.extract_append_window' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Challenge.EvmProof.ByteWindow.extract_append_window

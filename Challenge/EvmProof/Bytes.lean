@@ -112,6 +112,58 @@ theorem bytesNat_lt_pow (bytes : List UInt8) :
         Nat.mul_le_mul_right _ (by omega)
       _ = 256 ^ bytes.length * 256 := Nat.mul_comm _ _
 
+/-- Fixed-length big-endian byte strings have an injective natural-number
+interpretation. -/
+theorem bytesNat_injective_of_length {left right : List UInt8}
+    (hlength : left.length = right.length)
+    (hvalue : bytesNat left = bytesNat right) : left = right := by
+  induction left generalizing right with
+  | nil =>
+      cases right with
+      | nil => rfl
+      | cons byte bytes => simp at hlength
+  | cons leftHead leftTail ih =>
+      cases right with
+      | nil => simp at hlength
+      | cons rightHead rightTail =>
+          have htailLength : leftTail.length = rightTail.length := by
+            simpa using hlength
+          rw [bytesNat_cons, bytesNat_cons, htailLength] at hvalue
+          let place := 256 ^ rightTail.length
+          have hplace : 0 < place := Nat.pow_pos (by omega)
+          have hleftTail : bytesNat leftTail < place := by
+            simpa [place, htailLength] using bytesNat_lt_pow leftTail
+          have hrightTail : bytesNat rightTail < place := by
+            simpa [place] using bytesNat_lt_pow rightTail
+          have hheadNat : leftHead.toNat = rightHead.toNat := by
+            have hdiv := congrArg (fun n : Nat => n / place) hvalue
+            have hleftDiv :
+                (leftHead.toNat * place + bytesNat leftTail) / place =
+                  leftHead.toNat := by
+              calc
+                (leftHead.toNat * place + bytesNat leftTail) / place =
+                    bytesNat leftTail / place + leftHead.toNat := by
+                  rw [Nat.add_comm, Nat.mul_comm]
+                  exact Nat.add_mul_div_left _ _ hplace
+                _ = leftHead.toNat := by
+                  rw [Nat.div_eq_of_lt hleftTail, Nat.zero_add]
+            have hrightDiv :
+                (rightHead.toNat * place + bytesNat rightTail) / place =
+                  rightHead.toNat := by
+              calc
+                (rightHead.toNat * place + bytesNat rightTail) / place =
+                    bytesNat rightTail / place + rightHead.toNat := by
+                  rw [Nat.add_comm, Nat.mul_comm]
+                  exact Nat.add_mul_div_left _ _ hplace
+                _ = rightHead.toNat := by
+                  rw [Nat.div_eq_of_lt hrightTail, Nat.zero_add]
+            simpa [place, hleftDiv, hrightDiv] using hdiv
+          have hhead : leftHead = rightHead := UInt8.ext hheadNat
+          subst rightHead
+          have htailValue : bytesNat leftTail = bytesNat rightTail := by
+            omega
+          rw [ih htailLength htailValue]
+
 theorem bytesToNatPadded_succ (bytes : ByteArray) (offset width : Nat) :
     EvmSemantics.EVM.Precompile.bytesToNatPadded bytes offset (width + 1) =
       EvmSemantics.EVM.Precompile.bytesToNatPadded bytes offset width * 256 +
