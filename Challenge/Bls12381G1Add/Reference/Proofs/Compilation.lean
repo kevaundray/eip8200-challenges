@@ -1,4 +1,4 @@
-import Challenge.Bls12381G1Add.ProofSupport.Yul
+import Challenge.Bls12381G1Add.ProofSupport.YulDialect
 import Challenge.Bls12381G1Add.Reference.Bytecode
 import Challenge.Bls12381G1Add.Reference.Proofs.FrozenBlock
 import Challenge.Bls12381G1Add.Reference.Proofs.FrozenAssembly

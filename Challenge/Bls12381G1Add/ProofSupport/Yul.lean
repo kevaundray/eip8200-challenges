@@ -1,4 +1,5 @@
 import Challenge.Bls12381G1Add.ProofSupport
+import Challenge.Bls12381G1Add.ProofSupport.YulDialect
 import Challenge.EvmProof.ProfiledCorrectness
 
 set_option warningAsError true
@@ -15,16 +16,8 @@ namespace Challenge.Bls12381G1Add.ProofSupport.Yul
 
 open EvmSemantics
 open EvmSemantics.EVM
-open YulSemantics.EVM (evmWithExternal ExternalCreates)
 open YulEvmCompiler
 open Challenge.EvmProof
-
-@[reducible] def localModel : ExternalModel where
-  calls := successfulModexpCalls
-  creates := ExternalCreates.none
-
-abbrev localDialect :=
-  evmWithExternal successfulModexpCalls ExternalCreates.none
 
 /-- The challenge initial state is a valid top-level frame for any frozen
 runtime satisfying the ordinary code-size bound. -/
