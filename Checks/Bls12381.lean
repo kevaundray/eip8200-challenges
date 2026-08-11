@@ -1,4 +1,9 @@
 import Challenge.Bls12381
+import Checks.Bls12381FpAddSubSchedule
+import Checks.Bls12381FpAdd
+import Checks.Bls12381FpAddSub
+import Checks.Bls12381FpNeg
+import Checks.Bls12381FpAddSubLawful
 import Checks.Bls12381FpBarrettSchedule
 import Checks.Bls12381FpBarrett
 import Checks.Bls12381FpBarrettSubtract
