@@ -1,6 +1,7 @@
 import Challenge.Bls12381.ProofSupport.Codec
 import Challenge.Bls12381.ProofSupport.Fp
 import Challenge.Bls12381.ProofSupport.FpRepresentation
+import Challenge.Bls12381.ProofSupport.FpPredicates
 import Challenge.Bls12381.ProofSupport.FpConstants
 import Challenge.Bls12381.ProofSupport.FpWordBridge
 import Challenge.Bls12381.ProofSupport.FpAddSub
@@ -32,6 +33,7 @@ import Challenge.Bls12381.ProofSupport.Fp2Predicates
 import Challenge.Bls12381.ProofSupport.Fp2SqrtConstants
 import Challenge.Bls12381.ProofSupport.Fp2SqrtProgram
 import Challenge.Bls12381.ProofSupport.Fp2SqrtDefs
+import Challenge.Bls12381.ProofSupport.Fp2SqrtLawfulOps
 import Challenge.Bls12381.ProofSupport.Fp2SqrtRefinement
 import Challenge.Bls12381.ProofSupport.Fp2SqrtLawful
 import Challenge.Bls12381.ProofSupport.Fp2Sqrt

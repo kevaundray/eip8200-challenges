@@ -1,5 +1,6 @@
 import Challenge.Bls12381
 import Checks.Bls12381FpRepresentation
+import Checks.Bls12381FpPredicates
 import Checks.Bls12381FpWordBridge
 import Checks.Bls12381FpAddSubSchedule
 import Checks.Bls12381FpAdd
@@ -25,6 +26,7 @@ import Checks.Bls12381Fp2SourceInv
 import Checks.Bls12381Fp2Predicates
 import Checks.Bls12381Fp2SqrtConstants
 import Checks.Bls12381Fp2SqrtProgram
+import Checks.Bls12381Fp2SqrtLawfulOps
 import Checks.Bls12381Fp2SqrtRefinement
 import Checks.Bls12381Fp2SqrtLawful
 import Checks.Bls12381Fp2Sqrt
