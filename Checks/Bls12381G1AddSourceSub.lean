@@ -1,4 +1,4 @@
-import Challenge.Bls12381G1Add.Reference.Proofs.SourceSubRaw
+import Challenge.Bls12381G1Add.Reference.Proofs.SourceSubRepair
 
 set_option warningAsError true
 
@@ -18,6 +18,15 @@ example (diff : U256 × U256) :
       EvmSemantics.UInt256.gt (convPair diff).hi
         Challenge.Bls12381.ProofSupport.Fp.modulusHi :=
   conv_fpSubNeedsRepairValue diff
+
+example (diff : U256 × U256) :
+    convPair (fpSubRepairValue diff) =
+      Challenge.Bls12381.ProofSupport.Fp.subRepair (convPair diff) :=
+  conv_fpSubRepairValue diff
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpSubRepairValue' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms conv_fpSubRepairValue
 
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpSubRawValue' depends on axioms: [propext] -/
 #guard_msgs in
