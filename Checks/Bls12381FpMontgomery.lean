@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomery
+import Challenge.Bls12381.ProofSupport.FpMontgomeryReduce
 
 set_option warningAsError true
 
@@ -54,6 +54,30 @@ example (x0 y0 y1 : UInt256) :
       Challenge.EvmProof.Limbs.radix :=
   Fp.montgomeryAccumulateZero_top_lt x0 y0 y1
 
+/-! Each CIOS reduction chooses `m` so the low word cancels exactly. -/
+
+example (state : Fp.MontgomeryState) :
+    Fp.montgomeryReductionMultiplier state =
+      state.t0 * Fp.montgomeryN0Inv :=
+  rfl
+
+example (state : Fp.MontgomeryState) :
+    (Fp.montgomeryReductionMultiplier state).toNat =
+      (state.t0.toNat * Fp.montgomeryN0Inv.toNat) %
+        Challenge.EvmProof.Limbs.radix :=
+  Fp.montgomeryReductionMultiplier_value state
+
+example (state : Fp.MontgomeryState) :
+    (Fp.montgomeryReductionLowProduct state).lo.toNat =
+      ((Fp.montgomeryReductionMultiplier state).toNat *
+        Fp.modulusLo.toNat) % Challenge.EvmProof.Limbs.radix :=
+  Fp.montgomeryReductionLowProduct_lo_value state
+
+example : Fp.montgomeryN0Inv.toNat * Fp.modulusLo.toNat ≡
+    Challenge.EvmProof.Limbs.radix - 1
+      [MOD Challenge.EvmProof.Limbs.radix] :=
+  Fp.montgomeryN0Inv_modEq
+
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryN0Inv_spec' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms Fp.montgomeryN0Inv_spec
@@ -77,5 +101,13 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryAccumulateZero_top_lt' depen
 -/
 #guard_msgs in
 #print axioms Fp.montgomeryAccumulateZero_top_lt
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReductionMultiplier_modEq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Fp.montgomeryReductionMultiplier_modEq
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryN0Inv_modEq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.montgomeryN0Inv_modEq
 
 end Checks.Bls12381FpMontgomery
