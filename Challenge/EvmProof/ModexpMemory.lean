@@ -200,6 +200,17 @@ theorem bytesNat_readBytes_storeWord_prefix (memory : Nat → UInt8)
   rw [readBytes_storeWord_prefix memory start width value hwidth]
   exact bytesNat_storedWordBytesPrefix value width hwidth
 
+/-- Reading back the byte written by Yul `MSTORE8` recovers the source
+word's least-significant byte. -/
+theorem bytesNat_readBytes_storeByte (memory : Nat → UInt8) (start : Nat)
+    (value : YulSemantics.EVM.U256) :
+    Challenge.EvmProof.Bytes.bytesNat
+        (YulSemantics.EVM.readBytes
+          (YulSemantics.EVM.storeByte memory start value) start 1) =
+      (YulSemantics.EVM.byteAt value 0).toNat := by
+  simp [YulSemantics.EVM.readBytes, YulSemantics.EVM.storeByte,
+    Challenge.EvmProof.Bytes.bytesNat, Challenge.EvmProof.Bytes.step]
+
 /-- Reading back the exact 32-byte window written by Yul `MSTORE` recovers
 the source word's unsigned value. -/
 theorem bytesNat_readBytes_storeWord (memory : Nat → UInt8) (start : Nat)

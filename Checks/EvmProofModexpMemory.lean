@@ -103,6 +103,20 @@ example (memory : Nat → UInt8) (start width : Nat)
 #guard_msgs in
 #print axioms bytesNat_readBytes_storeWord_prefix
 
+example (memory : Nat → UInt8) (start : Nat)
+    (value : YulSemantics.EVM.U256) :
+    Challenge.EvmProof.Bytes.bytesNat
+        (YulSemantics.EVM.readBytes
+          (YulSemantics.EVM.storeByte memory start value) start 1) =
+      (YulSemantics.EVM.byteAt value 0).toNat :=
+  bytesNat_readBytes_storeByte memory start value
+
+/-- info: 'Challenge.EvmProof.ModexpMemory.bytesNat_readBytes_storeByte' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms bytesNat_readBytes_storeByte
+
 /-- info: 'Challenge.EvmProof.ModexpMemory.bytesNat_readBytes_storeWord' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
