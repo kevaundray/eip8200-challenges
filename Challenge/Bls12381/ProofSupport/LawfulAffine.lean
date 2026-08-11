@@ -103,6 +103,21 @@ omit [DecidableEq F] in
     add curve (.affine x y) (.affine x (-y)) = .infinity := by
   simp [add]
 
+theorem add_self_of_sum_ne_zero (curve : Curve F) (x y : F)
+    (hsum : y + y ≠ 0) :
+    add curve (.affine x y) (.affine x y) =
+      double curve (.affine x y) := by
+  simp [add, hsum]
+
+theorem add_of_x_ne (curve : Curve F) (x₁ y₁ x₂ y₂ : F)
+    (hx : x₁ ≠ x₂) :
+    add curve (.affine x₁ y₁) (.affine x₂ y₂) =
+      let slope := (y₂ - y₁) / (x₂ - x₁)
+      let x₃ := slope ^ 2 - x₁ - x₂
+      let y₃ := slope * (x₁ - x₃) - y₁
+      .affine x₃ y₃ := by
+  simp [add, hx]
+
 omit [DecidableEq F] in
 @[simp] theorem onCurve_infinity (curve : Curve F) :
     OnCurve curve .infinity := trivial

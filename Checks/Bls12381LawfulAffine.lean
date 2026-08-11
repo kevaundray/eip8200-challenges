@@ -21,6 +21,19 @@ example (curve : Curve F) (x y : F) :
 example (curve : Curve F) (x : F) :
     double curve (.affine x 0) = .infinity := double_y_zero curve x
 
+example (curve : Curve F) (x y : F) (hsum : y + y ≠ 0) :
+    add curve (.affine x y) (.affine x y) =
+      double curve (.affine x y) :=
+  add_self_of_sum_ne_zero curve x y hsum
+
+example (curve : Curve F) (x₁ y₁ x₂ y₂ : F) (hx : x₁ ≠ x₂) :
+    add curve (.affine x₁ y₁) (.affine x₂ y₂) =
+      let slope := (y₂ - y₁) / (x₂ - x₁)
+      let x₃ := slope ^ 2 - x₁ - x₂
+      let y₃ := slope * (x₁ - x₃) - y₁
+      .affine x₃ y₃ :=
+  add_of_x_ne curve x₁ y₁ x₂ y₂ hx
+
 example (curve : Curve F) (point : Point F) (h2 : (2 : F) ≠ 0) :
     OnCurve curve point -> OnCurve curve (double curve point) :=
   onCurve_double curve point h2
@@ -47,5 +60,17 @@ info: 'Challenge.Bls12381.ProofSupport.LawfulAffine.onCurve_add' depends on axio
 -/
 #guard_msgs in
 #print axioms onCurve_add
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulAffine.add_self_of_sum_ne_zero' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms add_self_of_sum_ne_zero
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.LawfulAffine.add_of_x_ne' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms add_of_x_ne
 
 end Checks.Bls12381LawfulAffine
