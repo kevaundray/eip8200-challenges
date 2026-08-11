@@ -62,6 +62,7 @@ import Challenge.Bls12381.ProofSupport.ScalarMulProgram
 import Challenge.Bls12381.ProofSupport.ScalarMul
 import Challenge.Bls12381.ProofSupport.Msm
 import Challenge.Bls12381.ProofSupport.MsmSemantics
+import Challenge.Bls12381.ProofSupport.MsmSubgroup
 import Challenge.Bls12381.ProofSupport.PrimeField
 import Challenge.Bls12381.ProofSupport.PrimeCertificate
 import Challenge.Bls12381.ProofSupport.Subgroup
