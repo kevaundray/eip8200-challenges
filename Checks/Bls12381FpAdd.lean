@@ -33,10 +33,6 @@ example {a b : Fp.Limbs} (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
 #guard_msgs in
 #print axioms Fp.value_addSource
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_of_value_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Fp.canonical_of_value_lt
-
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_addSource' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp.canonical_addSource

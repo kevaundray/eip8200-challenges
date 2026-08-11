@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.FpMul
+import Challenge.Bls12381.ProofSupport.FpRepresentation
 
 set_option warningAsError true
 
@@ -203,19 +204,7 @@ theorem canonical_squareCanonical {a : Limbs} (ha : Canonical a) :
   have hvalue : value (squareCanonical a) < p := by
     rw [value_squareCanonical ha]
     exact Nat.mod_lt _ (by norm_num [p, absU])
-  constructor
-  · have hpBound : p < Challenge.EvmProof.Limbs.radix * 2 ^ 128 := by
-      norm_num [Challenge.EvmProof.Limbs.radix, p, absU]
-    have hlimbLe : Challenge.EvmProof.Limbs.radix *
-        (squareCanonical a).hi.toNat ≤ value (squareCanonical a) := by
-      unfold value
-      omega
-    have hscaled : Challenge.EvmProof.Limbs.radix *
-        (squareCanonical a).hi.toNat <
-          Challenge.EvmProof.Limbs.radix * 2 ^ 128 :=
-      hlimbLe.trans_lt (hvalue.trans hpBound)
-    exact Nat.lt_of_mul_lt_mul_left hscaled
-  · exact hvalue
+  exact canonical_of_value_lt _ hvalue
 
 /-- Specialized squaring refines squaring in the pinned `Fin p` carrier. -/
 theorem refines_squareCanonical {a : Limbs} (ha : Canonical a) :

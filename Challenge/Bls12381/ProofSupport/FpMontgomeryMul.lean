@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.FpMontgomeryRelation
+import Challenge.Bls12381.ProofSupport.FpRepresentation
 
 set_option warningAsError true
 
@@ -57,19 +58,7 @@ theorem canonical_montMul2 {x y : Limbs}
   have hvalue : value (montMul2 x y) < p := by
     rw [value_montMul2 hx hy]
     exact Nat.mod_lt _ (by norm_num [p, absU])
-  constructor
-  · have hpBound : p < Challenge.EvmProof.Limbs.radix * 2 ^ 128 := by
-      norm_num [Challenge.EvmProof.Limbs.radix, p, absU]
-    have hlimbLe : Challenge.EvmProof.Limbs.radix *
-        (montMul2 x y).hi.toNat ≤ value (montMul2 x y) := by
-      unfold value
-      omega
-    have hscaled : Challenge.EvmProof.Limbs.radix *
-        (montMul2 x y).hi.toNat <
-          Challenge.EvmProof.Limbs.radix * 2 ^ 128 :=
-      hlimbLe.trans_lt (hvalue.trans hpBound)
-    exact Nat.lt_of_mul_lt_mul_left hscaled
-  · exact hvalue
+  exact canonical_of_value_lt _ hvalue
 
 /-- The corrected source output satisfies the defining Montgomery congruence. -/
 theorem montMul2_modEq {x y : Limbs}

@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.FpBarrettReduce
+import Challenge.Bls12381.ProofSupport.FpRepresentation
 
 set_option warningAsError true
 
@@ -50,22 +51,7 @@ theorem canonical_mulCanonical {a b : Limbs}
     exact Nat.mod_lt _ (by
       norm_num [EvmSemantics.Crypto.Bls12381.p,
         EvmSemantics.Crypto.Bls12381.absU])
-  constructor
-  · have hpBound : EvmSemantics.Crypto.Bls12381.p <
-        Challenge.EvmProof.Limbs.radix * 2 ^ 128 := by
-      norm_num [Challenge.EvmProof.Limbs.radix,
-        EvmSemantics.Crypto.Bls12381.p,
-        EvmSemantics.Crypto.Bls12381.absU]
-    have hlimbLe : Challenge.EvmProof.Limbs.radix *
-        (mulCanonical a b).hi.toNat ≤ value (mulCanonical a b) := by
-      unfold value
-      omega
-    have hscaled : Challenge.EvmProof.Limbs.radix *
-        (mulCanonical a b).hi.toNat <
-          Challenge.EvmProof.Limbs.radix * 2 ^ 128 :=
-      hlimbLe.trans_lt (hvalue.trans hpBound)
-    exact Nat.lt_of_mul_lt_mul_left hscaled
-  · exact hvalue
+  exact canonical_of_value_lt _ hvalue
 
 /-- The concrete canonical multiplication refines multiplication in the pinned
 `Fin p` carrier. -/

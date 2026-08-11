@@ -1,4 +1,5 @@
 import Challenge.Bls12381.ProofSupport.FpConstants
+import Challenge.Bls12381.ProofSupport.FpRepresentation
 
 set_option warningAsError true
 
@@ -343,20 +344,6 @@ theorem value_negSource {a : Limbs} (ha : Canonical a) :
     have hred : EvmSemantics.Crypto.Bls12381.p - value a <
         EvmSemantics.Crypto.Bls12381.p := by omega
     rw [hwide, Nat.mod_eq_of_lt hred]
-
-theorem canonical_of_value_lt (a : Limbs)
-    (hvalue : value a < EvmSemantics.Crypto.Bls12381.p) : Canonical a := by
-  constructor
-  · have hpBound : EvmSemantics.Crypto.Bls12381.p <
-        Challenge.EvmProof.Limbs.radix * 2 ^ 128 := by
-      norm_num [EvmSemantics.Crypto.Bls12381.p,
-        EvmSemantics.Crypto.Bls12381.absU, Challenge.EvmProof.Limbs.radix]
-    have hmul : Challenge.EvmProof.Limbs.radix * a.hi.toNat <
-        Challenge.EvmProof.Limbs.radix * 2 ^ 128 := by
-      unfold value at hvalue
-      omega
-    exact (Nat.mul_lt_mul_left Challenge.EvmProof.Limbs.radix_pos).mp hmul
-  · exact hvalue
 
 theorem canonical_addSource {a b : Limbs} (ha : Canonical a)
     (hb : Canonical b) : Canonical (addSource a b) := by

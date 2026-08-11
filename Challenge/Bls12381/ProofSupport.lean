@@ -1,5 +1,6 @@
 import Challenge.Bls12381.ProofSupport.Codec
 import Challenge.Bls12381.ProofSupport.Fp
+import Challenge.Bls12381.ProofSupport.FpRepresentation
 import Challenge.Bls12381.ProofSupport.FpConstants
 import Challenge.Bls12381.ProofSupport.FpAddSub
 import Challenge.Bls12381.ProofSupport.FpAddSubLawful
