@@ -49,6 +49,7 @@ import Checks.Bls12381LawfulAffineConformance
 import Checks.Bls12381ScalarMul
 import Checks.Bls12381ScalarMulConformance
 import Checks.Bls12381Msm
+import Checks.Bls12381MsmSemantics
 
 set_option warningAsError true
 
