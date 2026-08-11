@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryReduceStep
+import Challenge.Bls12381.ProofSupport.FpMontgomeryReduceReconstruct
 
 set_option warningAsError true
 
@@ -60,6 +60,14 @@ example (state : Fp.MontgomeryState) :
     Fp.montgomeryReductionMultiplier state =
       state.t0 * Fp.montgomeryN0Inv :=
   rfl
+
+example (state : Fp.MontgomeryState) :
+    Challenge.EvmProof.Limbs.radix * Fp.montgomeryReductionQuotient state =
+      state.t0.toNat + Challenge.EvmProof.Limbs.radix * state.t1.toNat +
+        Challenge.EvmProof.Limbs.radix * Challenge.EvmProof.Limbs.radix *
+          state.t2.toNat +
+        (Fp.montgomeryReductionMultiplier state).toNat * p :=
+  Fp.montgomeryReduction_reconstruct state
 
 example (state : Fp.MontgomeryState) :
     (Fp.montgomeryReductionMultiplier state).toNat =
@@ -178,5 +186,13 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReductionCarry_value' depend
 -/
 #guard_msgs in
 #print axioms Fp.montgomeryReductionCarry_value
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryReduction_reconstruct' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.montgomeryReduction_reconstruct
 
 end Checks.Bls12381FpMontgomery
