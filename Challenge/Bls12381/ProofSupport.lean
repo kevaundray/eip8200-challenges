@@ -58,6 +58,7 @@ import Challenge.Bls12381.ProofSupport.G2Affine
 import Challenge.Bls12381.ProofSupport.AffineGroupBls
 import Challenge.Bls12381.ProofSupport.G1Projective
 import Challenge.Bls12381.ProofSupport.G2Projective
+import Challenge.Bls12381.ProofSupport.ScalarMulProgram
 import Challenge.Bls12381.ProofSupport.ScalarMul
 import Challenge.Bls12381.ProofSupport.Msm
 import Challenge.Bls12381.ProofSupport.PrimeField

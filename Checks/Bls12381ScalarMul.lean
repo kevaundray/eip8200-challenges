@@ -51,20 +51,89 @@ example (scalar : Nat) (point : P) (hscalar : scalar ≠ 0) :
         else ScalarMul.binary zero add double (scalar / 2) (double point) :=
   ScalarMul.binary_step zero add double scalar point hscalar
 
-private structure AuditPoint where
-  value : Nat
-  events : List String
-deriving BEq
+private def auditNatAdd (left right : Nat) : Nat := left + right
 
-private def auditAdd (left right : AuditPoint) : AuditPoint :=
-  { value := left.value + right.value, events := "add" :: left.events ++ right.events }
+private def auditNatDouble (point : Nat) : Nat := 2 * point
 
-private def auditDouble (point : AuditPoint) : AuditPoint :=
-  { value := 2 * point.value, events := "double" :: point.events }
+/- The direct and audit interpreters execute one authoritative scalar program. -/
+example (scalar point : Nat) :
+    (ScalarMul.Program.audit 0 auditNatAdd auditNatDouble scalar point).value =
+      ScalarMul.binary 0 auditNatAdd auditNatDouble scalar point :=
+  ScalarMul.Program.audit_value 0 auditNatAdd auditNatDouble scalar point
 
-/- The scalar-one terminal branch performs neither addition nor doubling. -/
-#guard ScalarMul.binary { value := 0, events := [] } auditAdd auditDouble 1
-    { value := 7, events := [] } == { value := 7, events := [] }
+/- Zero and one invoke no curve operations.  Two invokes only the initial
+double, while three invokes that double followed by the odd addition. -/
+#guard (ScalarMul.Program.audit 0 auditNatAdd auditNatDouble 0 7).events == []
+#guard (ScalarMul.Program.audit 0 auditNatAdd auditNatDouble 1 7).events == []
+#guard (ScalarMul.Program.audit 0 auditNatAdd auditNatDouble 2 7).events ==
+  [.double]
+#guard (ScalarMul.Program.audit 0 auditNatAdd auditNatDouble 3 7).events ==
+  [.double, .add]
+
+example (point : P) :
+    (ScalarMul.Program.audit zero add double 0 point).events = [] :=
+  ScalarMul.Program.audit_zero_events zero add double point
+
+example (point : P) :
+    (ScalarMul.Program.audit zero add double 1 point).events = [] :=
+  ScalarMul.Program.audit_one_events zero add double point
+
+example (point : P) :
+    (ScalarMul.Program.audit zero add double 2 point).events = [.double] :=
+  ScalarMul.Program.audit_two_events zero add double point
+
+example (point : P) :
+    (ScalarMul.Program.audit zero add double 3 point).events =
+      [.double, .add] :=
+  ScalarMul.Program.audit_three_events zero add double point
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.Program.audit_value' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.Program.audit_value
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.Program.runWith_direct_zero' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.Program.runWith_direct_zero
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.Program.runWith_direct_one' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.Program.runWith_direct_one
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.Program.runWith_direct_step' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.Program.runWith_direct_step
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.Program.audit_zero_events' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.Program.audit_zero_events
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.Program.audit_one_events' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.Program.audit_one_events
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.Program.audit_two_events' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.Program.audit_two_events
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.ScalarMul.Program.audit_three_events' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ScalarMul.Program.audit_three_events
 
 /--
 info: 'Challenge.Bls12381.ProofSupport.ScalarMul.binary_zero' depends on axioms: [propext, Quot.sound]

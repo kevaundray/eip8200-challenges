@@ -5,19 +5,21 @@ import Challenge.Bls12381.ProofSupport.AffineGroupBls
 import Challenge.Bls12381.ProofSupport.CodecScalar
 import Challenge.Bls12381.ProofSupport.CodecG1Core
 import Challenge.Bls12381.ProofSupport.CodecG2Core
+import Challenge.Bls12381.ProofSupport.ScalarMulProgram
 
 set_option warningAsError true
 
 /-!
 # Shared naive scalar multiplication
 
-The executable algorithm is binary recursion by definition: `binary_even`
-and `binary_odd` universally characterize its double-and-add schedule.  The
-`g1_nsmul` and `g2_nsmul` theorems then map that recursion through the local
-affine boundary into Mathlib's independently proved affine elliptic-curve
-group, establishing equality with its natural-number scalar action.  This
-module still makes no equality claim about the pinned opaque-inverse scalar
-code.
+The executable algorithm is the direct interpreter of the one parametric
+binary program in `ScalarMulProgram`; the state-writer interpreter audits every
+operation invoked by that same control flow.  `binary_even` and `binary_odd`
+universally characterize its double-and-add schedule.  The `g1_nsmul` and
+`g2_nsmul` theorems then map that recursion through the local affine boundary
+into Mathlib's independently proved affine elliptic-curve group, establishing
+equality with its natural-number scalar action.  This module still makes no
+equality claim about the pinned opaque-inverse scalar code.
 -/
 
 namespace Challenge.Bls12381.ProofSupport.ScalarMul
@@ -36,33 +38,24 @@ def scalar256OfDecode {input : ByteArray} {offset scalar : Nat}
     (hdecode : Codec.decodeScalar input offset = some scalar) :
     (scalar256OfDecode hdecode).val = scalar := rfl
 
-/-! ## Transparent binary scalar semantics -/
+/-! ## Auditable binary scalar semantics -/
 
-/-- Proof-friendly right-to-left binary double-and-add.  This transparent
-recursion is the local mathematical scalar operation; no equality to the
-pinned inverse-dependent curve scalar multiplication is claimed. -/
+/-- Executable direct interpretation of the proof-friendly right-to-left
+binary program.  This is the local mathematical scalar operation; no equality
+to the pinned inverse-dependent curve scalar multiplication is claimed. -/
 def binary {Point : Type} (zero : Point) (add : Point → Point → Point)
     (double : Point → Point) (scalar : Nat) (point : Point) : Point :=
-  if hzero : scalar = 0 then zero
-  else if scalar = 1 then point
-  else
-    let rest := binary zero add double (scalar / 2) (double point)
-    if scalar % 2 = 1 then add rest point else rest
-termination_by scalar
-decreasing_by
-  exact Nat.div_lt_self (Nat.zero_lt_of_ne_zero hzero) (by omega)
+  Id.run (Program.runWith (Program.directOps zero add double) scalar point)
 
 @[simp] theorem binary_zero {Point : Type} (zero : Point)
     (add : Point → Point → Point) (double : Point → Point) (point : Point) :
     binary zero add double 0 point = zero := by
-  rw [binary]
-  simp
+  exact Program.runWith_direct_zero zero add double point
 
 @[simp] theorem binary_one {Point : Type} (zero : Point)
     (add : Point → Point → Point) (double : Point → Point) (point : Point) :
     binary zero add double 1 point = point := by
-  rw [binary]
-  simp
+  exact Program.runWith_direct_one zero add double point
 
 theorem binary_step {Point : Type} (zero : Point)
     (add : Point → Point → Point) (double : Point → Point)
@@ -72,8 +65,7 @@ theorem binary_step {Point : Type} (zero : Point)
       else if scalar % 2 = 1 then
           add (binary zero add double (scalar / 2) (double point)) point
         else binary zero add double (scalar / 2) (double point) := by
-  rw [binary]
-  simp [hscalar]
+  exact Program.runWith_direct_step zero add double scalar point hscalar
 
 theorem binary_even {Point : Type} (zero : Point)
     (add : Point → Point → Point) (double : Point → Point)
@@ -172,7 +164,7 @@ theorem binary_lift_val {Point : Type} (zero : Point)
         · rw [if_neg hodd, if_neg hodd]
           exact ih (scalar / 2) hhalf (double point) (hdouble point hpoint)
 
-/-- Map the transparent binary recursion into the independent `nsmul`
+/-- Map the auditable binary recursion into the independent `nsmul`
 semantics of any additive monoid.  The hypotheses deliberately describe the
 map boundary rather than assuming group laws for the executable point type. -/
 theorem binary_map_nsmul {Point Target : Type} [AddCommMonoid Target]
