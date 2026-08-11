@@ -55,6 +55,41 @@ theorem evalExpr_call_of_evalArgs_eq
   simp only [evalExpr]
   rw [hargs]
 
+/-- A normally completed prefix can be spliced in front of a separately
+checked tail when the starting fuel accounts for the prefix length. -/
+theorem execStmts_append_normal
+    {n funs V st pre tail V1 st1 Vend st2 outcome}
+    (hn : 0 < n)
+    (hpre : execStmts E (n + pre.length) funs V st pre =
+      .ok (V1, st1, .normal))
+    (htail : execStmts E n funs V1 st1 tail =
+      .ok (Vend, st2, outcome)) :
+    execStmts E (n + pre.length) funs V st (pre ++ tail) =
+      .ok (Vend, st2, outcome) := by
+  induction pre generalizing n V st with
+  | nil =>
+      cases n with
+      | zero => omega
+      | succ n =>
+          simp only [List.length_nil, Nat.add_zero, List.nil_append] at hpre ⊢
+          simp only [execStmts] at hpre
+          cases Result.ok.inj hpre
+          exact htail
+  | cons head rest ih =>
+      have hfuel : n + (head :: rest).length =
+          (n + rest.length) + 1 := by
+        simp only [List.length_cons]
+        omega
+      rw [hfuel] at hpre ⊢
+      simp only [List.cons_append, execStmts] at hpre ⊢
+      cases hhead : execStmt E (n + rest.length) funs V st head with
+      | stuck => simp [hhead] at hpre
+      | outOfFuel => simp [hhead] at hpre
+      | ok result =>
+          rcases result with ⟨Vhead, stHead, headOutcome⟩
+          cases headOutcome <;> simp [hhead] at hpre ⊢
+          exact ih hn hpre htail
+
 theorem sound_all_of
     (hE : ∀ op args st result, E.builtinFn op args st = some result →
       E.toDialect.Builtin op args st result) : ∀ n : Nat,

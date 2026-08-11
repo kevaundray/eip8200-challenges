@@ -45,6 +45,21 @@ example {E : ExecDialect} [DecidableEq E.toDialect.Value]
       Interp.evalExpr E (n + 1) funs V' st' (.call fn args') :=
   Interp.evalExpr_call_of_evalArgs_eq hargs
 
+example {E : ExecDialect} [DecidableEq E.toDialect.Value]
+    {n funs V st pre tail V1 st1 Vend st2 outcome}
+    (hn : 0 < n)
+    (hprefix : Interp.execStmts E (n + pre.length) funs V st pre =
+      .ok (V1, st1, .normal))
+    (htail : Interp.execStmts E n funs V1 st1 tail =
+      .ok (Vend, st2, outcome)) :
+    Interp.execStmts E (n + pre.length) funs V st (pre ++ tail) =
+      .ok (Vend, st2, outcome) :=
+  Interp.execStmts_append_normal hn hprefix htail
+
+/-- info: 'YulSemantics.Interp.execStmts_append_normal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms YulSemantics.Interp.execStmts_append_normal
+
 /-- info: 'YulSemantics.Interp.evalExpr_call_of_evalArgs_eq' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms YulSemantics.Interp.evalExpr_call_of_evalArgs_eq
