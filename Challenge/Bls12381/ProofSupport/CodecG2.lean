@@ -61,6 +61,22 @@ theorem decodeG2_eq_none_of_offCurve
   rw [decodeG2_of_components x y hx hy, if_neg hnonzero]
   simp [hcurve]
 
+/-- Any non-all-zero coordinate tuple, including a partial-zero tuple, can
+never be interpreted as the infinity encoding. -/
+theorem decodeG2_nonzero_ne_infinity
+    {input : ByteArray} {offset : Nat} {x y : Fp2}
+    (hx : decodeFp2 input offset = some x)
+    (hy : decodeFp2 input (offset + fp2Bytes) = some y)
+    (hnonzero : ¬ G2WireZero x y) :
+    decodeG2 input offset ≠ some .infinity := by
+  rw [decodeG2_of_components x y hx hy, if_neg hnonzero]
+  by_cases hcurve : EvmSemantics.Crypto.G2.onCurve
+      EvmSemantics.Crypto.Bls12381.g2Curve x y = true
+  · rw [if_pos hcurve]
+    simp
+  · rw [if_neg hcurve]
+    simp
+
 theorem decodeG2_eq_none_of_first_field {input : ByteArray} {offset : Nat}
     (hx : decodeFp2 input offset = none) : decodeG2 input offset = none := by
   unfold decodeG2 EvmSemantics.Crypto.Bls12381G2Add.decodePoint

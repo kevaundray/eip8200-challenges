@@ -29,6 +29,13 @@ example (input : ByteArray) (offset : Nat) (x y : Fp)
     Codec.decodeG1 input offset = none :=
   Codec.decodeG1_eq_none_of_offCurve hx hy hnonzero hcurve
 
+example (input : ByteArray) (offset : Nat) (x y : Fp)
+    (hx : Codec.decodeFp input offset = some x)
+    (hy : Codec.decodeFp input (offset + Codec.fpBytes) = some y)
+    (hnonzero : ¬(x.val = 0 ∧ y.val = 0)) :
+    Codec.decodeG1 input offset ≠ some .infinity :=
+  Codec.decodeG1_nonzero_ne_infinity hx hy hnonzero
+
 example (pre suffix : ByteArray) (point : Point) (hpoint : Codec.ValidG1 point) :
     Codec.decodeG1 (pre ++ Codec.encodeG1 point ++ suffix) pre.size = some point :=
   Codec.decodeG1_framed pre suffix point hpoint
@@ -63,6 +70,10 @@ example (input : ByteArray) (offset : Nat)
 /-- info: 'Challenge.Bls12381.ProofSupport.Codec.decodeG1_eq_none_of_offCurve' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Codec.decodeG1_eq_none_of_offCurve
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Codec.decodeG1_nonzero_ne_infinity' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Codec.decodeG1_nonzero_ne_infinity
 
 /-- info: 'Challenge.Bls12381.ProofSupport.Codec.decodeG1_eq_none_of_first_field' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in

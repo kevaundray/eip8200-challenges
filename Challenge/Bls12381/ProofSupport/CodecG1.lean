@@ -50,6 +50,21 @@ theorem decodeG1_eq_none_of_offCurve
   rw [decodeG1_of_components x y hx hy, if_neg hnonzero]
   simp [hcurve]
 
+/-- Any non-all-zero coordinate pair, including a partial-zero pair, can
+never be interpreted as the infinity encoding. -/
+theorem decodeG1_nonzero_ne_infinity
+    {input : ByteArray} {offset : Nat} {x y : Fp}
+    (hx : decodeFp input offset = some x)
+    (hy : decodeFp input (offset + fpBytes) = some y)
+    (hnonzero : ¬(x.val = 0 ∧ y.val = 0)) :
+    decodeG1 input offset ≠ some .infinity := by
+  rw [decodeG1_of_components x y hx hy, if_neg hnonzero]
+  by_cases hcurve : EvmSemantics.Crypto.Bls12381.onCurve x y = true
+  · rw [if_pos hcurve]
+    simp
+  · rw [if_neg hcurve]
+    simp
+
 theorem decodeG1_eq_none_of_first_field {input : ByteArray} {offset : Nat}
     (hx : decodeFp input offset = none) : decodeG1 input offset = none := by
   unfold decodeG1 EvmSemantics.Crypto.Bls12381G1Add.decodePoint
