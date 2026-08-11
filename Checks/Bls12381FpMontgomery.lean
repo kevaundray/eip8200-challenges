@@ -248,6 +248,9 @@ example :
       (Fp.montgomeryRadix : PrimeField.LawfulFp) :=
   Fp.lawful_montgomeryOne
 
+example : Fp.Canonical Fp.montgomeryOne :=
+  Fp.canonical_montgomeryOne
+
 example {a : Fp.Limbs} (ha : Fp.Canonical a) :
     (Fp.value (Fp.montgomeryDecode (Fp.montgomeryEncode a)) :
         PrimeField.LawfulFp) = (Fp.value a : PrimeField.LawfulFp) :=
@@ -803,5 +806,9 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomerySecondTopConstant_lt' depend
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_montgomeryOneInput' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms Fp.value_montgomeryOneInput
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_montgomeryOne' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.canonical_montgomeryOne
 
 end Checks.Bls12381FpMontgomery

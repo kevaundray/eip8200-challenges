@@ -112,6 +112,9 @@ theorem lawful_montgomeryEncode {a : Limbs} (ha : Canonical a) :
 /-- Source initialization of Montgomery one. -/
 def montgomeryOne : Limbs := montgomeryEncode montgomeryOneInput
 
+theorem canonical_montgomeryOne : Canonical montgomeryOne :=
+  canonical_montgomeryEncode canonical_montgomeryOneInput
+
 theorem lawful_montgomeryOne :
     (value montgomeryOne : LawfulFp) = (montgomeryRadix : LawfulFp) := by
   rw [montgomeryOne, lawful_montgomeryEncode canonical_montgomeryOneInput,
