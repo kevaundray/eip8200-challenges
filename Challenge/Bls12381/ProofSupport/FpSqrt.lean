@@ -1,7 +1,7 @@
 import Challenge.Bls12381.ProofSupport.FpSqrtConstants
 import Challenge.Bls12381.ProofSupport.FpSquare
 import Challenge.Bls12381.ProofSupport.FpPredicates
-import Mathlib.FieldTheory.Finite.Basic
+import Challenge.Bls12381.ProofSupport.FpSqrtLawful
 
 set_option warningAsError true
 
@@ -10,10 +10,6 @@ set_option warningAsError true
 namespace Challenge.Bls12381.ProofSupport.Fp
 
 open PrimeField
-
-theorem p_mod_four : EvmSemantics.Crypto.Bls12381.p % 4 = 3 := by
-  norm_num [EvmSemantics.Crypto.Bls12381.p,
-    EvmSemantics.Crypto.Bls12381.absU]
 
 /-- Exact source call `Fp.sqrt(a) = _modexp(a, P_PLUS_1_DIV_4)`. -/
 def sqrtCanonical (a : Limbs) : Limbs :=
@@ -30,6 +26,12 @@ theorem lawful_sqrtCanonical_pow {a : Limbs} (ha : Canonical a) :
         ((EvmSemantics.Crypto.Bls12381.p + 1) / 4) := by
   rw [sqrtCanonical, lawful_montgomeryPowDecoded ha,
     bytesValue_pPlus1Div4Bytes]
+
+/-- The concrete source exponentiation refines the algebraic square-root
+boundary over the certified prime field. -/
+theorem sqrtCanonical_refines_lawful {a : Limbs} (ha : Canonical a) :
+    (value (sqrtCanonical a) : LawfulFp) = lawfulSqrt (value a : LawfulFp) := by
+  rw [lawful_sqrtCanonical_pow ha, lawfulSqrt_eq]
 
 @[simp] theorem lawful_sqrtCanonical_zero {a : Limbs} (ha : Canonical a)
     (hzero : value a = 0) :
@@ -49,33 +51,6 @@ def isSquareCanonical (a : Limbs) : Bool :=
 @[simp] theorem isSquareCanonical_zero {a : Limbs} (hzero : value a = 0) :
     isSquareCanonical a = true := by
   simp [isSquareCanonical, isZeroValue, hzero]
-
-/-- In a field of the certified BLS modulus, the source exponent squares back
-to a square input.  The zero case is included. -/
-theorem lawful_sqrt_pow_square_of_isSquare (x : LawfulFp)
-    (hsquare : IsSquare x) :
-    (x ^ ((EvmSemantics.Crypto.Bls12381.p + 1) / 4)) ^ 2 = x := by
-  rcases hsquare with ⟨y, rfl⟩
-  by_cases hy : y = 0
-  · rw [hy]
-    norm_num [EvmSemantics.Crypto.Bls12381.p,
-      EvmSemantics.Crypto.Bls12381.absU]
-  · have hexponent :
-        2 * ((EvmSemantics.Crypto.Bls12381.p + 1) / 4) * 2 =
-          (EvmSemantics.Crypto.Bls12381.p - 1) + 2 := by
-      norm_num [EvmSemantics.Crypto.Bls12381.p,
-        EvmSemantics.Crypto.Bls12381.absU]
-    calc
-      ((y * y) ^ ((EvmSemantics.Crypto.Bls12381.p + 1) / 4)) ^ 2 =
-          y ^ (2 * ((EvmSemantics.Crypto.Bls12381.p + 1) / 4) * 2) := by
-            simp only [← pow_two, ← pow_mul]
-      _ = y ^ ((EvmSemantics.Crypto.Bls12381.p - 1) + 2) := by
-        rw [hexponent]
-      _ = y ^ (EvmSemantics.Crypto.Bls12381.p - 1) * y ^ 2 :=
-        pow_add _ _ _
-      _ = y * y := by
-        rw [ZMod.pow_card_sub_one_eq_one hy]
-        simp [pow_two]
 
 theorem lawful_squareCanonical {a : Limbs} (ha : Canonical a) :
     (value (squareCanonical a) : LawfulFp) =

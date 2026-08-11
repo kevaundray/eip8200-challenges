@@ -33,6 +33,11 @@ example {a : Fp.Limbs} (ha : Fp.Canonical a) :
         ((EvmSemantics.Crypto.Bls12381.p + 1) / 4) :=
   Fp.lawful_sqrtCanonical_pow ha
 
+example {a : Fp.Limbs} (ha : Fp.Canonical a) :
+    (Fp.value (Fp.sqrtCanonical a) : PrimeField.LawfulFp) =
+      Fp.lawfulSqrt (Fp.value a : PrimeField.LawfulFp) :=
+  Fp.sqrtCanonical_refines_lawful ha
+
 example {a : Fp.Limbs} (ha : Fp.Canonical a)
     (hzero : Fp.value a = 0) :
     (Fp.value (Fp.sqrtCanonical a) : PrimeField.LawfulFp) = 0 :=
@@ -54,10 +59,6 @@ example {a : Fp.Limbs} (ha : Fp.Canonical a)
     Fp.squareCanonical (Fp.sqrtCanonical a) = a :=
   Fp.square_sqrtCanonical ha hsquare
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.p_mod_four' depends on axioms: [propext] -/
-#guard_msgs in
-#print axioms Fp.p_mod_four
-
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_sqrtCanonical' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp.canonical_sqrtCanonical
@@ -65,6 +66,14 @@ example {a : Fp.Limbs} (ha : Fp.Canonical a)
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_sqrtCanonical_pow' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp.lawful_sqrtCanonical_pow
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.sqrtCanonical_refines_lawful' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.sqrtCanonical_refines_lawful
 
 /--
 info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_sqrtCanonical_zero' depends on axioms: [propext,
@@ -77,14 +86,6 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_sqrtCanonical_zero' depends on 
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.isSquareCanonical_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp.isSquareCanonical_zero
-
-/--
-info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_sqrt_pow_square_of_isSquare' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs in
-#print axioms Fp.lawful_sqrt_pow_square_of_isSquare
 
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_squareCanonical' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
