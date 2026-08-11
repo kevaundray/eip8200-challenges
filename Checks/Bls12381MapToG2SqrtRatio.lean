@@ -22,6 +22,9 @@ example (u : Field) :
     ProjectiveOnCurve (sswuProjective sqrtRatioSource u) :=
   sswuSource_onCurve u
 
+example (u : Field) : ProjectiveOnCurve (sourceSswu u) :=
+  sourceSswu_onCurve u
+
 /-- info: 'Challenge.Bls12381.ProofSupport.MapToG2.isoZ_not_isSquare' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms isoZ_not_isSquare
@@ -41,5 +44,9 @@ example (u : Field) :
 /-- info: 'Challenge.Bls12381.ProofSupport.MapToG2.sswuSource_onCurve' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms sswuSource_onCurve
+
+/-- info: 'Challenge.Bls12381.ProofSupport.MapToG2.sourceSswu_onCurve' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms sourceSswu_onCurve
 
 end Challenge.Bls12381.ProofSupport.MapToG2

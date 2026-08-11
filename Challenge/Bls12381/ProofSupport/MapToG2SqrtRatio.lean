@@ -124,4 +124,16 @@ theorem sswuSource_onCurve (u : Field) :
     ProjectiveOnCurve (sswuProjective sqrtRatioSource u) :=
   sswuProjective_onCurve sqrtRatioSource sqrtRatioSource_valid u
 
+/-- Opaque source-SSWU stage boundary.  Keeping the already-proved schedule
+behind this equation prevents downstream isogeny proofs from repeatedly
+normalizing the complete Fp2 square-root program. -/
+irreducible_def sourceSswu (lemma := sourceSswu_eq)
+    (u : Field) : SswuResult :=
+  sswuProjective sqrtRatioSource u
+
+theorem sourceSswu_onCurve (u : Field) :
+    ProjectiveOnCurve (sourceSswu u) := by
+  rw [sourceSswu_eq]
+  exact sswuSource_onCurve u
+
 end Challenge.Bls12381.ProofSupport.MapToG2
