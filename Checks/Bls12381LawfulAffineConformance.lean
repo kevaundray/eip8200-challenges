@@ -40,6 +40,24 @@ private def lawfulG2DoubleMatches : Bool :=
         (G2Affine.double (G2Affine.ofWire generator))) ==
         Vectors.g2Msm.expected
 
+private def lawfulG1UnequalXAddMatches : Bool :=
+  match Codec.decodeG1 Vectors.g1Add.input 0,
+      Codec.decodeG1 Vectors.g1Add.input Codec.g1Bytes with
+  | some left, some right =>
+      Codec.encodeG1 (G1Affine.toWire
+        (G1Affine.add (G1Affine.ofWire left) (G1Affine.ofWire right))) ==
+        Vectors.g1Add.expected
+  | _, _ => false
+
+private def lawfulG2UnequalXAddMatches : Bool :=
+  match Codec.decodeG2 Vectors.g2Add.input 0,
+      Codec.decodeG2 Vectors.g2Add.input Codec.g2Bytes with
+  | some left, some right =>
+      Codec.encodeG2 (G2Affine.toWire
+        (G2Affine.add (G2Affine.ofWire left) (G2Affine.ofWire right))) ==
+        Vectors.g2Add.expected
+  | _, _ => false
+
 private def lawfulG1InverseMatches : Bool :=
   match Codec.decodeG1 Vectors.generatorG1 0 with
   | none => false
@@ -88,6 +106,8 @@ private def lawfulG2InfinityIdentity : Bool :=
 
 #guard lawfulG1DoubleMatches
 #guard lawfulG2DoubleMatches
+#guard lawfulG1UnequalXAddMatches
+#guard lawfulG2UnequalXAddMatches
 #guard lawfulG1InverseMatches
 #guard lawfulG2InverseMatches
 #guard lawfulG1InverseAddsToInfinity
