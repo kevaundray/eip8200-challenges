@@ -1,4 +1,4 @@
-import Challenge.Bls12381.ProofSupport.FpMontgomeryMul
+import Challenge.Bls12381.ProofSupport.FpMontgomeryLawful
 
 set_option warningAsError true
 
@@ -216,6 +216,50 @@ example {x y : Fp.Limbs} (hx : Fp.Canonical x) (hy : Fp.Canonical y) :
     Fp.montgomeryRadix * Fp.value (Fp.montMul2 x y) ≡
       Fp.value x * Fp.value y [MOD p] :=
   Fp.montMul2_modEq hx hy
+
+example {x y : Fp.Limbs} (hx : Fp.Canonical x) (hy : Fp.Canonical y) :
+    (Fp.value (Fp.montMul2 x y) : PrimeField.LawfulFp) =
+      (Fp.value x : PrimeField.LawfulFp) *
+        (Fp.value y : PrimeField.LawfulFp) *
+          (Fp.montgomeryRadix : PrimeField.LawfulFp)⁻¹ :=
+  Fp.lawful_montMul2 hx hy
+
+example {x y : Fp.Limbs} (hx : Fp.Canonical x) (hy : Fp.Canonical y) :
+    PrimeField.finEquiv (Fp.toField (Fp.montMul2 x y)) =
+      PrimeField.finEquiv (Fp.toField x) *
+        PrimeField.finEquiv (Fp.toField y) *
+          (Fp.montgomeryRadix : PrimeField.LawfulFp)⁻¹ :=
+  Fp.toLawful_montMul2 hx hy
+
+example : Fp.Canonical Fp.montgomeryR2 :=
+  Fp.canonical_montgomeryR2
+
+example : Fp.Canonical Fp.montgomeryOneInput :=
+  Fp.canonical_montgomeryOneInput
+
+example {a : Fp.Limbs} (ha : Fp.Canonical a) :
+    (Fp.value (Fp.montgomeryEncode a) : PrimeField.LawfulFp) =
+      (Fp.value a : PrimeField.LawfulFp) *
+        (Fp.montgomeryRadix : PrimeField.LawfulFp) :=
+  Fp.lawful_montgomeryEncode ha
+
+example :
+    (Fp.value Fp.montgomeryOne : PrimeField.LawfulFp) =
+      (Fp.montgomeryRadix : PrimeField.LawfulFp) :=
+  Fp.lawful_montgomeryOne
+
+example {a : Fp.Limbs} (ha : Fp.Canonical a) :
+    (Fp.value (Fp.montgomeryDecode (Fp.montgomeryEncode a)) :
+        PrimeField.LawfulFp) = (Fp.value a : PrimeField.LawfulFp) :=
+  Fp.lawful_montgomeryDecode_encode ha
+
+example {a : Fp.Limbs} (ha : Fp.Canonical a) :
+    Fp.toField (Fp.montgomeryDecode (Fp.montgomeryEncode a)) = Fp.toField a :=
+  Fp.toField_montgomeryDecode_encode ha
+
+example {a : Fp.Limbs} (ha : Fp.Canonical a) :
+    Fp.montgomeryDecode (Fp.montgomeryEncode a) = a :=
+  Fp.montgomeryDecode_encode ha
 
 example (x : Fp.Limbs) {y : Fp.Limbs} (hy : Fp.Canonical y) :
     Fp.montgomeryReductionTopNat (Fp.montgomerySecondAccumulate x y) <
@@ -558,5 +602,97 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryResultWords_lt_two_modulus' 
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.montMul2_modEq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp.montMul2_modEq
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_montgomeryRadix_ne_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.lawful_montgomeryRadix_ne_zero
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.eq_mul_inv_of_mul_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.eq_mul_inv_of_mul_eq
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_montMul2' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.lawful_montMul2
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.finEquiv_toField' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.finEquiv_toField
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.toLawful_montMul2' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.toLawful_montMul2
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_montgomeryR2' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.canonical_montgomeryR2
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_montgomeryOneInput' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.canonical_montgomeryOneInput
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_montgomeryR2' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.lawful_montgomeryR2
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_montgomeryEncode' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.canonical_montgomeryEncode
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_montgomeryEncode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.lawful_montgomeryEncode
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_montgomeryOne' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.lawful_montgomeryOne
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.canonical_montgomeryDecode' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.canonical_montgomeryDecode
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_montgomeryDecode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.lawful_montgomeryDecode
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_montgomeryDecode_encode' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.lawful_montgomeryDecode_encode
+
+/--
+info: 'Challenge.Bls12381.ProofSupport.Fp.toField_montgomeryDecode_encode' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Fp.toField_montgomeryDecode_encode
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.limbs_ext_of_value_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.limbs_ext_of_value_eq
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryDecode_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.montgomeryDecode_encode
 
 end Checks.Bls12381FpMontgomery
