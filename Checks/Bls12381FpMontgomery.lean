@@ -691,10 +691,6 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.toField_montgomeryDecode_encode' depen
 #guard_msgs in
 #print axioms Fp.toField_montgomeryDecode_encode
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.limbs_ext_of_value_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Fp.limbs_ext_of_value_eq
-
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.montgomeryDecode_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp.montgomeryDecode_encode

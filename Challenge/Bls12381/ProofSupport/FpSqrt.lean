@@ -1,5 +1,6 @@
 import Challenge.Bls12381.ProofSupport.FpSqrtConstants
 import Challenge.Bls12381.ProofSupport.FpSquare
+import Challenge.Bls12381.ProofSupport.FpPredicates
 import Mathlib.FieldTheory.Finite.Basic
 
 set_option warningAsError true
@@ -37,16 +38,6 @@ theorem lawful_sqrtCanonical_pow {a : Limbs} (ha : Canonical a) :
   norm_num [EvmSemantics.Crypto.Bls12381.p,
     EvmSemantics.Crypto.Bls12381.absU]
 
-/-- Canonical-value zero test corresponding to the source's zero fast path.
-The byte-level equivalence to `LimbMath.isZeroBytes` belongs to codec/wire
-refinement. -/
-def isZeroValue (a : Limbs) : Bool := value a == 0
-
-/-- Canonical-value equality corresponding to the source's final hash equality.
-Its equivalence to equality of the canonical 48-byte encodings belongs to
-codec/wire refinement. -/
-def eqCanonicalValue (a b : Limbs) : Bool := value a == value b
-
 /-- Source control flow: zero fast path, square root, square-back, equality. -/
 def isSquareCanonical (a : Limbs) : Bool :=
   if isZeroValue a then true
@@ -54,14 +45,6 @@ def isSquareCanonical (a : Limbs) : Bool :=
     let root := sqrtCanonical a
     let check := squareCanonical root
     eqCanonicalValue check a
-
-@[simp] theorem isZeroValue_eq_true (a : Limbs) :
-    isZeroValue a = true ↔ value a = 0 := by
-  simp [isZeroValue]
-
-@[simp] theorem eqCanonicalValue_eq_true (a b : Limbs) :
-    eqCanonicalValue a b = true ↔ value a = value b := by
-  simp [eqCanonicalValue]
 
 @[simp] theorem isSquareCanonical_zero {a : Limbs} (hzero : value a = 0) :
     isSquareCanonical a = true := by
@@ -108,15 +91,6 @@ theorem lawful_square_sqrtCanonical {a : Limbs} (ha : Canonical a)
   rw [lawful_squareCanonical (canonical_sqrtCanonical ha),
     lawful_sqrtCanonical_pow ha]
   exact lawful_sqrt_pow_square_of_isSquare _ hsquare
-
-theorem value_eq_of_lawful_eq {a b : Limbs} (ha : Canonical a)
-    (hb : Canonical b)
-    (hvalue : (value a : LawfulFp) = (value b : LawfulFp)) :
-    value a = value b := by
-  have hmod : Nat.ModEq EvmSemantics.Crypto.Bls12381.p (value a) (value b) :=
-    (ZMod.natCast_eq_natCast_iff _ _
-      EvmSemantics.Crypto.Bls12381.p).mp hvalue
-  exact hmod.eq_of_lt_of_lt ha.2 hb.2
 
 /-- Exact canonical-limb square-back result consumed by extension-field square
 root algorithms. -/

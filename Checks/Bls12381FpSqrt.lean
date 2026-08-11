@@ -74,14 +74,6 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_sqrtCanonical_zero' depends on 
 #guard_msgs in
 #print axioms Fp.lawful_sqrtCanonical_zero
 
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.isZeroValue_eq_true' depends on axioms: [propext, Quot.sound] -/
-#guard_msgs in
-#print axioms Fp.isZeroValue_eq_true
-
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.eqCanonicalValue_eq_true' depends on axioms: [propext, Quot.sound] -/
-#guard_msgs in
-#print axioms Fp.eqCanonicalValue_eq_true
-
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.isSquareCanonical_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp.isSquareCanonical_zero
@@ -109,10 +101,6 @@ info: 'Challenge.Bls12381.ProofSupport.Fp.lawful_square_sqrtCanonical' depends o
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.square_sqrtCanonical' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp.square_sqrtCanonical
-
-/-- info: 'Challenge.Bls12381.ProofSupport.Fp.value_eq_of_lawful_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Fp.value_eq_of_lawful_eq
 
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.isSquareCanonical_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

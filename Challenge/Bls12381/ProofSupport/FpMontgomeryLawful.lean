@@ -1,5 +1,6 @@
 import Challenge.Bls12381.ProofSupport.FpMontgomeryMul
 import Challenge.Bls12381.ProofSupport.PrimeCertificate
+import Challenge.Bls12381.ProofSupport.FpPredicates
 
 set_option warningAsError true
 
@@ -146,28 +147,6 @@ theorem toField_montgomeryDecode_encode {a : Limbs} (ha : Canonical a) :
     toField (montgomeryDecode (montgomeryEncode a)) = toField a := by
   apply PrimeField.finEquiv.injective
   simpa only [finEquiv_toField] using lawful_montgomeryDecode_encode ha
-
-/-- The natural reconstruction uniquely determines its two EVM words. -/
-theorem limbs_ext_of_value_eq {a b : Limbs} (hvalue : value a = value b) :
-    a = b := by
-  have hloA := a.lo.val.isLt
-  have hloB := b.lo.val.isLt
-  change a.lo.toNat < Challenge.EvmProof.Limbs.radix at hloA
-  change b.lo.toNat < Challenge.EvmProof.Limbs.radix at hloB
-  have hhigh := congrArg
-    (fun n => n / Challenge.EvmProof.Limbs.radix) hvalue
-  unfold value at hhigh
-  rw [Nat.add_mul_div_left _ _ Challenge.EvmProof.Limbs.radix_pos,
-    Nat.add_mul_div_left _ _ Challenge.EvmProof.Limbs.radix_pos] at hhigh
-  rw [Nat.div_eq_of_lt hloA, Nat.div_eq_of_lt hloB] at hhigh
-  simp only [Nat.zero_add] at hhigh
-  have hlow : a.lo.toNat = b.lo.toNat := by
-    unfold value at hvalue
-    rw [hhigh] at hvalue
-    omega
-  exact congrArg₂ Limbs.mk
-    (Challenge.EvmProof.Word.word_ext hhigh)
-    (Challenge.EvmProof.Word.word_ext hlow)
 
 /-- The full source conversion round trip returns the original canonical wire
 representation, not only an equivalent field residue. -/

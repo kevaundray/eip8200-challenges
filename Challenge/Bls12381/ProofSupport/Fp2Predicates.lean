@@ -1,6 +1,6 @@
 import Challenge.Bls12381.ProofSupport.Fp2Representation
 import Challenge.Bls12381.ProofSupport.FpParity
-import Challenge.Bls12381.ProofSupport.FpSqrt
+import Challenge.Bls12381.ProofSupport.FpPredicates
 
 set_option warningAsError true
 
