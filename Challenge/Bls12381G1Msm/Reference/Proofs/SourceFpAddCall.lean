@@ -1,0 +1,57 @@
+import Challenge.Bls12381G1Msm.Reference.Proofs.SourceFpAddBody
+
+set_option warningAsError true
+
+/-! Relational call semantics of the frozen G1MSM `fpAdd` helper. -/
+
+namespace Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
+
+open YulSemantics YulSemantics.EVM
+open Challenge.EvmProof
+
+def fpAddResult (ahi alo bhi blo : U256) : U256 × U256 :=
+  let final := fpAddFinalEnv ahi alo bhi blo
+  ((VEnv.get final "\x0038").getD (0#256),
+   (VEnv.get final "\x0039").getD (0#256))
+
+theorem step_fpAdd (ahi alo bhi blo : U256) (yst : EvmState) :
+    EvalExpr modexpExec.toDialect sourceFuns
+      [("ahi", ahi), ("alo", alo), ("bhi", bhi), ("blo", blo)] yst
+      (.call "\x004" [.var "ahi", .var "alo", .var "bhi", .var "blo"])
+      (.vals [(fpAddResult ahi alo bhi blo).1,
+        (fpAddResult ahi alo bhi blo).2] yst) := by
+  let outer : VEnv modexpExec.toDialect :=
+    [("ahi", ahi), ("alo", alo), ("bhi", bhi), ("blo", blo)]
+  have hhi : EvalExpr modexpExec.toDialect sourceFuns outer yst
+      (.var "ahi") (.vals [ahi] yst) := Step.var rfl
+  have halo : EvalExpr modexpExec.toDialect sourceFuns outer yst
+      (.var "alo") (.vals [alo] yst) := Step.var rfl
+  have hbhi : EvalExpr modexpExec.toDialect sourceFuns outer yst
+      (.var "bhi") (.vals [bhi] yst) := Step.var rfl
+  have hblo : EvalExpr modexpExec.toDialect sourceFuns outer yst
+      (.var "blo") (.vals [blo] yst) := Step.var rfl
+  have hargs : EvalArgs modexpExec.toDialect sourceFuns outer yst
+      [.var "ahi", .var "alo", .var "bhi", .var "blo"]
+      (.vals [ahi, alo, bhi, blo] yst) :=
+    Step.argsCons (Step.argsCons (Step.argsCons (Step.argsCons Step.argsNil
+      hblo) hbhi) halo) hhi
+  have hbody : ExecStmt modexpExec.toDialect sourceFuns
+      (fpAddInitialEnv ahi alo bhi blo) yst (.block fpAddBody)
+      (fpAddFinalEnv ahi alo bhi blo) yst .normal := by
+    have hseq : ExecStmts modexpExec.toDialect
+        (hoist modexpExec.toDialect fpAddBody :: sourceFuns)
+        (fpAddInitialEnv ahi alo bhi blo) yst fpAddBody
+        (fpAddFinalEnv ahi alo bhi blo) yst .normal := by
+      rw [hoist_fpAddBody]
+      exact step_fpAddBody ahi alo bhi blo yst
+    have h := Step.block (D := modexpExec.toDialect) hseq
+    by_cases hc : fpGeModulusValue (fpAddHighValue ahi alo bhi blo)
+        (fpAddLowValue alo blo) = (0#256)
+    · simpa [restore, fpAddInitialEnv, fpAddFinalEnv, hc,
+        fpAddHighEnv] using h
+    · simpa [restore, fpAddInitialEnv, fpAddFinalEnv, hc,
+        fpAddCorrectEnv] using h
+  have hcall := Step.callOk hargs lookup_fpAdd rfl hbody (Or.inl rfl)
+  simpa [outer, fpAddDecl, fpAddResult, Dialect.zero, litValue] using hcall
+
+end Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics

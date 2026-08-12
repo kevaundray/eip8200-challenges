@@ -40,6 +40,10 @@ def fpAddStmt2 : Stmt Op :=
 
 def fpAddBody : Block Op := [fpAddStmt0, fpAddStmt1, fpAddStmt2]
 
+theorem hoist_fpAddBody :
+    hoist Challenge.EvmProof.modexpExec.toDialect fpAddBody = [] := by
+  rfl
+
 def fpAddBodyFuns : FunEnv Challenge.EvmProof.modexpExec.toDialect :=
   [] :: sourceFuns
 
