@@ -102,3 +102,7 @@ example : YulEvmCompiler.assemble referenceInstructions =
  Quot.sound] -/
 #guard_msgs in
 #print axioms referenceInstructions_assemble
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.Compilation.referenceBytecode_size_lt' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms referenceBytecode_size_lt
