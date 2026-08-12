@@ -18,6 +18,49 @@ private theorem soundStmt {n funs V st stmt V' st' outcome}
     (fun _ _ _ _ hb => Challenge.EvmProof.modexpBuiltinFn_sound hb) n).2.2.1
     _ _ _ _ _ _ _ h
 
+private theorem exec_msmStorePointBody (ptr x y : U256) (yst : EvmState) :
+    Interp.execStmt Challenge.EvmProof.modexpExec 67 fp2Funs
+      [("\x00137", ptr), ("\x00138", x), ("\x00139", y)] yst
+      (.block msmStorePointBody) =
+    .ok ([("\x00137", ptr), ("\x00138", x), ("\x00139", y)],
+      msmStorePointState yst ptr x y, .normal) := by
+  let V := [("\x00137", ptr), ("\x00138", x), ("\x00139", y)]
+  have hpre : Interp.execStmts Challenge.EvmProof.modexpExec 66
+      ([] :: fp2Funs) V yst msmStorePointPrefix =
+      .ok (V, msmStorePointMidState yst ptr x, .normal) := by rfl
+  have htail : Interp.execStmts Challenge.EvmProof.modexpExec 62
+      ([] :: fp2Funs) V (msmStorePointMidState yst ptr x)
+      msmStorePointTail =
+      .ok (V, msmStorePointState yst ptr x y, .normal) := by rfl
+  have hbody := Interp.execStmts_append_normal
+    (E := Challenge.EvmProof.modexpExec) (n := 62)
+    (pre := msmStorePointPrefix) (tail := msmStorePointTail)
+    (by omega) hpre htail
+  have hlen : msmStorePointPrefix.length = 4 := by rfl
+  rw [hlen] at hbody
+  rw [Interp.execStmt, msmStorePointBody_eq]
+  rw [show hoist Challenge.EvmProof.modexpExec.toDialect
+    (msmStorePointPrefix ++ msmStorePointTail) = [] by rfl]
+  change (do
+    let result ← Interp.execStmts Challenge.EvmProof.modexpExec 66
+      ([] :: fp2Funs) V yst (msmStorePointPrefix ++ msmStorePointTail)
+    .ok (restore V result.1, result.2.1, result.2.2)) = _
+  rw [hbody]
+  rfl
+
+theorem step_msmStorePoint_of_args {funs V st argState args}
+    (ptr x y : U256)
+    (hargs : EvalArgs Challenge.EvmProof.modexpExec.toDialect funs V st args
+      (.vals [ptr, x, y] argState))
+    (hlookup : lookupFun funs "\x0025" =
+      some (msmStorePointDecl, fp2Funs)) :
+    EvalExpr Challenge.EvmProof.modexpExec.toDialect funs V st
+      (.call "\x0025" args)
+      (.vals [] (msmStorePointState argState ptr x y)) := by
+  have hbody := soundStmt (exec_msmStorePointBody ptr x y argState)
+  have hcall := Step.callOk hargs hlookup rfl hbody (Or.inl rfl)
+  simpa [msmStorePointDecl] using hcall
+
 private theorem exec_msmCopyPointBody (dst src : U256) (yst : EvmState) :
     Interp.execStmt Challenge.EvmProof.modexpExec 67 fp2Funs
       [("\x00141", dst), ("\x00142", src)] yst
