@@ -192,6 +192,36 @@ theorem decodeFp_eq_some_sourceField (yst : EvmState) (input : ByteArray)
     unfold Fp.toField
     rw [Fin.val_ofNat, Nat.mod_eq_of_lt hcanonical.2]
 
+/-- A complete source-word characterization of field-decoder rejection. -/
+theorem decodeFp_eq_none_iff_sourceField (yst : EvmState) (input : ByteArray)
+    (hcalldata : yst.env.calldata = input.toList) (i : Nat) (hi : i < 8)
+    (hsize : 64 * i + 64 ≤ input.size) :
+    Codec.decodeFp input (64 * i) = none ↔
+      ¬ Codec.PaddingZero input (64 * i) ∨
+        ¬ Fp.Canonical (sourceField yst (64 * i)) := by
+  have hsome := decodeFp_eq_some_sourceField yst input hcalldata i hi hsize
+  constructor
+  · intro hnone
+    by_contra hvalid
+    push Not at hvalid
+    rw [hsome.mpr hvalid] at hnone
+    contradiction
+  · intro hinvalid
+    cases hdecode : Codec.decodeFp input (64 * i) with
+    | none => rfl
+    | some a =>
+        have ha := (Codec.decodeFp_eq_some_iff input (64 * i) a).mp hdecode
+        have hfield := fpWindowValue_eq_sourceField yst input hcalldata i hi
+          hsize ha.2.1
+        have hvalue : Fp.value (sourceField yst (64 * i)) <
+            EvmSemantics.Crypto.Bls12381.p := by
+          rw [← hfield, ha.2.2]
+          exact a.isLt
+        have hcanon : Fp.Canonical (sourceField yst (64 * i)) :=
+          Fp.canonical_of_value_lt _ hvalue
+        exact False.elim (hinvalid.elim (fun h => h ha.2.1)
+          (fun h => h hcanon))
+
 private theorem sourceFp2_eq_fields (yst : EvmState) (i : Nat) (hi : i < 4) :
     sourceFp2 yst (128 * i) = Fp2.mkRepr
       (sourceField yst (128 * i)) (sourceField yst (128 * i + 64)) := by
