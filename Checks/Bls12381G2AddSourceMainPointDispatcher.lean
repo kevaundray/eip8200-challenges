@@ -1,0 +1,8 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainPointDispatcher
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check step_mainPointDispatcher_finite
+#check step_mainPointDispatcher_bothInfinity
+#check step_mainPointDispatcher_firstInfinity
+#check step_mainPointDispatcher_secondInfinity
