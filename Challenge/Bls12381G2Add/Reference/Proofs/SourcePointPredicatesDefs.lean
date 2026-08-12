@@ -8,10 +8,10 @@ namespace Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 open YulSemantics YulSemantics.EVM
 
 def pointPaddingZeroValue (yst : EvmState) (point : U256) : U256 :=
-  b2w ((loadWord yst.memory point.toNat >>> 128) |||
-    (loadWord yst.memory (point + BitVec.ofNat 256 64).toNat >>> 128) |||
-    (loadWord yst.memory (point + BitVec.ofNat 256 128).toNat >>> 128) |||
-    (loadWord yst.memory (point + BitVec.ofNat 256 192).toNat >>> 128) = 0)
+  b2w (((loadWord yst.memory point.toNat >>> 128) |||
+      (loadWord yst.memory (point + BitVec.ofNat 256 64).toNat >>> 128)) |||
+    ((loadWord yst.memory (point + BitVec.ofNat 256 128).toNat >>> 128) |||
+      (loadWord yst.memory (point + BitVec.ofNat 256 192).toNat >>> 128)) = 0)
 
 def pointValidValue (yst : EvmState) (point : U256) : U256 :=
   (fp2ValidValue yst point &&&
