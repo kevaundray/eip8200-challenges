@@ -1,0 +1,6 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceOnCurveHighPreservation
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check fp2MulFinalState_loadWord_before_out_high
+#check fp2MulFinalState_fp2At_before_out_high
