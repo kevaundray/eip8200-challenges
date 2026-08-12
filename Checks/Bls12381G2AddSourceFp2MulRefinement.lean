@@ -6,5 +6,6 @@ open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 #check fp2MulReal_eq_subSource
 #check fp2MulSumA_eq_addSource
 #check fp2MulSumB_eq_addSource
+#check fp2MulCross_eq_mulCanonical
 #check fp2MulVSum_eq_addSource
 #check fp2MulImag_eq_subSource

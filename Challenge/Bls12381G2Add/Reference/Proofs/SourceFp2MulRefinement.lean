@@ -72,6 +72,27 @@ theorem fp2MulSumB_eq_addSource (yst : EvmState) (out a b : U256) :
         (fp2At (fp2MulAfterSumAStores yst out a b) b).c1 := by
   exact conv_fpAddValue _ _ _ _
 
+def fp2MulCrossLeft (yst : EvmState) (out a b : U256) :=
+  let s := fp2MulAfterSumBStores yst out a b
+  fpWords (loadWord s.memory 1664) (loadWord s.memory 1696)
+def fp2MulCrossRight (yst : EvmState) (out a b : U256) :=
+  let s := fp2MulAfterSumBStores yst out a b
+  fpWords (loadWord s.memory 1728) (loadWord s.memory 1760)
+
+theorem fp2MulCross_eq_mulCanonical (yst : EvmState) (out a b : U256)
+    (ha : Challenge.Bls12381.ProofSupport.Fp.Canonical
+      (fp2MulCrossLeft yst out a b))
+    (hb : Challenge.Bls12381.ProofSupport.Fp.Canonical
+      (fp2MulCrossRight yst out a b)) :
+    pairWords (fp2MulCross yst out a b) =
+      Challenge.Bls12381.ProofSupport.Fp.mulCanonical
+        (fp2MulCrossLeft yst out a b) (fp2MulCrossRight yst out a b) := by
+  exact fpMulOutput_eq_mulCanonical (fp2MulAfterCrossReads yst out a b)
+    (loadWord (fp2MulAfterSumBStores yst out a b).memory 1664)
+    (loadWord (fp2MulAfterSumBStores yst out a b).memory 1696)
+    (loadWord (fp2MulAfterSumBStores yst out a b).memory 1728)
+    (loadWord (fp2MulAfterSumBStores yst out a b).memory 1760) ha hb
+
 theorem fp2MulVSum_eq_addSource (yst : EvmState) (out a b : U256) :
     pairWords (fp2MulVSum yst out a b) =
       Challenge.Bls12381.ProofSupport.Fp.addSource
