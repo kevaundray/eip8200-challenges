@@ -116,12 +116,16 @@ def pointAddUnequalNumeratorRawLo (yst : EvmState)
   pointAddUnequalRightYLo yst out left right -
     pointAddUnequalLeftYLo yst out left right
 
+def pointAddUnequalNumeratorBorrow (yst : EvmState)
+    (out left right : U256) : U256 :=
+  b2w (BitVec.ult (pointAddUnequalRightYLo yst out left right)
+    (pointAddUnequalLeftYLo yst out left right))
+
 def pointAddUnequalNumeratorRawHi (yst : EvmState)
     (out left right : U256) : U256 :=
   pointAddUnequalRightYHi yst out left right -
     pointAddUnequalLeftYHi yst out left right -
-      b2w (BitVec.ult (pointAddUnequalLeftYLo yst out left right)
-        (pointAddUnequalRightYLo yst out left right))
+      pointAddUnequalNumeratorBorrow yst out left right
 
 def pointAddUnequalNumeratorRaw (yst : EvmState)
     (out left right : U256) : U256 × U256 :=
