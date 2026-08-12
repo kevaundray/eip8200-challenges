@@ -66,6 +66,27 @@ theorem readPadded_toList_add (bytes : ByteArray)
   congr 1
   omega
 
+/-- An in-bounds padded read is exactly the corresponding byte-array
+extraction. -/
+theorem readPadded_eq_extract (bytes : ByteArray) (offset width : Nat)
+    (hfit : offset + width ≤ bytes.size) :
+    EvmSemantics.MachineState.readPadded bytes offset width =
+      bytes.extract offset (offset + width) := by
+  unfold EvmSemantics.MachineState.readPadded
+  dsimp only
+  have hoffset : offset.min bytes.size = offset := by
+    apply min_eq_left
+    omega
+  simp only [hoffset]
+  have havail : width ≤ bytes.size - offset := by omega
+  have htake : (bytes.size - offset).min width = width := by
+    apply min_eq_right
+    exact havail
+  simp only [htake]
+  rw [Nat.sub_self]
+  change bytes.extract offset (offset + width) ++ ByteArray.empty = _
+  exact ByteArray.append_empty
+
 theorem foldl_step (bytes : List UInt8) (acc : Nat) :
     bytes.foldl step acc =
       acc * 256 ^ bytes.length + bytes.foldl step 0 := by

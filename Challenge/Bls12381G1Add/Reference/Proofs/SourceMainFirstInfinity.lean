@@ -347,25 +347,6 @@ private theorem mainFirstInfinityCopyState_readOutput (yst : EvmState)
   rw [← Challenge.EvmProof.Bytes.readPadded_toList_add input 160 32 64]
   rw [← Challenge.EvmProof.Bytes.readPadded_toList_add input 128 32 96]
 
-private theorem readPadded_eq_extract (input : ByteArray) (start size : Nat)
-    (hfit : start + size ≤ input.size) :
-    EvmSemantics.MachineState.readPadded input start size =
-      input.extract start (start + size) := by
-  unfold EvmSemantics.MachineState.readPadded
-  dsimp only
-  have hstart : start.min input.size = start := by
-    apply min_eq_left
-    omega
-  simp only [hstart]
-  have havail : size ≤ input.size - start := by omega
-  have htake : (input.size - start).min size = size := by
-    apply min_eq_right
-    exact havail
-  simp only [htake]
-  rw [Nat.sub_self]
-  change input.extract start (start + size) ++ ByteArray.empty = _
-  exact ByteArray.append_empty
-
 private theorem decodeG1_right_size {input : ByteArray}
     {right : EvmSemantics.Crypto.Bls12381.Point}
     (hright : Challenge.Bls12381.ProofSupport.Codec.decodeG1 input 128 =
@@ -401,7 +382,8 @@ theorem mainFirstInfinity_returned_other (yst : EvmState) (input : ByteArray)
   change some (HaltKind.ret,
     readBytes (mainFirstInfinityCopyState yst).memory 0 128) = _
   rw [mainFirstInfinityCopyState_readOutput yst input hcalldata,
-    readPadded_eq_extract input 128 128 (decodeG1_right_size hright)]
+    Challenge.EvmProof.Bytes.readPadded_eq_extract input 128 128
+      (decodeG1_right_size hright)]
   have hencode :=
     Challenge.Bls12381.ProofSupport.Codec.encodeG1_decodeG1 hright
   rw [Challenge.Bls12381.ProofSupport.Codec.g1Bytes] at hencode
