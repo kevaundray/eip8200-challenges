@@ -8,6 +8,11 @@ proved, what is still incomplete, and which proof-engineering approaches are
 safe to resume. The Lean sources and fresh verification output remain the
 authority if this file becomes stale.
 
+Implementation is paused by user request. The last GREEN branch checkpoint is
+`kw/new-precompiles` at `e802e69`. Incomplete RED experiments are preserved on
+`wip/bls-proof-pause-2026-08-12` at `2bca845`; they are not part of the GREEN
+branch history.
+
 ## Current scope
 
 The current milestone is the six non-pairing EIP-2537 precompiles:
@@ -30,12 +35,12 @@ left-fold MSM. Pippenger and other optimizations are not on the critical path.
 | Shared proof support | Complete for the six-precompile milestone | `Challenge/Bls12381/ProofSupport`; `+Checks.Bls12381` and conformance gates were green at the shared freeze. |
 | G1ADD | Complete, independently reviewed, CI-gated | Final proof `dacd447`; exports `231813b`; artifact-sensitive CI fixes `f45f847`, `e5ee4cc`. Exact runtime: 1,723 bytes. |
 | G2ADD | Complete, independently reviewed, CI-gated | Final challenge gate `8beb159`; correctness `5dc8f27`; CI/direct-artifact gate `a8491b5`; cache/policy hardening through `61ec724`. Exact runtime: 2,788 bytes. |
-| G1MSM | Active; roughly two-thirds of the end-to-end deliverable | Runtime/compiler artifacts and branchwise point addition are proved. Active work is total point-add value/preservation, then scalar semantics, subgroup/outer MSM, main correctness, gas/scorer/CI. |
-| G2MSM | Active; roughly three-quarters of the end-to-end deliverable | Runtime/compiler/byte/stack proofs, helpers, point-add execution, and scalar-loop structure are proved. Active work is total point-add value/preservation, scalar semantics, subgroup/outer MSM, and final correctness/gas/CI. |
-| MAP_FP_TO_G1 | Active | Strict shared-adapter spec and all ten vector/axiom checks are complete at `3e2cfec`. Concrete runtime construction is the next boundary. |
+| G1MSM | Paused; roughly two-thirds of the end-to-end deliverable | Last GREEN checkpoint `e802e69`. Resume total point-add value/preservation, then scalar semantics, subgroup/outer MSM, main correctness, gas/scorer/CI. |
+| G2MSM | Paused; roughly three-quarters of the end-to-end deliverable | Last GREEN checkpoint `04c2a5c`. Resume concrete doubling preservation/composition, total point-add semantics, scalar/MSM semantics, and final correctness/gas/CI. |
+| MAP_FP_TO_G1 | Paused | Strict shared-adapter spec and all ten vector/axiom checks are complete at `3e2cfec`. Concrete runtime construction is the next boundary. |
 | MAP_FP2_TO_G2 | Not started at challenge-runtime level | Shared implementation/proofs/vectors are complete. Start after a worker slot becomes available. |
 | Pairing | Deferred | Do not pull it into this milestone. |
-| Post-proof architecture refactor | Waiting | Start only after the six precompile implementations pass their final gates and reviews. See `docs/bls-proof-architecture-research.md`. |
+| Architecture cleanup/refactor | On hold by user request | Do not explore, propose, or apply architecture changes until explicitly resumed. |
 
 ## Shared layer: completed endpoints
 
@@ -106,12 +111,12 @@ proof-policy scan is intentionally conservative raw-source scanning: forbidden
 spellings in comments or strings must be reworded rather than hidden behind a
 partial Lean lexer.
 
-## Active G1MSM work
+## Paused G1MSM work
 
-Recoverable checkpoint: `2e18e53` commits the currently GREEN unequal-X
-arithmetic stages and their exact guards. Later concrete right-subtraction
-specialization files are intentionally uncommitted while their value-only
-projection boundary is being redesigned.
+Recoverable checkpoint: `e802e69` adds the GREEN smart constructor and cached
+`x3Hi` projection on top of the unequal-X arithmetic checkpoint `2e18e53`.
+Later concrete right-subtraction specialization files are RED and preserved
+only on WIP commit `2bca845`.
 
 Completed:
 
@@ -137,14 +142,15 @@ Still required:
 5. Instantiate final compiled `CorrectWithSchedule` / `Correct`.
 6. Add honest gas, scorer, public umbrellas, CI, and independent review.
 
-Current ownership: `bls_g1msm`. Do not edit its dirty files while it is active.
+No worker is active. Resume from the value-only right-subtraction projection
+boundary documented in the WIP files.
 
-## Active G2MSM work
+## Paused G2MSM work
 
 Recoverable checkpoints: `19078bd` proves the lawful doubling numerator and
-`07f1f25` proves the denominator, inverse, and final slope stages. The next
-composition file is intentionally outside those commits until its focused gate
-is GREEN.
+`07f1f25` proves the denominator, inverse, and final slope stages. `04c2a5c`
+composes the lawful double slope. The next RED memory-preservation leaf is
+preserved only on WIP commit `2bca845`.
 
 Completed:
 
@@ -171,10 +177,10 @@ Still required:
 5. Instantiate final `CorrectWithSchedule` / `Correct`.
 6. Add gas, scorer, public/CI gates, and independent review.
 
-Current ownership: `bls_g2msm`. Do not run broad G2MSM umbrellas while heavy
-leaf outputs are stale; rebuild heavy leaves serially first.
+No worker is active. On resume, rebuild heavy leaves serially before any broad
+G2MSM umbrella.
 
-## Active MAP_FP_TO_G1 work
+## Paused MAP_FP_TO_G1 work
 
 Checkpoint `3e2cfec` migrates the challenge spec to the shared `MapToG1.run`
 adapter and proves the strict 64-byte rejection characterization, five official
@@ -188,7 +194,8 @@ challenge-level worker must still:
 3. certify compiler, bytes, stack, and MODEXP calls;
 4. prove final correctness/gas and add scorer/CI/review gates.
 
-Current ownership: `bls_map_g1`.
+The placeholder source wrapper and intentionally failing first runtime vector
+are preserved only on WIP commit `2bca845`. No worker is active.
 
 ## Proof-engineering rules learned here
 
@@ -244,11 +251,8 @@ Before resuming work:
 7. Do not call a precompile complete until source/spec, compiled correctness,
    gas/scorer, CI, focused gates, and independent review all pass.
 
-## After the six precompiles
+## Architecture work
 
-Read `docs/bls-proof-architecture-research.md` and the pinned external sources
-it links before refactoring. The intended direction is fewer/deeper public
-facades while retaining physical `.olean` firebreaks for expensive proofs. Run
-memory/time baselines before merging files: fewer source files is not an
-improvement if it causes Lean to normalize multiple large proof graphs in one
-module.
+Architecture exploration and refactoring are on hold by user request. Do not
+continue from `docs/bls-proof-architecture-research.md` or its linked sources
+until explicitly directed to resume.
