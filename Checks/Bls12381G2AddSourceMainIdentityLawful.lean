@@ -1,0 +1,9 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainIdentityLawful
+
+set_option warningAsError true
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check mainBothInfinity_returned_add
+#check mainFirstInfinity_returned_add
+#check mainSecondInfinity_returned_add

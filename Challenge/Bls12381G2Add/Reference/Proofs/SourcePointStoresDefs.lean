@@ -32,15 +32,82 @@ def clearPointState (yst : EvmState) : EvmState :=
   let s6 := storeConstState s5 192 0
   storeConstState s6 224 0
 
+def copyPointState0 (yst : EvmState) (point : U256) : EvmState :=
+  copyWordState yst 0 point
+
+def copyPointState1 (yst : EvmState) (point : U256) : EvmState :=
+  copyWordState (copyPointState0 yst point) 32
+    (point + BitVec.ofNat 256 32)
+
+def copyPointState2 (yst : EvmState) (point : U256) : EvmState :=
+  copyWordState (copyPointState1 yst point) 64
+    (point + BitVec.ofNat 256 64)
+
+def copyPointState3 (yst : EvmState) (point : U256) : EvmState :=
+  copyWordState (copyPointState2 yst point) 96
+    (point + BitVec.ofNat 256 96)
+
+def copyPointState4 (yst : EvmState) (point : U256) : EvmState :=
+  copyWordState (copyPointState3 yst point) 128
+    (point + BitVec.ofNat 256 128)
+
+def copyPointState5 (yst : EvmState) (point : U256) : EvmState :=
+  copyWordState (copyPointState4 yst point) 160
+    (point + BitVec.ofNat 256 160)
+
+def copyPointState6 (yst : EvmState) (point : U256) : EvmState :=
+  copyWordState (copyPointState5 yst point) 192
+    (point + BitVec.ofNat 256 192)
+
 def copyPointState (yst : EvmState) (point : U256) : EvmState :=
-  let s0 := copyWordState yst 0 point
-  let s1 := copyWordState s0 32 (point + BitVec.ofNat 256 32)
-  let s2 := copyWordState s1 64 (point + BitVec.ofNat 256 64)
-  let s3 := copyWordState s2 96 (point + BitVec.ofNat 256 96)
-  let s4 := copyWordState s3 128 (point + BitVec.ofNat 256 128)
-  let s5 := copyWordState s4 160 (point + BitVec.ofNat 256 160)
-  let s6 := copyWordState s5 192 (point + BitVec.ofNat 256 192)
-  copyWordState s6 224 (point + BitVec.ofNat 256 224)
+  copyWordState (copyPointState6 yst point) 224
+    (point + BitVec.ofNat 256 224)
+
+theorem copyPointState0_memory (yst : EvmState) (point : U256) :
+    (copyPointState0 yst point).memory =
+      storeWord yst.memory 0 (loadWord yst.memory point.toNat) := by rfl
+
+theorem copyPointState1_memory (yst : EvmState) (point : U256) :
+    (copyPointState1 yst point).memory =
+      storeWord (copyPointState0 yst point).memory 32
+        (loadWord (copyPointState0 yst point).memory
+          (point + BitVec.ofNat 256 32).toNat) := by rfl
+
+theorem copyPointState2_memory (yst : EvmState) (point : U256) :
+    (copyPointState2 yst point).memory =
+      storeWord (copyPointState1 yst point).memory 64
+        (loadWord (copyPointState1 yst point).memory
+          (point + BitVec.ofNat 256 64).toNat) := by rfl
+
+theorem copyPointState3_memory (yst : EvmState) (point : U256) :
+    (copyPointState3 yst point).memory =
+      storeWord (copyPointState2 yst point).memory 96
+        (loadWord (copyPointState2 yst point).memory
+          (point + BitVec.ofNat 256 96).toNat) := by rfl
+
+theorem copyPointState4_memory (yst : EvmState) (point : U256) :
+    (copyPointState4 yst point).memory =
+      storeWord (copyPointState3 yst point).memory 128
+        (loadWord (copyPointState3 yst point).memory
+          (point + BitVec.ofNat 256 128).toNat) := by rfl
+
+theorem copyPointState5_memory (yst : EvmState) (point : U256) :
+    (copyPointState5 yst point).memory =
+      storeWord (copyPointState4 yst point).memory 160
+        (loadWord (copyPointState4 yst point).memory
+          (point + BitVec.ofNat 256 160).toNat) := by rfl
+
+theorem copyPointState6_memory (yst : EvmState) (point : U256) :
+    (copyPointState6 yst point).memory =
+      storeWord (copyPointState5 yst point).memory 192
+        (loadWord (copyPointState5 yst point).memory
+          (point + BitVec.ofNat 256 192).toNat) := by rfl
+
+theorem copyPointState_memory (yst : EvmState) (point : U256) :
+    (copyPointState yst point).memory =
+      storeWord (copyPointState6 yst point).memory 224
+        (loadWord (copyPointState6 yst point).memory
+          (point + BitVec.ofNat 256 224).toNat) := by rfl
 
 def storePointState (yst : EvmState) (x y : U256) : EvmState :=
   let s0 := copyWordState yst 0 x
