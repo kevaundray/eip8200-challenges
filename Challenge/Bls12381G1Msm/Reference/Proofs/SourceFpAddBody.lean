@@ -26,7 +26,7 @@ def fpAddFinalEnv (ahi alo bhi blo : U256) :
   else fpAddCorrectEnv ahi alo bhi blo
 
 theorem step_fpAddBody (ahi alo bhi blo : U256) (yst : EvmState) :
-    ExecStmts modexpExec.toDialect sourceFuns
+    ExecStmts modexpExec.toDialect fpAddBodyFuns
       (fpAddInitialEnv ahi alo bhi blo) yst fpAddBody
       (fpAddFinalEnv ahi alo bhi blo) yst .normal := by
   have h0 := sound_execStmt (exec_fpAddStmt0 ahi alo bhi blo yst)

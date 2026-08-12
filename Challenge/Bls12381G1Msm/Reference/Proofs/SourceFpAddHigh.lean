@@ -10,7 +10,7 @@ open YulSemantics YulSemantics.EVM
 open Challenge.EvmProof
 
 theorem exec_fpAddStmt1 (ahi alo bhi blo : U256) (yst : EvmState) :
-    Interp.execStmt modexpExec 16 sourceFuns
+    Interp.execStmt modexpExec 16 fpAddBodyFuns
       (fpAddLowEnv ahi alo bhi blo) yst fpAddStmt1 =
     .ok (fpAddHighEnv ahi alo bhi blo, yst, .normal) := by
   rfl

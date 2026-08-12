@@ -11,7 +11,7 @@ open YulSemantics YulSemantics.EVM
 open Challenge.EvmProof
 
 theorem eval_fpAddCondition (ahi alo bhi blo : U256) (yst : EvmState) :
-    Interp.evalExpr modexpExec 32 sourceFuns
+    Interp.evalExpr modexpExec 32 fpAddBodyFuns
       (fpAddHighEnv ahi alo bhi blo) yst
       (.call "\x000" [.var "\x0038", .var "\x0039"]) =
     .ok (.vals [fpGeModulusValue (fpAddHighValue ahi alo bhi blo)

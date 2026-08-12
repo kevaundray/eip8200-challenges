@@ -40,6 +40,9 @@ def fpAddStmt2 : Stmt Op :=
 
 def fpAddBody : Block Op := [fpAddStmt0, fpAddStmt1, fpAddStmt2]
 
+def fpAddBodyFuns : FunEnv Challenge.EvmProof.modexpExec.toDialect :=
+  [] :: sourceFuns
+
 def fpAddDecl : FDecl Challenge.EvmProof.modexpExec.toDialect :=
   { params := ["\x0034", "\x0035", "\x0036", "\x0037"]
     rets := ["\x0038", "\x0039"]

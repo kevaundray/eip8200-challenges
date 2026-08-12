@@ -12,7 +12,7 @@ open Challenge.EvmProof
 theorem exec_fpAddStmt2_keep (ahi alo bhi blo : U256) (yst : EvmState)
     (hkeep : fpGeModulusValue (fpAddHighValue ahi alo bhi blo)
       (fpAddLowValue alo blo) = 0) :
-    Interp.execStmt modexpExec 33 sourceFuns
+    Interp.execStmt modexpExec 33 fpAddBodyFuns
       (fpAddHighEnv ahi alo bhi blo) yst fpAddStmt2 =
     .ok (fpAddHighEnv ahi alo bhi blo, yst, .normal) := by
   unfold fpAddStmt2
