@@ -64,4 +64,55 @@ theorem eval_fpEq (ahi alo bhi blo : U256) (yst : EvmState) :
     modexpExec, modexpBuiltinFn, stepOp, bin, fpEqValue,
     Dialect.zero, VEnv.get, VEnv.setMany, VEnv.set, bindZeros, restore]
 
+/-- Relational call boundary for `fpEq`.  The argument evaluation may touch
+memory; the field predicate itself is pure and preserves that resulting state. -/
+theorem step_fpEq_of_args {funs V st argState args}
+    (ahi alo bhi blo : U256)
+    (hargs : EvalArgs modexpExec.toDialect funs V st args
+      (.vals [ahi, alo, bhi, blo] argState))
+    (hlookup : lookupFun funs "\x003" = some (fpEqDecl, sourceFuns)) :
+    EvalExpr modexpExec.toDialect funs V st (.call "\x003" args)
+      (.vals [fpEqValue ahi alo bhi blo] argState) := by
+  let initial : VEnv modexpExec.toDialect :=
+    [("\x0029", ahi), ("\x0030", alo), ("\x0031", bhi), ("\x0032", blo),
+      ("\x0033", 0)]
+  let final : VEnv modexpExec.toDialect :=
+    [("\x0029", ahi), ("\x0030", alo), ("\x0031", bhi), ("\x0032", blo),
+      ("\x0033", fpEqValue ahi alo bhi blo)]
+  have hbhi : EvalExpr modexpExec.toDialect ([] :: sourceFuns) initial argState
+      (.var "\x0031") (.vals [bhi] argState) := Step.var rfl
+  have hahi : EvalExpr modexpExec.toDialect ([] :: sourceFuns) initial argState
+      (.var "\x0029") (.vals [ahi] argState) := Step.var rfl
+  have heqHi : EvalExpr modexpExec.toDialect ([] :: sourceFuns) initial argState
+      (.builtin .eq [.var "\x0029", .var "\x0031"])
+      (.vals [b2w (ahi = bhi)] argState) :=
+    Step.builtinOk (Step.argsCons (Step.argsCons Step.argsNil hbhi) hahi) rfl
+  have hblo : EvalExpr modexpExec.toDialect ([] :: sourceFuns) initial argState
+      (.var "\x0032") (.vals [blo] argState) := Step.var rfl
+  have halo : EvalExpr modexpExec.toDialect ([] :: sourceFuns) initial argState
+      (.var "\x0030") (.vals [alo] argState) := Step.var rfl
+  have heqLo : EvalExpr modexpExec.toDialect ([] :: sourceFuns) initial argState
+      (.builtin .eq [.var "\x0030", .var "\x0032"])
+      (.vals [b2w (alo = blo)] argState) :=
+    Step.builtinOk (Step.argsCons (Step.argsCons Step.argsNil hblo) halo) rfl
+  have hand : EvalExpr modexpExec.toDialect ([] :: sourceFuns) initial argState
+      (.builtin .and
+        [.builtin .eq [.var "\x0029", .var "\x0031"],
+          .builtin .eq [.var "\x0030", .var "\x0032"]])
+      (.vals [fpEqValue ahi alo bhi blo] argState) :=
+    Step.builtinOk (Step.argsCons (Step.argsCons Step.argsNil heqLo) heqHi) rfl
+  have hstmt : ExecStmt modexpExec.toDialect ([] :: sourceFuns) initial argState
+      fpEqStmt final argState .normal := by
+    rw [fpEqStmt]
+    exact Step.assignVal hand rfl
+  have hseq : ExecStmts modexpExec.toDialect ([] :: sourceFuns) initial argState
+      fpEqBody final argState .normal := by
+    rw [fpEqBody_eq]
+    exact Step.seqCons hstmt Step.seqNil
+  have hblock : ExecStmt modexpExec.toDialect sourceFuns initial argState
+      (.block fpEqBody) (restore initial final) argState .normal := Step.block hseq
+  have hcall := Step.callOk hargs hlookup rfl hblock (Or.inl rfl)
+  simpa [fpEqDecl, initial, final, fpEqValue, Dialect.zero, litValue,
+    bindZeros, VEnv.setMany, VEnv.set, VEnv.get, restore] using hcall
+
 end Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
