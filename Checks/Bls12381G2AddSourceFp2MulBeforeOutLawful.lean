@@ -1,0 +1,7 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2MulBeforeOutLawful
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check fp2MulScheduledRight_eq_of_high_before_out
+#check fp2MulFinalState_canonical_of_high_before_out
+#check fp2MulFinalState_toLawful_mul_of_high_before_out
