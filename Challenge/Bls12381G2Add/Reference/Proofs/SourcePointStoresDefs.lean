@@ -17,6 +17,11 @@ private def copyWordState (yst : EvmState) (dest : Nat) (src : U256) :
   { touchMemory read dest 32 with
     memory := storeWord read.memory dest (loadWord yst.memory src.toNat) }
 
+private theorem copyWordState_memory (yst : EvmState) (dest : Nat)
+    (src : U256) :
+    (copyWordState yst dest src).memory =
+      storeWord yst.memory dest (loadWord yst.memory src.toNat) := rfl
+
 def clearPointState (yst : EvmState) : EvmState :=
   let s0 := storeConstState yst 0 0
   let s1 := storeConstState s0 32 0
@@ -46,6 +51,38 @@ def storePointState (yst : EvmState) (x y : U256) : EvmState :=
   let s5 := copyWordState s4 160 (y + BitVec.ofNat 256 32)
   let s6 := copyWordState s5 192 (y + BitVec.ofNat 256 64)
   copyWordState s6 224 (y + BitVec.ofNat 256 96)
+
+/-- At the fixed postlude scratch addresses, the eight point copies read the
+original high-memory words.  This shallow memory boundary keeps output-codec
+proofs from unfolding the nested source helper. -/
+theorem storePointState_memory_2688_2944 (yst : EvmState) :
+    (storePointState yst 2688 2944).memory =
+      storeWord
+        (storeWord
+          (storeWord
+            (storeWord
+              (storeWord
+                (storeWord
+                  (storeWord
+                    (storeWord yst.memory 0 (loadWord yst.memory 2688))
+                    32 (loadWord yst.memory 2720))
+                  64 (loadWord yst.memory 2752))
+                96 (loadWord yst.memory 2784))
+              128 (loadWord yst.memory 2944))
+            160 (loadWord yst.memory 2976))
+        192 (loadWord yst.memory 3008))
+        224 (loadWord yst.memory 3040) := by
+  have hx0 : ((2688 : U256).toNat) = 2688 := by decide
+  have hx1 : (2688 + BitVec.ofNat 256 32 : U256).toNat = 2720 := by decide
+  have hx2 : (2688 + BitVec.ofNat 256 64 : U256).toNat = 2752 := by decide
+  have hx3 : (2688 + BitVec.ofNat 256 96 : U256).toNat = 2784 := by decide
+  have hy0 : ((2944 : U256).toNat) = 2944 := by decide
+  have hy1 : (2944 + BitVec.ofNat 256 32 : U256).toNat = 2976 := by decide
+  have hy2 : (2944 + BitVec.ofNat 256 64 : U256).toNat = 3008 := by decide
+  have hy3 : (2944 + BitVec.ofNat 256 96 : U256).toNat = 3040 := by decide
+  simp only [storePointState, copyWordState_memory]
+  rw [hx0, hx1, hx2, hx3, hy0, hy1, hy2, hy3]
+  repeat' rw [loadWord_storeWord_disjoint _ _ _ _ (by omega)]
 
 def clearPointBody : Block Op :=
   match Compilation.referenceCompiledBlock[22]? with
