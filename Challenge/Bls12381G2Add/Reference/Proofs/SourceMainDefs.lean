@@ -49,20 +49,26 @@ private def mainStoreWord (yst : EvmState) (offset : Nat) : EvmState :=
   { touchMemory yst offset 32 with
     memory := storeWord yst.memory offset (mainInputWord yst offset) }
 
-def mainDecodedState (yst : EvmState) : EvmState :=
+def mainDecodedState4 (yst : EvmState) : EvmState :=
   let s0 := mainStoreWord yst 0
   let s1 := mainStoreWord s0 32
   let s2 := mainStoreWord s1 64
-  let s3 := mainStoreWord s2 96
-  let s4 := mainStoreWord s3 128
+  mainStoreWord s2 96
+
+def mainDecodedState8 (yst : EvmState) : EvmState :=
+  let s4 := mainStoreWord (mainDecodedState4 yst) 128
   let s5 := mainStoreWord s4 160
   let s6 := mainStoreWord s5 192
-  let s7 := mainStoreWord s6 224
-  let s8 := mainStoreWord s7 256
+  mainStoreWord s6 224
+
+def mainDecodedState12 (yst : EvmState) : EvmState :=
+  let s8 := mainStoreWord (mainDecodedState8 yst) 256
   let s9 := mainStoreWord s8 288
   let s10 := mainStoreWord s9 320
-  let s11 := mainStoreWord s10 352
-  let s12 := mainStoreWord s11 384
+  mainStoreWord s10 352
+
+def mainDecodedState (yst : EvmState) : EvmState :=
+  let s12 := mainStoreWord (mainDecodedState12 yst) 384
   let s13 := mainStoreWord s12 416
   let s14 := mainStoreWord s13 448
   mainStoreWord s14 480
