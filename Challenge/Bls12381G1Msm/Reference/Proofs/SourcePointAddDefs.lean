@@ -19,6 +19,7 @@ def pointAddStmt1 : Stmt Op := pointAddBody[1]!
 def pointAddStmt2 : Stmt Op := pointAddBody[2]!
 def pointAddStmt3 : Stmt Op := pointAddBody[3]!
 def pointAddStmt4 : Stmt Op := pointAddBody[4]!
+def pointAddStmt5 : Stmt Op := pointAddBody[5]!
 def pointAddAfterPrefix : Block Op := pointAddBody.drop 3
 
 def pointAddLeftInfinityCondition : Expr Op :=
@@ -99,6 +100,32 @@ theorem pointAddRightCopyBody_eq : pointAddRightCopyBody =
     [pointAddRightCopyStmt0, pointAddRightCopyStmt1, pointAddRightCopyStmt2,
       pointAddRightCopyStmt3, pointAddRightCopyStmt4, pointAddRightCopyStmt5,
       pointAddRightCopyStmt6] := by
+  rfl
+
+def pointAddXEqCondition : Expr Op :=
+  match pointAddStmt5 with
+  | .cond condition _ => condition
+  | _ => .lit (.number 0)
+
+def pointAddXEqBody : Block Op :=
+  match pointAddStmt5 with
+  | .cond _ body => body
+  | _ => []
+
+theorem pointAddStmt5_eq : pointAddStmt5 =
+    .cond pointAddXEqCondition pointAddXEqBody := by
+  rfl
+
+theorem pointAddXEqCondition_eq : pointAddXEqCondition =
+    .call "\x003"
+      [.builtin .mload [.builtin .mload [.lit (.number 1568)]],
+       .builtin .mload
+        [.builtin .add
+          [.builtin .mload [.lit (.number 1568)], .lit (.number 32)]],
+       .builtin .mload [.builtin .mload [.lit (.number 1600)]],
+       .builtin .mload
+        [.builtin .add
+          [.builtin .mload [.lit (.number 1600)], .lit (.number 32)]]] := by
   rfl
 
 theorem pointAddLeftInfinityBody_eq : pointAddLeftInfinityBody =
