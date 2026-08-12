@@ -1,0 +1,10 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainFiniteDispatcherLawful
+
+set_option warningAsError true
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check mainFiniteDispatcher_double_returned_add
+#check mainFiniteDispatcher_unequal_returned_add
+#check mainFiniteDispatcher_opposite_returned_add
+#check mainFiniteDispatcher_zeroY_returned_add

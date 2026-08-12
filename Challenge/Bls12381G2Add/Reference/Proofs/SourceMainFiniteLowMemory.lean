@@ -78,7 +78,7 @@ theorem mainAfterDoubleXEq2_fp2At_low (yst : EvmState) (ptr : U256)
   (mainAfterDoubleXEq2_fp2At yst ptr).trans
     (mainDoubleFinalState_fp2At_low yst ptr hptrEnd hptrLow)
 
-theorem mainUnequalState0_fp2At_low (yst : EvmState) (ptr : U256)
+theorem mainFiniteUnequalState0_fp2At_low (yst : EvmState) (ptr : U256)
     (hptrEnd : ptr.toNat + 96 < 2 ^ 256)
     (hptrLow : ptr.toNat + 128 ≤ 1024) :
     fp2At (mainUnequalState0 yst) ptr = fp2At (mainValidatedState yst) ptr := by
@@ -94,7 +94,7 @@ theorem mainUnequalState1_fp2At_low (yst : EvmState) (ptr : U256)
   rw [mainUnequalState1]
   exact (fp2SubFinalState_fp2At_before_out _ _ _ _ _ hptrEnd
     (by bv_omega) (by decide)).trans
-      (mainUnequalState0_fp2At_low yst ptr hptrEnd hptrLow)
+      (mainFiniteUnequalState0_fp2At_low yst ptr hptrEnd hptrLow)
 
 theorem mainUnequalState2_fp2At_low (yst : EvmState) (ptr : U256)
     (hptrEnd : ptr.toNat + 96 < 2 ^ 256)

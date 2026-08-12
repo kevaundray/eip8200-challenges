@@ -11,7 +11,7 @@ open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 #check mainDoubleState4_fp2At_low
 #check mainDoubleFinalState_fp2At_low
 #check mainAfterDoubleXEq2_fp2At_low
-#check mainUnequalState0_fp2At_low
+#check mainFiniteUnequalState0_fp2At_low
 #check mainUnequalState1_fp2At_low
 #check mainUnequalState2_fp2At_low
 #check mainUnequalFinalState_fp2At_low
