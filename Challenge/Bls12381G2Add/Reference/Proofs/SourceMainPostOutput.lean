@@ -81,6 +81,57 @@ private theorem wordBytes_fp2_eq_encodeFp2 {a : Fp2.Repr}
           rw [List.append_assoc]
     _ = _ := congrArg₂ (· ++ ·) h0 h1
 
+private theorem readBytes_eq_wordBytes (memory : Nat → UInt8) (start : Nat) :
+    readBytes memory start 32 = wordBytes (loadWord memory start).toNat := by
+  have hrestore : readBytes memory start 32 =
+      readBytes (storeWord memory start (loadWord memory start)) start 32 := by
+    rw [← YulEvmCompiler.Optimizer.ReuseValues.wordBytes_loadWord memory start,
+      ← YulEvmCompiler.Optimizer.ReuseValues.wordBytes_loadWord
+        (storeWord memory start (loadWord memory start)) start,
+      YulEvmCompiler.Optimizer.MemorySpillStateSound.loadWord_storeWord]
+  rw [hrestore, readBytes_storeWord_eq_wordBytes]
+
+private theorem readBytes_fp2At_eq_encodeFp2 (st : EvmState) (ptr : U256)
+    (hptr : ptr.toNat + 96 < 2 ^ 256)
+    (ha : Fp2.Canonical (fp2At st ptr)) :
+    readBytes st.memory ptr.toNat 128 =
+      (Codec.encodeFp2 (Fp2.toField (fp2At st ptr))).toList := by
+  rw [Challenge.EvmProof.ModexpMemory.readBytes_add _ ptr.toNat 32 96,
+    Challenge.EvmProof.ModexpMemory.readBytes_add _ (ptr.toNat + 32) 32 64,
+    Challenge.EvmProof.ModexpMemory.readBytes_add _ (ptr.toNat + 64) 32 32,
+    readBytes_eq_wordBytes, readBytes_eq_wordBytes,
+    readBytes_eq_wordBytes, readBytes_eq_wordBytes]
+  have h1 : (ptr + BitVec.ofNat 256 32).toNat = ptr.toNat + 32 := by
+    bv_omega
+  have h2 : (ptr + BitVec.ofNat 256 64).toNat = ptr.toNat + 64 := by
+    bv_omega
+  have h3 : (ptr + BitVec.ofNat 256 96).toNat = ptr.toNat + 96 := by
+    bv_omega
+  simpa only [fp2At, YulEvmCompiler.conv_toNat, h1, h2, h3,
+    List.append_assoc] using wordBytes_fp2_eq_encodeFp2 ha
+
+/-- A canonical affine point in the first 256 memory bytes is already in the
+exact EIP-2537 G2 wire encoding.  Identity branches consume this opaque
+boundary instead of expanding eight memory words. -/
+theorem readBytes_point_eq_encodeG2 (st : EvmState)
+    (hx : Fp2.Canonical (fp2At st 0))
+    (hy : Fp2.Canonical (fp2At st 128)) :
+    readBytes st.memory 0 256 =
+      (Codec.encodeG2 (.affine (Fp2.toField (fp2At st 0))
+        (Fp2.toField (fp2At st 128)))).toList := by
+  rw [Challenge.EvmProof.ModexpMemory.readBytes_add _ 0 128 128]
+  have hxbytes := readBytes_fp2At_eq_encodeFp2 st 0 (by decide) hx
+  have hybytes := readBytes_fp2At_eq_encodeFp2 st 128 (by decide) hy
+  change readBytes st.memory 0 128 = _ at hxbytes
+  change readBytes st.memory 128 128 = _ at hybytes
+  rw [hxbytes, hybytes]
+  change _ = (Codec.encodeFp2 (Fp2.toField (fp2At st 0)) ++
+    Codec.encodeFp2 (Fp2.toField (fp2At st 128))).toList
+  conv_rhs => rw [YulEvmCompiler.ByteArray.toList_eq_data]
+  rw [ByteArray.data_append, Array.toList_append]
+  rw [YulEvmCompiler.ByteArray.toList_eq_data,
+    YulEvmCompiler.ByteArray.toList_eq_data]
+
 private theorem mainPostStoredState_readOutput (st : EvmState) :
     readBytes (mainPostStoredState st).memory 0 256 =
       wordBytes (loadWord (mainPostState5 st).memory 2688).toNat ++

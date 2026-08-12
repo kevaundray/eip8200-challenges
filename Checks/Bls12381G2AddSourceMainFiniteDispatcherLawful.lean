@@ -8,3 +8,4 @@ open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 #check mainFiniteDispatcher_unequal_returned_add
 #check mainFiniteDispatcher_opposite_returned_add
 #check mainFiniteDispatcher_zeroY_returned_add
+#check readBytes_point_eq_encodeG2
