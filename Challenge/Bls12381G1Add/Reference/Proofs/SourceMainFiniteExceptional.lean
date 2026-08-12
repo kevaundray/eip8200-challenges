@@ -70,6 +70,17 @@ private def fpZeroLoads (hi lo : Nat) : Expr Op :=
 @[simp] private theorem afterTwoLoads_memory (yst : EvmState)
     (hi lo : Nat) : (afterTwoLoads yst hi lo).memory = yst.memory := rfl
 
+/-- The finite exceptional tests only read memory, so every decoded word is
+preserved for the arithmetic branch that follows them. -/
+theorem mainFiniteYZeroArgsState_loadWord (yst : EvmState) (offset : Nat)
+    (hend : offset + 32 ≤ 1024) :
+    loadWord (mainFiniteYZeroArgsState yst).memory offset =
+      mainDecodedWord yst offset := by
+  rw [mainFiniteYZeroArgsState, afterTwoLoads_memory,
+    mainFiniteYEqArgsState, afterFourLoads_memory,
+    mainFiniteXEqArgsState, afterFourLoads_memory]
+  exact mainValidatedState_loadWord yst offset hend
+
 private theorem eval_fpEqLoads
     (funs : FunEnv Challenge.EvmProof.modexpExec.toDialect)
     (V : VEnv Challenge.EvmProof.modexpExec.toDialect) (yst : EvmState)

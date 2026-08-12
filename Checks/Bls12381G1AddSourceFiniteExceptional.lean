@@ -72,6 +72,11 @@ example (x : Challenge.Bls12381.ProofSupport.G1Affine.Field) :
       (.affine x 0) = .infinity :=
   mainFiniteZeroY_affineInfinity x
 
+example (yst : EvmState) (offset : Nat) (hend : offset + 32 ≤ 1024) :
+    loadWord (mainFiniteYZeroArgsState yst).memory offset =
+      mainDecodedWord yst offset :=
+  mainFiniteYZeroArgsState_loadWord yst offset hend
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainFiniteOpposite_return' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
@@ -129,5 +134,10 @@ example (x : Challenge.Bls12381.ProofSupport.G1Affine.Field) :
  Quot.sound] -/
 #guard_msgs in
 #print axioms mainFiniteZeroY_affineInfinity
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainFiniteYZeroArgsState_loadWord' depends on axioms: [propext,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms mainFiniteYZeroArgsState_loadWord
 
 end Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
