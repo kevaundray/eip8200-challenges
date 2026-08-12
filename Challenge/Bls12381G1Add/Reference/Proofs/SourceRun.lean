@@ -1,0 +1,251 @@
+import Challenge.Bls12381G1Add.Reference.Proofs.SourceMainFull
+
+set_option warningAsError true
+
+/-! # Complete frozen G1ADD source runs -/
+
+namespace Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
+
+open YulSemantics YulSemantics.EVM
+open Challenge.Bls12381.ProofSupport
+
+/-- The executable top-level body after its thirteen function definitions. -/
+def mainValidBody : Block Op := Compilation.referenceCompiledBlock.drop 13
+
+theorem mainValidBody_eq : mainValidBody =
+    mainDecodePrefix ++ mainPointScope :: mainFiniteTopBody := by
+  rfl
+
+private theorem step_append_normal
+    {funs V st pre Vmid stmid suffix Vend stend outcome}
+    (hprefix : ExecStmts Challenge.EvmProof.modexpExec.toDialect funs V st
+      pre Vmid stmid .normal)
+    (hsuffix : ExecStmts Challenge.EvmProof.modexpExec.toDialect funs Vmid stmid
+      suffix Vend stend outcome) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect funs V st
+      (pre ++ suffix) Vend stend outcome := by
+  induction pre generalizing V st Vmid stmid with
+  | nil =>
+      cases hprefix
+      simpa using hsuffix
+  | cons head rest ih =>
+      cases hprefix with
+      | seqCons hhead htail =>
+        simpa using Step.seqCons hhead (ih htail hsuffix)
+      | seqStop _ hnot => exact (hnot rfl).elim
+
+private theorem step_mainValid_double (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst = 0)
+    (hxeq : mainFiniteXEqValue yst = 1)
+    (hyeq : mainFiniteYEqValue yst ≠ 0)
+    (hyzero : mainFiniteYZeroValue yst = 0)
+    (hx : Fp.Canonical (mainFiniteDoubleX yst))
+    (hy : Fp.Canonical (mainFiniteDoubleY yst)) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody
+      (mainFinitePostEnv5 yst (mainFiniteDoubleResultEnv yst)
+        (mainFiniteDoublePostState yst) (mainFiniteDoubleLambdaWords yst))
+      (mainFinitePostReturnState yst (mainFiniteDoublePostState yst)
+        (mainFiniteDoubleLambdaWords yst)) .halt := by
+  rw [mainValidBody_eq]
+  have hdecode := step_mainDecodePrefix_success yst hsize hpadding hcanonical
+  have hscope := step_mainPointScope_finite yst hcurve1 hcurve2 hfirst hsecond
+  have htail := step_mainPointDispatcher_double yst hxeq hyeq hyzero hx hy
+  exact step_append_normal hdecode (Step.seqCons hscope htail)
+
+private theorem step_mainValid_of_finiteTail (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst = 0)
+    {Vend : VEnv Challenge.EvmProof.modexpExec.toDialect}
+    {stend : EvmState}
+    (htail : ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns
+      [] (mainValidatedState yst) mainFiniteTopBody Vend stend .halt) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody Vend stend .halt := by
+  rw [mainValidBody_eq]
+  exact step_append_normal
+    (step_mainDecodePrefix_success yst hsize hpadding hcanonical)
+    (Step.seqCons
+      (step_mainPointScope_finite yst hcurve1 hcurve2 hfirst hsecond) htail)
+
+private theorem step_mainValid_unequal (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst = 0)
+    (hxeq : mainFiniteXEqValue yst = 0)
+    (hx1 : Fp.Canonical (mainFiniteUnequalX1 yst))
+    (hx2 : Fp.Canonical (mainFiniteUnequalX2 yst)) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody
+      (mainFinitePostEnv5 yst (mainFiniteUnequalResultEnv yst)
+        (mainFiniteUnequalFinalState yst) (mainFiniteUnequalLambdaWords yst))
+      (mainFinitePostReturnState yst (mainFiniteUnequalFinalState yst)
+        (mainFiniteUnequalLambdaWords yst)) .halt :=
+  step_mainValid_of_finiteTail yst hsize hpadding hcanonical hcurve1 hcurve2
+    hfirst hsecond (step_mainPointDispatcher_unequal yst hxeq hx1 hx2)
+
+private theorem step_mainValid_opposite (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst = 0)
+    (hxeq : mainFiniteXEqValue yst = 1)
+    (hyeq : mainFiniteYEqValue yst = 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody (mainFiniteEnv yst)
+      (mainFiniteOppositeReturnState yst) .halt :=
+  step_mainValid_of_finiteTail yst hsize hpadding hcanonical hcurve1 hcurve2
+    hfirst hsecond (step_mainPointDispatcher_opposite yst hxeq hyeq)
+
+private theorem step_mainValid_zeroY (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst = 0)
+    (hxeq : mainFiniteXEqValue yst = 1)
+    (hyeq : mainFiniteYEqValue yst ≠ 0)
+    (hyzero : mainFiniteYZeroValue yst ≠ 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody (mainFiniteEnv yst)
+      (mainFiniteZeroYReturnState yst) .halt :=
+  step_mainValid_of_finiteTail yst hsize hpadding hcanonical hcurve1 hcurve2
+    hfirst hsecond
+      (step_mainPointDispatcher_zeroY yst hxeq hyeq hyzero)
+
+private def isFunctionDefinition : Stmt Op → Bool
+  | .funDef .. => true
+  | _ => false
+
+private theorem step_function_definitions
+    (defs : Block Op) (hdefs : defs.all isFunctionDefinition = true)
+    (funs : FunEnv Challenge.EvmProof.modexpExec.toDialect)
+    (V : VEnv Challenge.EvmProof.modexpExec.toDialect) (yst : EvmState) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect funs V yst defs
+      V yst .normal := by
+  induction defs with
+  | nil => exact Step.seqNil
+  | cons head tail ih =>
+      have hparts : isFunctionDefinition head = true ∧
+          tail.all isFunctionDefinition = true := by
+        simpa using hdefs
+      cases head <;>
+        simp only [isFunctionDefinition, Bool.false_eq_true] at hparts
+      all_goals try { exact False.elim hparts.1 }
+      case funDef => exact Step.seqCons Step.funDef (ih hparts.2)
+
+private theorem reference_function_prefix :
+    (Compilation.referenceCompiledBlock.take 13).all
+      isFunctionDefinition = true := by
+  rfl
+
+private theorem reference_decompose : Compilation.referenceCompiledBlock =
+    Compilation.referenceCompiledBlock.take 13 ++ mainValidBody := by
+  exact (List.take_append_drop 13 Compilation.referenceCompiledBlock).symm
+
+private theorem run_of_mainValid (yst stend : EvmState)
+    {Vend : VEnv Challenge.EvmProof.modexpExec.toDialect}
+    (hmain : ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody Vend stend .halt) :
+    Run Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst [] stend .halt := by
+  have hdefs := step_function_definitions
+    (Compilation.referenceCompiledBlock.take 13) reference_function_prefix
+    mainFuns [] yst
+  have hbody : ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      Compilation.referenceCompiledBlock Vend stend .halt := by
+    rw [reference_decompose]
+    exact step_append_normal hdefs hmain
+  have hblock := Step.block
+    (D := Challenge.EvmProof.modexpExec.toDialect) hbody
+  simpa [Run, mainFuns, restore] using hblock
+
+/-- The exact frozen source runs through the complete nonexceptional doubling
+path and halts with the already-refined canonical output state. -/
+theorem run_main_double (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst = 0)
+    (hxeq : mainFiniteXEqValue yst = 1)
+    (hyeq : mainFiniteYEqValue yst ≠ 0)
+    (hyzero : mainFiniteYZeroValue yst = 0)
+    (hx : Fp.Canonical (mainFiniteDoubleX yst))
+    (hy : Fp.Canonical (mainFiniteDoubleY yst)) :
+    Run Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainFinitePostReturnState yst (mainFiniteDoublePostState yst)
+        (mainFiniteDoubleLambdaWords yst)) .halt := by
+  have hmain := step_mainValid_double yst hsize hpadding hcanonical
+    hcurve1 hcurve2 hfirst hsecond hxeq hyeq hyzero hx hy
+  exact run_of_mainValid yst _ hmain
+
+/-- The exact frozen source runs through the unequal-x affine branch. -/
+theorem run_main_unequal (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst = 0)
+    (hxeq : mainFiniteXEqValue yst = 0)
+    (hx1 : Fp.Canonical (mainFiniteUnequalX1 yst))
+    (hx2 : Fp.Canonical (mainFiniteUnequalX2 yst)) :
+    Run Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainFinitePostReturnState yst (mainFiniteUnequalFinalState yst)
+        (mainFiniteUnequalLambdaWords yst)) .halt :=
+  run_of_mainValid yst _ (step_mainValid_unequal yst hsize hpadding
+    hcanonical hcurve1 hcurve2 hfirst hsecond hxeq hx1 hx2)
+
+/-- The exact frozen source returns infinity for opposite finite points. -/
+theorem run_main_opposite (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst = 0)
+    (hxeq : mainFiniteXEqValue yst = 1)
+    (hyeq : mainFiniteYEqValue yst = 0) :
+    Run Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainFiniteOppositeReturnState yst) .halt :=
+  run_of_mainValid yst _ (step_mainValid_opposite yst hsize hpadding
+    hcanonical hcurve1 hcurve2 hfirst hsecond hxeq hyeq)
+
+/-- The exact frozen source returns infinity for doubling at `y = 0`. -/
+theorem run_main_zeroY (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst = 0)
+    (hxeq : mainFiniteXEqValue yst = 1)
+    (hyeq : mainFiniteYEqValue yst ≠ 0)
+    (hyzero : mainFiniteYZeroValue yst ≠ 0) :
+    Run Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainFiniteZeroYReturnState yst) .halt :=
+  run_of_mainValid yst _ (step_mainValid_zeroY yst hsize hpadding
+    hcanonical hcurve1 hcurve2 hfirst hsecond hxeq hyeq hyzero)
+
+end Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
