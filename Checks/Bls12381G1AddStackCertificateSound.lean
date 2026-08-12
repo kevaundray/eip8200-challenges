@@ -1,4 +1,4 @@
-import Challenge.Bls12381G1Add.Reference.Proofs.StackCertificateSound
+import Challenge.Bls12381G1Add.Reference.Proofs.StackCertificateChunks
 
 set_option warningAsError true
 

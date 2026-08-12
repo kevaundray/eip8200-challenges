@@ -237,12 +237,19 @@ separate memory baseline.
 
 Completed on 2026-08-12: the common compact checker and soundness bridge now
 live in `Challenge.EvmProof.StackCertificate`, while generated data and bounded
-chunks remain challenge-local. One shared production file was added; the two
-challenge core/soundness files remain as thin name-preserving instantiations.
+chunks remain challenge-local. One shared production file was added. The two
+challenge core files remain as the thin instantiation boundary used by every
+bounded chunk; the two separate `StackCertificateSound.lean` adapters were
+subsequently folded into `StackCertificateChunks.lean`, which already owned
+the aggregate Boolean certificate proof.
 Certificate chunk and soundness leaf RSS was neutral or slightly lower in
-repeated warm measurements. Together with the completed check cleanup, the
-overall repository change still removes 130 files net from the reviewed ADD
-surface.
+repeated warm measurements. The consolidated aggregate boundaries measured
+2,458,036 KiB for G1ADD and 2,127,740 KiB for G2ADD and preserved the existing
+axiom guards. This removes two more production files without merging the
+100-entry decision chunks. The public roots and all retained checks then built
+successfully: 2,342 G1ADD jobs and 2,534 G2ADD jobs. Together with the completed
+check cleanup, the overall repository change removes 132 files net from the
+reviewed ADD surface.
 
 The practical sequence is therefore:
 

@@ -319,6 +319,14 @@ were already in final-correctness closure. Completed-ADD checks now total 89
 CI-shaped G2ADD root plus every remaining check passed 2,534 jobs at
 2,732,800 KiB peak RSS; policy and cache-policy tests also passed.
 
+**Follow-up production consolidation.** After Task 8 made certificate
+soundness generic, each challenge's 72-line `StackCertificateSound.lean`
+became a shallow adapter above `StackCertificateChunks.lean`. The bridge was
+moved into that existing aggregate boundary and both adapters were removed.
+This reduced the reachable counts to 114 G1ADD and 228 G2ADD modules including
+their top-level entry points, while retaining every bounded certificate chunk
+and every staged source/arithmetic module.
+
 ## Task 8: Extract the generic compact certificate checker
 
 Baseline one G1ADD and one G2ADD certificate chunk plus final soundness. Move
@@ -369,6 +377,14 @@ policy tests, and both full challenge gates passed. The post-change G1ADD gate
 built 2,343 jobs in 1:23.26 at 3,375,136 KiB; G2ADD built 2,535 jobs in 2:50.47
 at 4,361,416 KiB. These broad rebuilds are verification figures, not leaf A/B
 performance claims.
+
+The subsequent adapter consolidation retained the same theorem names and
+axiom guards. Aggregate-plus-check builds peaked at 2,458,036 KiB for G1ADD and
+2,127,740 KiB for G2ADD; both compiler-correctness consumers rebuilt. The
+separate soundness files were therefore deleted, but the core instantiation,
+generated data, and bounded decision chunks remain separate compilation
+units. The public roots and all retained checks subsequently passed 2,342
+G1ADD jobs and 2,534 G2ADD jobs.
 
 ## Stop conditions
 

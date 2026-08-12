@@ -629,6 +629,15 @@ certificate chunks and the staged low-memory arithmetic paths that replaced
 14-20 GiB monoliths. File-count cleanup must distinguish disposable test
 wrappers from semantic `.olean` firebreaks.
 
+A later certificate-boundary consolidation removed one production module per
+completed challenge. The count is now 114 G1ADD and 228 G2ADD modules when the
+top-level challenge entry point is included (113 and 227 below the respective
+challenge directories). These were not arithmetic or execution firebreaks:
+each deleted `StackCertificateSound.lean` merely imported the already
+aggregated chunk proof and instantiated the generic soundness API. Moving that
+unchanged bridge into `StackCertificateChunks.lean` preserves all individual
+chunk `.olean` barriers.
+
 ## Certificate lessons
 
 A certificate that stores the complete remaining program suffix at every
@@ -687,6 +696,26 @@ Warm before/after leaves were memory-neutral. G1 chunk 0 moved from
 3,970,804 KiB. G1/G2 soundness moved from 2,444,200/2,111,160 KiB to
 2,410,840/2,062,832 KiB. The shared axiom footprints match the old adapters.
 Full shared, G1ADD, and G2ADD gates passed after extraction.
+
+### Removing shallow certificate adapters
+
+After the shared extraction, the aggregate `StackCertificateChunks.lean`
+module already imported every bounded chunk and proved
+`referenceStackLengthEntryChecks`. The remaining soundness module contained
+only 72 lines that instantiated shared theorems from that aggregate result.
+It was therefore safe to move those declarations into the aggregate module
+and point compiler correctness and trust checks at it directly.
+
+The characterization checks were changed first and failed on the missing
+soundness names. After the declarations moved, both checks passed with their
+exact axiom messages unchanged. Single-job aggregate-plus-check builds peaked
+at 2,458,036 KiB for G1ADD and 2,127,740 KiB for G2ADD. Compiler correctness
+also rebuilt successfully, followed by the public roots and every retained
+check (2,342 G1ADD jobs and 2,534 G2ADD jobs). This is the useful deletion
+rule: remove a module when it is only a shallow adapter above an already
+aggregated opaque result.
+Do not use this result to justify concatenating the bounded data/decision
+chunks that feed that result.
 
 ## Measurement workflow
 
