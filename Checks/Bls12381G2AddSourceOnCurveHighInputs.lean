@@ -1,0 +1,6 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceOnCurveHighInputs
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check fp2MulLeftInput_eq_fp2At_of_high
+#check fp2MulScheduledLeft_eq_of_high_before_out
