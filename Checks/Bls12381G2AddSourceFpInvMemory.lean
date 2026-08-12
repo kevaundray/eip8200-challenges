@@ -1,0 +1,6 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceFpInvMemory
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check fpInvFinalState_readBytes_after_scratch
+#check fpInvFinalState_loadWord_after_scratch
