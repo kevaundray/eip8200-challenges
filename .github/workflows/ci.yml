@@ -195,6 +195,88 @@ jobs:
             exit 1
           fi
 
+  # G2ADD uses a proof-friendly direct compiler boundary.  The ordinary Yul
+  # optimizer emits a different 3,339-byte program, so freshness is checked by
+  # the executable Lean guard for the proved 2,788-byte runtime below.
+  bls12381-g2add:
+    name: BLS12-381 G2ADD proofs and frozen direct artifact
+    needs: shared-lean
+    runs-on: warp-ubuntu-2404-x64-32x
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Restore pinned packages
+        uses: actions/cache/restore@v5
+        with:
+          path: .lake/packages
+          key: ${{ needs.shared-lean.outputs.package-key }}
+          fail-on-cache-miss: true
+
+      - name: Restore shared project build
+        uses: actions/cache/restore@v5
+        with:
+          path: .lake/build
+          key: ${{ needs.shared-lean.outputs.shared-key }}
+          fail-on-cache-miss: true
+
+      # Lake does not reliably track `include_str` inputs.  Keep the source,
+      # frozen hex, and proved byte-list representation ahead of the Lean hash
+      # in both the exact key and restore namespace.
+      - name: Compute G2ADD cache keys
+        id: g2add-cache-keys
+        env:
+          ARTIFACT_HASH: ${{ hashFiles('Challenge/Bls12381G2Add/Reference/reference.yul', 'Challenge/Bls12381G2Add/Reference/reference.hex', 'Challenge/Bls12381G2Add/Reference/FrozenBytecode.lean') }}
+          LEAN_HASH: ${{ hashFiles('Challenge/Bls12381G2Add.lean', 'Challenge/Bls12381G2Add/**/*.lean', 'Checks/Bls12381G2Add*.lean') }}
+        run: |
+          prefix="project-bls12381-g2add-v1-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-${ARTIFACT_HASH}"
+          echo "key=${prefix}-${LEAN_HASH}" >> "$GITHUB_OUTPUT"
+          echo "restore-prefix=${prefix}-" >> "$GITHUB_OUTPUT"
+
+      - name: Cache G2ADD project build
+        uses: actions/cache@v5
+        with:
+          path: .lake/build
+          key: ${{ steps.g2add-cache-keys.outputs.key }}
+          restore-keys: |
+            ${{ steps.g2add-cache-keys.outputs.restore-prefix }}
+
+      - name: Set up Lean
+        uses: leanprover/lean-action@v1
+        with:
+          use-mathlib-cache: "false"
+          build: "false"
+          test: "false"
+          lint: "false"
+          use-github-cache: "false"
+
+      - name: Verify G2ADD soundness
+        run: |
+          if grep -rnE --include='*.lean' \
+              '(^|[^[:alnum:]_])(sorry|admit|native_decide|CertifiedArtifact)([^[:alnum:]_]|$)|^[[:space:]]*axiom[[:space:]]|set_option[[:space:]]+maxHeartbeats[[:space:]]+0' \
+              Challenge/Bls12381G2Add Challenge/Bls12381G2Add.lean \
+              Checks/Bls12381G2Add*.lean; then
+            echo "::error::found a forbidden G2ADD proof mechanism"
+            exit 1
+          fi
+
+      - name: Build every G2ADD proof and axiom guard
+        run: |
+          mapfile -t checks < <(
+            find Checks -maxdepth 1 -type f -name 'Bls12381G2Add*.lean' \
+              -printf '%f\n' | sort | \
+              sed -e 's/\.lean$//' -e 's/^/+Checks./'
+          )
+          lake -Kjobs=1 build +Challenge.Bls12381G2Add:c.o "${checks[@]}"
+
+      - name: Verify exact 2,788-byte direct-compiler artifact
+        run: |
+          # This check evaluates `referenceBytecode?` directly and guards its
+          # equality with both FrozenBytecode.lean and reference.hex.  Do not
+          # replace it with yulc, whose optimized G2ADD artifact is 3,339 bytes.
+          lake -Kjobs=1 env lean Checks/Bls12381G2AddReference.lean
+
   # Each matrix entry has its own job and source-keyed project cache. A RIPEMD
   # submission therefore neither rebuilds nor invalidates SHA-256 or MODEXP.
   challenge:
