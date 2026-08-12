@@ -47,8 +47,32 @@ private def pointAddDoubleXSubLeftBodyFinalEnv (yst : EvmState)
 
 def pointAddDoubleXSubLeftRepairedEnv (yst : EvmState)
     (out left right : U256) : VEnv Challenge.EvmProof.modexpExec.toDialect :=
-  restore (pointAddDoubleXSubLeftRawEnv yst out left right)
-    (pointAddDoubleXSubLeftBodyFinalEnv yst out left right)
+  ["fc0_28", "fc0_29"].zip
+    [(pointAddDoubleXSubLeftRepaired yst out left right).1,
+      (pointAddDoubleXSubLeftRepaired yst out left right).2] ++
+    pointAddDoubleX3Env yst out left right
+
+theorem pointAddDoubleXSubLeftRepairedEnv_hi (yst : EvmState)
+    (out left right : U256) :
+    VEnv.get (pointAddDoubleXSubLeftRepairedEnv yst out left right) "fc0_28" =
+      some (pointAddDoubleXSubLeftRepaired yst out left right).1 := by
+  rfl
+
+theorem pointAddDoubleXSubLeftRepairedEnv_lo (yst : EvmState)
+    (out left right : U256) :
+    VEnv.get (pointAddDoubleXSubLeftRepairedEnv yst out left right) "fc0_29" =
+      some (pointAddDoubleXSubLeftRepaired yst out left right).2 := by
+  rfl
+
+private theorem restore_pointAddDoubleXSubLeftBodyFinalEnv
+    (yst : EvmState) (out left right : U256) :
+    restore (pointAddDoubleXSubLeftRawEnv yst out left right)
+      (pointAddDoubleXSubLeftBodyFinalEnv yst out left right) =
+    pointAddDoubleXSubLeftRepairedEnv yst out left right := by
+  simp [pointAddDoubleXSubLeftBodyFinalEnv,
+    pointAddDoubleXSubLeftHighEnv, pointAddDoubleXSubLeftTempEnv,
+    pointAddDoubleXSubLeftRawEnv, pointAddDoubleXSubLeftRepairedEnv,
+    restore, VEnv.set]
 
 private theorem step_repairBody (yst : EvmState) (out left right : U256) :
     ExecStmts Challenge.EvmProof.modexpExec.toDialect
@@ -220,6 +244,8 @@ theorem step_pointAddDoubleXSubLeftRepair (yst : EvmState)
     (body := pointAddDoubleXSubLeftRepairBody)
     (step_repairBody yst out left right)
   exact Step.ifTrue (step_pointAddDoubleXSubLeftRepairCondition yst out left right)
-    hrepair (by simpa [pointAddDoubleXSubLeftRepairedEnv] using hbody)
+    hrepair (by
+      rw [restore_pointAddDoubleXSubLeftBodyFinalEnv] at hbody
+      exact hbody)
 
 end Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics

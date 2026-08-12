@@ -52,6 +52,18 @@ def pointAddDoubleXSubLeftRawEnv (yst : EvmState) (out left right : U256) :
       (pointAddDoubleXSubLeftRaw yst out left right).2] ++
     pointAddDoubleX3Env yst out left right
 
+theorem pointAddDoubleXSubLeftRawEnv_hi (yst : EvmState)
+    (out left right : U256) :
+    VEnv.get (pointAddDoubleXSubLeftRawEnv yst out left right) "fc0_28" =
+      some (pointAddDoubleXSubLeftRaw yst out left right).1 := by
+  rfl
+
+theorem pointAddDoubleXSubLeftRawEnv_lo (yst : EvmState)
+    (out left right : U256) :
+    VEnv.get (pointAddDoubleXSubLeftRawEnv yst out left right) "fc0_29" =
+      some (pointAddDoubleXSubLeftRaw yst out left right).2 := by
+  rfl
+
 theorem exec_pointAddDoubleXSubLeftRaw (yst : EvmState)
     (out left right : U256) :
     Interp.execStmts Challenge.EvmProof.modexpExec 70
