@@ -200,6 +200,70 @@ theorem fp2SubScheduledB_eq_after_out (yst : EvmState) (out a b : U256)
         yst out a b) b =
     Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At yst b at hp
   rw [hp]
+
+theorem fp2SubFinalState_canonical_at_out_after (yst : EvmState)
+    (out b : U256)
+    (ha : Challenge.Bls12381.ProofSupport.Fp2.Canonical (fp2At yst out))
+    (hb : Challenge.Bls12381.ProofSupport.Fp2.Canonical (fp2At yst b))
+    (hbEnd : b.toNat + 96 < 2 ^ 256)
+    (hbAfter : out.toNat + 64 ≤ b.toNat)
+    (houtEnd : out.toNat + 96 < 2 ^ 256) :
+    Challenge.Bls12381.ProofSupport.Fp2.Canonical
+      (fp2At (fp2SubFinalState yst out out b) out) := by
+  change Challenge.Bls12381.ProofSupport.Fp2.Canonical
+    (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubFinalState
+        yst out out b) out)
+  rw [Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubFinalState_output
+    _ _ _ _ houtEnd]
+  apply fp2SubResult_canonical
+  · rw [fp2SubScheduledA_eq_at_out _ _ _ houtEnd]
+    exact ha
+  · have hB := fp2SubScheduledB_eq_after_out yst out out b
+      hbEnd hbAfter (by bv_omega)
+    change Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubScheduledB
+        yst out out b =
+      Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At yst b at hB
+    rw [hB]
+    exact hb
+
+theorem fp2SubFinalState_toLawful_at_out_after (yst : EvmState)
+    (out b : U256)
+    (ha : Challenge.Bls12381.ProofSupport.Fp2.Canonical (fp2At yst out))
+    (hb : Challenge.Bls12381.ProofSupport.Fp2.Canonical (fp2At yst b))
+    (hbEnd : b.toNat + 96 < 2 ^ 256)
+    (hbAfter : out.toNat + 64 ≤ b.toNat)
+    (houtEnd : out.toNat + 96 < 2 ^ 256) :
+    Challenge.Bls12381.ProofSupport.Fp2.toLawful
+        (fp2At (fp2SubFinalState yst out out b) out) =
+      Challenge.Bls12381.ProofSupport.Fp2.toLawful (fp2At yst out) -
+        Challenge.Bls12381.ProofSupport.Fp2.toLawful (fp2At yst b) := by
+  have hA := fp2SubScheduledA_eq_at_out yst out b houtEnd
+  have hB := fp2SubScheduledB_eq_after_out yst out out b hbEnd hbAfter
+    (by bv_omega)
+  change Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubScheduledB
+      yst out out b =
+    Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At yst b at hB
+  have hca : Challenge.Bls12381.ProofSupport.Fp2.Canonical
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubScheduledA
+        yst out out b) := by
+    rw [hA]
+    exact ha
+  have hcb : Challenge.Bls12381.ProofSupport.Fp2.Canonical
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubScheduledB
+        yst out out b) := by
+    rw [hB]
+    change Challenge.Bls12381.ProofSupport.Fp2.Canonical (fp2At yst b)
+    exact hb
+  change Challenge.Bls12381.ProofSupport.Fp2.toLawful
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At
+        (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubFinalState
+          yst out out b) out) = _
+  rw [Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubFinalState_output
+      _ _ _ _ houtEnd,
+    fp2SubResult_eq_subSource,
+    Challenge.Bls12381.ProofSupport.Fp2.toLawful_subSource hca hcb,
+    hA, hB]
 private theorem fp2MulAfterRealStores_loadWord_after_out
     (yst : EvmState) (out a b : U256) (offset : Nat)
     (hstart : 1664 ≤ offset) (hafter : out.toNat + 64 ≤ offset)
