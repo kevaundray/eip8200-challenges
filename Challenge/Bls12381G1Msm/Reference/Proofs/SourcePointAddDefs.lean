@@ -206,6 +206,39 @@ theorem pointAddDoubleNum3Expr_eq : pointAddDoubleNum3Expr =
       [.var "\x00114", .var "\x00115", .var "\x00112", .var "\x00113"] := by
   rfl
 
+def pointAddDoubleDenExpr : Expr Op :=
+  match pointAddDoubleDenStmt with
+  | .letDecl _ (some expr) => expr
+  | _ => .lit (.number 0)
+
+def pointAddDoubleDenArgs : List (Expr Op) :=
+  match pointAddDoubleDenExpr with
+  | .call _ args => args
+  | _ => []
+
+theorem pointAddDoubleDenStmt_eq : pointAddDoubleDenStmt =
+    .letDecl ["\x00116", "\x00117"] (some pointAddDoubleDenExpr) := by
+  rfl
+
+theorem pointAddDoubleDenExpr_eq : pointAddDoubleDenExpr =
+    .call "\x004" pointAddDoubleDenArgs := by
+  rfl
+
+theorem pointAddDoubleDenArgs_eq : pointAddDoubleDenArgs =
+    [.builtin .mload
+      [.builtin .add
+        [.builtin .mload [.lit (.number 1568)], .lit (.number 64)]],
+     .builtin .mload
+      [.builtin .add
+        [.builtin .mload [.lit (.number 1568)], .lit (.number 96)]],
+     .builtin .mload
+      [.builtin .add
+        [.builtin .mload [.lit (.number 1568)], .lit (.number 64)]],
+     .builtin .mload
+      [.builtin .add
+        [.builtin .mload [.lit (.number 1568)], .lit (.number 96)]]] := by
+  rfl
+
 def pointAddYSumExpr : Expr Op :=
   match pointAddYSumStmt with
   | .letDecl _ (some expr) => expr
