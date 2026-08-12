@@ -32,13 +32,15 @@ theorem step_pointAddYSum {funs V} (yst : EvmState) (out left right : U256)
     (pointAddFiniteRightYLo yst out left right)
     (step_pointAddYSumArgs yst out left right) hlookup
 
-theorem step_pointAddYSumStmt (yst : EvmState) (out left right : U256) :
-    ExecStmt Challenge.EvmProof.modexpExec.toDialect pointAddBodyFuns
+theorem step_pointAddYSumStmt_of_lookup {funs} (yst : EvmState)
+    (out left right : U256)
+    (hlookup : lookupFun funs "\x004" = some (fpAddDecl, sourceFuns)) :
+    ExecStmt Challenge.EvmProof.modexpExec.toDialect funs
       (pointAddInitialEnv out left right) (pointAddXEqState yst out left right)
       pointAddYSumStmt (pointAddYSumEnv yst out left right)
       (pointAddYSumState yst out left right) .normal := by
   rw [pointAddYSumStmt_eq]
-  change ExecStmt Challenge.EvmProof.modexpExec.toDialect pointAddBodyFuns
+  change ExecStmt Challenge.EvmProof.modexpExec.toDialect funs
     (pointAddInitialEnv out left right) (pointAddXEqState yst out left right)
     _ (["\x00110", "\x00111"].zip
       [(fpAddResult
@@ -54,7 +56,14 @@ theorem step_pointAddYSumStmt (yst : EvmState) (out left right : U256) :
       pointAddInitialEnv out left right)
     (pointAddYSumState yst out left right) .normal
   exact Step.letVal
-    (step_pointAddYSum (funs := pointAddBodyFuns)
-      (V := pointAddInitialEnv out left right) yst out left right (by rfl)) rfl
+    (step_pointAddYSum (funs := funs)
+      (V := pointAddInitialEnv out left right) yst out left right hlookup) rfl
+
+theorem step_pointAddYSumStmt (yst : EvmState) (out left right : U256) :
+    ExecStmt Challenge.EvmProof.modexpExec.toDialect pointAddBodyFuns
+      (pointAddInitialEnv out left right) (pointAddXEqState yst out left right)
+      pointAddYSumStmt (pointAddYSumEnv yst out left right)
+      (pointAddYSumState yst out left right) .normal :=
+  step_pointAddYSumStmt_of_lookup yst out left right (by rfl)
 
 end Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics

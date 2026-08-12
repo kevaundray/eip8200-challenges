@@ -28,25 +28,26 @@ private theorem pointAddYSumEnv_lo (yst : EvmState) (out left right : U256) :
       some (pointAddYSumLo yst out left right) := by
   rfl
 
-theorem step_pointAddYZero (yst : EvmState) (out left right : U256) :
-    EvalExpr Challenge.EvmProof.modexpExec.toDialect pointAddBodyFuns
+theorem step_pointAddYZero_of_lookup {funs} (yst : EvmState) (out left right : U256)
+    (hlookup : lookupFun funs "\x002" = some (fpZeroDecl, sourceFuns)) :
+    EvalExpr Challenge.EvmProof.modexpExec.toDialect funs
       (pointAddYSumEnv yst out left right) (pointAddYSumState yst out left right)
       pointAddYZeroCondition
       (.vals [pointAddYZeroValue yst out left right]
         (pointAddYSumState yst out left right)) := by
-  have hlo : EvalExpr Challenge.EvmProof.modexpExec.toDialect pointAddBodyFuns
+  have hlo : EvalExpr Challenge.EvmProof.modexpExec.toDialect funs
       (pointAddYSumEnv yst out left right) (pointAddYSumState yst out left right)
       (.var "\x00111")
       (.vals [pointAddYSumLo yst out left right]
         (pointAddYSumState yst out left right)) :=
     Step.var (pointAddYSumEnv_lo yst out left right)
-  have hhi : EvalExpr Challenge.EvmProof.modexpExec.toDialect pointAddBodyFuns
+  have hhi : EvalExpr Challenge.EvmProof.modexpExec.toDialect funs
       (pointAddYSumEnv yst out left right) (pointAddYSumState yst out left right)
       (.var "\x00110")
       (.vals [pointAddYSumHi yst out left right]
         (pointAddYSumState yst out left right)) :=
     Step.var (pointAddYSumEnv_hi yst out left right)
-  have hargs : EvalArgs Challenge.EvmProof.modexpExec.toDialect pointAddBodyFuns
+  have hargs : EvalArgs Challenge.EvmProof.modexpExec.toDialect funs
       (pointAddYSumEnv yst out left right) (pointAddYSumState yst out left right)
       [.var "\x00110", .var "\x00111"]
       (.vals [pointAddYSumHi yst out left right,
@@ -54,7 +55,15 @@ theorem step_pointAddYZero (yst : EvmState) (out left right : U256) :
         (pointAddYSumState yst out left right)) :=
     Step.argsCons (Step.argsCons Step.argsNil hlo) hhi
   rw [pointAddYZeroCondition_eq]
-  exact step_fpZero_of_args _ _ hargs (by rfl)
+  exact step_fpZero_of_args _ _ hargs hlookup
+
+theorem step_pointAddYZero (yst : EvmState) (out left right : U256) :
+    EvalExpr Challenge.EvmProof.modexpExec.toDialect pointAddBodyFuns
+      (pointAddYSumEnv yst out left right) (pointAddYSumState yst out left right)
+      pointAddYZeroCondition
+      (.vals [pointAddYZeroValue yst out left right]
+        (pointAddYSumState yst out left right)) :=
+  step_pointAddYZero_of_lookup yst out left right (by rfl)
 
 theorem pointAddYZeroValue_eq_one_iff (yst : EvmState) (out left right : U256) :
     pointAddYZeroValue yst out left right = 1 ↔
