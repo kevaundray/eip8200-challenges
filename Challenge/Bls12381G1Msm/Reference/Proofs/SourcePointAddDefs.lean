@@ -153,6 +153,10 @@ def pointAddDoubleInvStmt : Stmt Op := pointAddXEqMainBody[6]!
 def pointAddDoubleLambdaStmt : Stmt Op := pointAddXEqMainBody[7]!
 def pointAddDoubleX3Stmt : Stmt Op := pointAddXEqMainBody[8]!
 def pointAddDoubleXSubStmt : Stmt Op := pointAddXEqMainBody[9]!
+def pointAddDoubleDeltaInitStmt : Stmt Op := pointAddXEqMainBody[10]!
+def pointAddDoubleDeltaStmt : Stmt Op := pointAddXEqMainBody[11]!
+def pointAddDoubleYMulStmt : Stmt Op := pointAddXEqMainBody[12]!
+def pointAddDoubleYSubStmt : Stmt Op := pointAddXEqMainBody[13]!
 
 def pointAddDoubleXSubBody : Block Op :=
   match pointAddDoubleXSubStmt with
@@ -266,6 +270,17 @@ theorem pointAddDoubleX3Args_eq : pointAddDoubleX3Args =
 theorem pointAddDoubleXSubStmt_eq : pointAddDoubleXSubStmt =
     .block pointAddDoubleXSubBody := by
   rfl
+
+theorem pointAddDoubleDeltaInitStmt_eq : pointAddDoubleDeltaInitStmt =
+    .letDecl ["\x00124", "\x00125"] none := by rfl
+
+def pointAddDoubleDeltaBody : Block Op :=
+  match pointAddDoubleDeltaStmt with
+  | .block body => body
+  | _ => []
+
+theorem pointAddDoubleDeltaStmt_eq : pointAddDoubleDeltaStmt =
+    .block pointAddDoubleDeltaBody := by rfl
 
 theorem pointAddDoubleXSubBody_eq : pointAddDoubleXSubBody =
     pointAddDoubleXSubLeftStmt :: pointAddDoubleXSubRightTail := by
