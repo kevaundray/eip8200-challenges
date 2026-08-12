@@ -20,3 +20,7 @@ open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 #check fp2MulAfterVSumStores_cross
 #check fp2MulAfterVSumStores_vsum
 #check fp2MulImag_eq_cross_vsum
+#check fp2MulAfterSumAStores_loadWord_high
+#check fp2MulAfterSumBStores_loadWord_high
+#check fp2MulAfterCrossStores_loadWord_high
+#check fp2MulAfterVSumStores_loadWord_high

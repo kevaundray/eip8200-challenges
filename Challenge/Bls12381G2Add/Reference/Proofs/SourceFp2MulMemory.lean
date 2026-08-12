@@ -284,4 +284,64 @@ theorem fp2MulImag_eq_cross_vsum (yst : EvmState) (out a b : U256) :
   rw [fp2MulImag_eq_subSource, fp2MulAfterVSumStores_cross,
     fp2MulAfterVSumStores_vsum]
 
+theorem fp2MulAfterSumAStores_loadWord_high (yst : EvmState) (out a b : U256)
+    (offset : Nat) (hoffset : 1728 ≤ offset) :
+    loadWord (fp2MulAfterSumAStores yst out a b).memory offset =
+      loadWord (fp2MulAfterRealStores yst out a b).memory offset := by
+  rw [fp2MulAfterSumAStores, fp2MulAfterSumAHigh]
+  change loadWord
+    (storeWord
+      (storeWord (fp2MulAfterRealStores yst out a b).memory 1664
+        (fp2MulSumA yst out a b).1)
+      1696 (fp2MulSumA yst out a b).2) offset = _
+  rw [loadWord_storeWord_disjoint _ 1696 offset _ (by omega),
+    loadWord_storeWord_disjoint _ 1664 offset _ (by omega)]
+
+theorem fp2MulAfterSumBStores_loadWord_high (yst : EvmState) (out a b : U256)
+    (offset : Nat) (hoffset : 1792 ≤ offset) :
+    loadWord (fp2MulAfterSumBStores yst out a b).memory offset =
+      loadWord (fp2MulAfterRealStores yst out a b).memory offset := by
+  rw [fp2MulAfterSumBStores, fp2MulAfterSumBHigh]
+  change loadWord
+    (storeWord
+      (storeWord (fp2MulAfterSumAStores yst out a b).memory 1728
+        (fp2MulSumB yst out a b).1)
+      1760 (fp2MulSumB yst out a b).2) offset = _
+  rw [loadWord_storeWord_disjoint _ 1760 offset _ (by omega),
+    loadWord_storeWord_disjoint _ 1728 offset _ (by omega),
+    fp2MulAfterSumAStores_loadWord_high _ _ _ _ offset (by omega)]
+
+theorem fp2MulAfterCrossStores_loadWord_high (yst : EvmState) (out a b : U256)
+    (offset : Nat) (hoffset : 1856 ≤ offset) :
+    loadWord (fp2MulAfterCrossStores yst out a b).memory offset =
+      loadWord (fp2MulAfterRealStores yst out a b).memory offset := by
+  rw [fp2MulAfterCrossStores, fp2MulAfterCrossHigh]
+  change loadWord
+    (storeWord
+      (storeWord (fp2MulAfterCrossCall yst out a b).memory 1792
+        (fp2MulCross yst out a b).1)
+      1824 (fp2MulCross yst out a b).2) offset = _
+  rw [loadWord_storeWord_disjoint _ 1824 offset _ (by omega),
+    loadWord_storeWord_disjoint _ 1792 offset _ (by omega)]
+  unfold fp2MulAfterCrossCall
+  rw [fpMulFinalState_loadWord_after_scratch (hstart := by omega)]
+  have hreads : (fp2MulAfterCrossReads yst out a b).memory =
+      (fp2MulAfterSumBStores yst out a b).memory := rfl
+  rw [hreads,
+    fp2MulAfterSumBStores_loadWord_high _ _ _ _ offset (by omega)]
+
+theorem fp2MulAfterVSumStores_loadWord_high (yst : EvmState) (out a b : U256)
+    (offset : Nat) (hoffset : 1920 ≤ offset) :
+    loadWord (fp2MulAfterVSumStores yst out a b).memory offset =
+      loadWord (fp2MulAfterRealStores yst out a b).memory offset := by
+  rw [fp2MulAfterVSumStores, fp2MulAfterVSumHigh]
+  change loadWord
+    (storeWord
+      (storeWord (fp2MulAfterCrossStores yst out a b).memory 1856
+        (fp2MulVSum yst out a b).1)
+      1888 (fp2MulVSum yst out a b).2) offset = _
+  rw [loadWord_storeWord_disjoint _ 1888 offset _ (by omega),
+    loadWord_storeWord_disjoint _ 1856 offset _ (by omega),
+    fp2MulAfterCrossStores_loadWord_high _ _ _ _ offset (by omega)]
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
