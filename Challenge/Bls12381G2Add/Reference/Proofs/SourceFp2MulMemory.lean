@@ -344,4 +344,71 @@ theorem fp2MulAfterVSumStores_loadWord_high (yst : EvmState) (out a b : U256)
     loadWord_storeWord_disjoint _ 1856 offset _ (by omega),
     fp2MulAfterCrossStores_loadWord_high _ _ _ _ offset (by omega)]
 
+theorem fp2MulFinalState_c1 (yst : EvmState) (out a b : U256)
+    (hout : out.toNat + 96 < 2 ^ 256) :
+    (fp2At (fp2MulFinalState yst out a b) out).c1 =
+      pairWords (fp2MulImag yst out a b) := by
+  have h64 : (out + BitVec.ofNat 256 64).toNat = out.toNat + 64 := by
+    bv_omega
+  have h96 : (out + BitVec.ofNat 256 96).toNat = out.toNat + 96 := by
+    bv_omega
+  rw [fp2MulFinalState, fp2MulAfterImagHigh]
+  change fpWords
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterImagReads yst out a b).memory
+          (out + BitVec.ofNat 256 64).toNat (fp2MulImag yst out a b).1)
+        (out + BitVec.ofNat 256 96).toNat (fp2MulImag yst out a b).2)
+      (out + BitVec.ofNat 256 64).toNat)
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterImagReads yst out a b).memory
+          (out + BitVec.ofNat 256 64).toNat (fp2MulImag yst out a b).1)
+        (out + BitVec.ofNat 256 96).toNat (fp2MulImag yst out a b).2)
+      (out + BitVec.ofNat 256 96).toNat) = _
+  rw [h64, h96,
+    loadWord_storeWord_disjoint _ (out.toNat + 96) (out.toNat + 64) _
+      (by omega),
+    loadWord_storeWord_same, loadWord_storeWord_same]
+  rfl
+
+theorem fp2MulFinalState_c0 (yst : EvmState) (out a b : U256)
+    (houtHigh : 1920 ≤ out.toNat) (hout : out.toNat + 96 < 2 ^ 256) :
+    (fp2At (fp2MulFinalState yst out a b) out).c0 =
+      pairWords (fp2MulReal yst a b) := by
+  have h32 : (out + BitVec.ofNat 256 32).toNat = out.toNat + 32 := by
+    bv_omega
+  have h64 : (out + BitVec.ofNat 256 64).toNat = out.toNat + 64 := by
+    bv_omega
+  have h96 : (out + BitVec.ofNat 256 96).toNat = out.toNat + 96 := by
+    bv_omega
+  rw [fp2MulFinalState, fp2MulAfterImagHigh]
+  change fpWords
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterImagReads yst out a b).memory
+          (out + BitVec.ofNat 256 64).toNat (fp2MulImag yst out a b).1)
+        (out + BitVec.ofNat 256 96).toNat (fp2MulImag yst out a b).2)
+      out.toNat)
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterImagReads yst out a b).memory
+          (out + BitVec.ofNat 256 64).toNat (fp2MulImag yst out a b).1)
+        (out + BitVec.ofNat 256 96).toNat (fp2MulImag yst out a b).2)
+      (out + BitVec.ofNat 256 32).toNat) = _
+  rw [h32, h64, h96,
+    loadWord_storeWord_disjoint _ (out.toNat + 96) out.toNat _ (by omega),
+    loadWord_storeWord_disjoint _ (out.toNat + 64) out.toNat _ (by omega),
+    loadWord_storeWord_disjoint _ (out.toNat + 96) (out.toNat + 32) _
+      (by omega),
+    loadWord_storeWord_disjoint _ (out.toNat + 64) (out.toNat + 32) _
+      (by omega)]
+  have hreads : (fp2MulAfterImagReads yst out a b).memory =
+      (fp2MulAfterVSumStores yst out a b).memory := rfl
+  rw [hreads,
+    fp2MulAfterVSumStores_loadWord_high _ _ _ _ out.toNat houtHigh,
+    fp2MulAfterVSumStores_loadWord_high _ _ _ _ (out.toNat + 32)
+      (by omega)]
+  simpa [h32] using fp2MulAfterRealStores_result yst out a b (by omega)
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
