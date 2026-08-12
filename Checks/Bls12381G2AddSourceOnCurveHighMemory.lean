@@ -1,0 +1,7 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceOnCurveHighMemory
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check fp2MulAfterV0Stores_loadWord_high_input
+#check fp2MulAfterV1Stores_loadWord_high_input
+#check fp2MulAfterRealStores_loadWord_before_out
