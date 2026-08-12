@@ -109,6 +109,78 @@ jobs:
           fi
           lake -Kjobs=1 build +Checks.Bls12381
 
+  # G1ADD is intentionally not part of the shared BLS cache: its source,
+  # compiler, bytecode, and execution certificates are challenge-owned.  Keep
+  # a dedicated gate so every focused axiom guard is enforced in standard CI.
+  bls12381-g1add:
+    name: BLS12-381 G1ADD proofs and frozen artifact
+    needs: shared-lean
+    runs-on: warp-ubuntu-2404-x64-32x
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Restore pinned packages
+        uses: actions/cache/restore@v5
+        with:
+          path: .lake/packages
+          key: ${{ needs.shared-lean.outputs.package-key }}
+          fail-on-cache-miss: true
+
+      - name: Restore shared project build
+        uses: actions/cache/restore@v5
+        with:
+          path: .lake/build
+          key: ${{ needs.shared-lean.outputs.shared-key }}
+          fail-on-cache-miss: true
+
+      - name: Cache G1ADD project build
+        uses: actions/cache@v5
+        with:
+          path: .lake/build
+          key: project-bls12381-g1add-v1-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-${{ hashFiles('Challenge/Bls12381G1Add.lean', 'Challenge/Bls12381G1Add/**/*.lean', 'Checks/Bls12381G1Add*.lean') }}
+          restore-keys: |
+            project-bls12381-g1add-v1-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-
+
+      - name: Set up Lean
+        uses: leanprover/lean-action@v1
+        with:
+          use-mathlib-cache: "false"
+          build: "false"
+          test: "false"
+          lint: "false"
+          use-github-cache: "false"
+
+      - name: Verify G1ADD soundness
+        run: |
+          if grep -rnE --include='*.lean' \
+              '(^|[^[:alnum:]_])(sorry|admit|native_decide|CertifiedArtifact)([^[:alnum:]_]|$)' \
+              Challenge/Bls12381G1Add Challenge/Bls12381G1Add.lean \
+              Checks/Bls12381G1Add*.lean; then
+            echo "::error::found a forbidden G1ADD proof mechanism"
+            exit 1
+          fi
+
+      - name: Build every G1ADD proof and axiom guard
+        run: |
+          mapfile -t checks < <(
+            find Checks -maxdepth 1 -type f -name 'Bls12381G1Add*.lean' \
+              -printf '%f\n' | sort | \
+              sed -e 's/\.lean$//' -e 's/^/+Checks./'
+          )
+          lake -Kjobs=1 build +Challenge.Bls12381G1Add:c.o "${checks[@]}"
+
+      - name: Verify frozen G1ADD source artifact
+        run: |
+          reference=Challenge/Bls12381G1Add/Reference
+          compiled="$(lake exe yulc "$reference/reference.yul")"
+          frozen="$(tr -d '[:space:]' < "$reference/reference.hex")"
+          if [ "$compiled" != "$frozen" ]; then
+            echo "::error::G1ADD reference.hex is stale"
+            exit 1
+          fi
+
   # Each matrix entry has its own job and source-keyed project cache. A RIPEMD
   # submission therefore neither rebuilds nor invalidates SHA-256 or MODEXP.
   challenge:
