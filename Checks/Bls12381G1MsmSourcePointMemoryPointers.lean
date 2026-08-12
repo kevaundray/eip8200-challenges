@@ -11,3 +11,4 @@ open Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
 #check pointAddUnequalRightXLimbs_eq
 #check pointAddFiniteLeftYLimbs_eq
 #check pointAddFiniteRightYLimbs_eq
+#check pointAddDoubleLeftYLimbs_eq

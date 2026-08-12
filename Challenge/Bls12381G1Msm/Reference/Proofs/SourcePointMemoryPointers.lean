@@ -1,4 +1,5 @@
 import Challenge.Bls12381G1Msm.Reference.Proofs.SourcePointMemory
+import Challenge.Bls12381G1Msm.Reference.Proofs.SourceFpMulMemory
 import YulEvmCompiler.Optimizer.Implementation.MemorySpillStateSound
 
 set_option warningAsError true
@@ -134,5 +135,37 @@ theorem pointAddFiniteRightYLimbs_eq (yst : EvmState)
     pointAddFiniteRightPtr_eq, pointAddFiniteState_memory]
   rw [pointAddPrefix_loadPoint yst out left right (right + 64).toNat hhi,
     pointAddPrefix_loadPoint yst out left right (right + 96).toNat hlo]
+
+theorem pointAddDoubleXSqState_loadWord_after_scratch (yst : EvmState)
+    (out left right : U256) (offset : Nat) (hstart : 1328 ≤ offset) :
+    loadWord (pointAddDoubleXSqState yst out left right).memory offset =
+      loadWord (pointAddPrefixState yst out left right).memory offset := by
+  rw [pointAddDoubleXSqState,
+    fpMulFinalState_loadWord_after_scratch _ _ _ _ _ offset hstart]
+  rfl
+
+@[simp] theorem pointAddDoubleLeftPtr_eq (yst : EvmState)
+    (out left right : U256) :
+    pointAddDoubleLeftPtr yst out left right = left := by
+  rw [pointAddDoubleLeftPtr,
+    pointAddDoubleXSqState_loadWord_after_scratch _ _ _ _ 1568 (by omega)]
+  simp only [pointAddPrefixState, pointAddStore]
+  rw [loadWord_storeWord_disjoint _ 1600 1568 _ (by omega),
+    loadWord_storeWord_same]
+
+theorem pointAddDoubleLeftYLimbs_eq (yst : EvmState)
+    (out left right : U256)
+    (hhi : 1632 ≤ (left + 64).toNat)
+    (hlo : 1632 ≤ (left + 96).toNat) :
+    pointAddDoubleLeftYLimbs yst out left right = pointMemoryY yst left := by
+  rw [pointAddDoubleLeftYLimbs, pointMemoryY]
+  simp only [pointAddDoubleLeftYHi, pointAddDoubleLeftYLo,
+    pointAddDoubleLeftPtr_eq]
+  rw [pointAddDoubleXSqState_loadWord_after_scratch _ _ _ _
+      (left + 64).toNat (by omega),
+    pointAddDoubleXSqState_loadWord_after_scratch _ _ _ _
+      (left + 96).toNat (by omega),
+    pointAddPrefix_loadPoint yst out left right (left + 64).toNat hhi,
+    pointAddPrefix_loadPoint yst out left right (left + 96).toNat hlo]
 
 end Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
