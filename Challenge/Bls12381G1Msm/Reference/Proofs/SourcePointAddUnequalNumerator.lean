@@ -89,6 +89,36 @@ theorem pointAddUnequalNumeratorRawStmt5_eq :
            .builtin .gt [.var "fc0_69", .var "fc0_71"]]) := by
   rfl
 
+theorem pointAddUnequalNumeratorRepairStmt_eq :
+    pointAddUnequalNumeratorRepairStmt =
+      .cond
+        (.builtin .gt
+          [.var "fc0_67",
+           .lit (.number 34565483545414906068789196026815425751)])
+        [.letDecl ["\x0051"]
+          (some (.builtin .add
+            [.var "fc0_68",
+             .lit (.number
+              45442060874369865957053122457065728162598490762543039060009208264153100167851)])),
+         .assign ["fc0_67"]
+          (.builtin .add
+            [.var "fc0_67",
+             .builtin .add
+              [.lit (.number 34565483545414906068789196026815425751),
+               .builtin .lt [.var "\x0051", .var "fc0_68"]]]),
+         .assign ["fc0_68"] (.var "\x0051")] := by
+  rfl
+
+theorem pointAddUnequalNumeratorOutHiStmt_eq :
+    pointAddUnequalNumeratorOutHiStmt =
+      .assign ["\x00128"] (.var "fc0_67") := by
+  rfl
+
+theorem pointAddUnequalNumeratorOutLoStmt_eq :
+    pointAddUnequalNumeratorOutLoStmt =
+      .assign ["\x00129"] (.var "fc0_68") := by
+  rfl
+
 def pointAddUnequalLeftPtr (yst : EvmState) (out left right : U256) : U256 :=
   loadWord (pointAddXEqState yst out left right).memory 1568
 
