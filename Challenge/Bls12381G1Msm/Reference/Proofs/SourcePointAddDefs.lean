@@ -150,6 +150,7 @@ def pointAddDoubleNum3Stmt : Stmt Op := pointAddXEqMainBody[3]!
 def pointAddDoubleDenStmt : Stmt Op := pointAddXEqMainBody[4]!
 def pointAddDoubleInvInitStmt : Stmt Op := pointAddXEqMainBody[5]!
 def pointAddDoubleInvStmt : Stmt Op := pointAddXEqMainBody[6]!
+def pointAddDoubleLambdaStmt : Stmt Op := pointAddXEqMainBody[7]!
 
 def pointAddDoubleInvBody : Block Op :=
   match pointAddDoubleInvStmt with
@@ -197,6 +198,28 @@ theorem pointAddDoubleInvStmt9_eq : pointAddDoubleInvStmt9 =
           [.lit (.number 36576), .lit (.number 5), .lit (.number 1024),
             .lit (.number 240), .lit (.number 1280), .lit (.number 48)]])
       [.exprStmt (.builtin .invalid [])] := by rfl
+
+def pointAddDoubleLambdaExpr : Expr Op :=
+  match pointAddDoubleLambdaStmt with
+  | .letDecl _ (some expr) => expr
+  | _ => .lit (.number 0)
+
+def pointAddDoubleLambdaArgs : List (Expr Op) :=
+  match pointAddDoubleLambdaExpr with
+  | .call _ args => args
+  | _ => []
+
+theorem pointAddDoubleLambdaStmt_eq : pointAddDoubleLambdaStmt =
+    .letDecl ["\x00120", "\x00121"] (some pointAddDoubleLambdaExpr) := by
+  rfl
+
+theorem pointAddDoubleLambdaExpr_eq : pointAddDoubleLambdaExpr =
+    .call "\x009" pointAddDoubleLambdaArgs := by
+  rfl
+
+theorem pointAddDoubleLambdaArgs_eq : pointAddDoubleLambdaArgs =
+    [.var "\x00114", .var "\x00115", .var "\x00118", .var "\x00119"] := by
+  rfl
 
 def pointAddDoubleXSqExpr : Expr Op :=
   match pointAddDoubleXSqStmt with
