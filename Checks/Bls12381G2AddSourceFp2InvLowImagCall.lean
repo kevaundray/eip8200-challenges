@@ -1,5 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2InvLowImagCall
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check fp2InvAfterImagCall_loadWord_low

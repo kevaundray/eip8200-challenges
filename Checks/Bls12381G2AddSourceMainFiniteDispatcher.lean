@@ -1,8 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainFiniteDispatcher
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check step_mainFiniteDispatcher_double
-#check step_mainFiniteDispatcher_unequal
-#check step_mainFiniteDispatcher_opposite
-#check step_mainFiniteDispatcher_zeroY

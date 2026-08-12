@@ -1,7 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2MulHighInputs
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check fp2MulRightInput_eq_fp2At_of_high
-#check fp2MulScheduledLeft_eq_of_high_after_out
-#check fp2MulScheduledRight_eq_of_high_after_out

@@ -60,4 +60,13 @@ theorem refines_mulCanonical {a b : Limbs}
     toField (mulCanonical a b) = toField a * toField b := by
   simpa only [Refines] using refines_mulCanonical ha hb
 
+/-- Consumer contract for source-faithful multiplication. Callers receive the
+canonical representation invariant and mathematical field meaning together,
+without reopening the word-level multiplication and Barrett schedule. -/
+theorem mulCanonical_spec {a b : Limbs}
+    (ha : Canonical a) (hb : Canonical b) :
+    Canonical (mulCanonical a b) ∧
+      toField (mulCanonical a b) = toField a * toField b :=
+  ⟨canonical_mulCanonical ha hb, toField_mulCanonical ha hb⟩
+
 end Challenge.Bls12381.ProofSupport.Fp

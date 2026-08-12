@@ -37,6 +37,17 @@ HEARTBEAT_SETTING = re.compile(
 )
 HEARTBEAT_NAME = re.compile(r"maxHeartbeats")
 
+BROAD_BLS_PROOF_SUPPORT_IMPORT = re.compile(
+    r"^[ \t]*import[ \t]+Challenge\.Bls12381\.ProofSupport[ \t]*$",
+    re.MULTILINE,
+)
+COMPLETED_BLS_ADD_TREES = frozenset(("Bls12381G1Add", "Bls12381G2Add"))
+COMPLETED_BLS_ADD_CHECK_PREFIXES = ("Bls12381G1Add", "Bls12381G2Add")
+COMPLETED_BLS_ADD_CHECK_IMPORT = re.compile(
+    r"^[ \t]*import[ \t]+Checks\.Bls12381G[12]Add[A-Za-z0-9_.]*[ \t]*$",
+    re.MULTILINE,
+)
+
 
 def source_line(source: str, offset: int) -> int:
     return source.count("\n", 0, offset) + 1
@@ -54,7 +65,7 @@ def nat_value(spelling: str) -> int:
     return int(normalized, 10)
 
 
-def violations(source: str) -> list[tuple[int, str]]:
+def violations(source: str, path: Path | None = None) -> list[tuple[int, str]]:
     findings: list[tuple[int, str]] = []
 
     for spelling in FORBIDDEN_SUBSTRINGS:
@@ -87,6 +98,26 @@ def violations(source: str) -> list[tuple[int, str]]:
                 )
             )
 
+    if path is not None and COMPLETED_BLS_ADD_TREES.intersection(path.parts):
+        for match in BROAD_BLS_PROOF_SUPPORT_IMPORT.finditer(source):
+            findings.append(
+                (
+                    source_line(source, match.start()),
+                    "forbidden broad BLS proof-support import",
+                )
+            )
+
+    if path is not None and "Checks" in path.parts and path.name.startswith(
+        COMPLETED_BLS_ADD_CHECK_PREFIXES
+    ):
+        for match in COMPLETED_BLS_ADD_CHECK_IMPORT.finditer(source):
+            findings.append(
+                (
+                    source_line(source, match.start()),
+                    "forbidden completed-ADD check-to-check import",
+                )
+            )
+
     return sorted(findings)
 
 
@@ -116,7 +147,7 @@ def main() -> int:
 
     rejected = False
     for path in files:
-        for line, message in violations(path.read_text(encoding="utf-8")):
+        for line, message in violations(path.read_text(encoding="utf-8"), path):
             print(f"{path}:{line}: {message}", file=sys.stderr)
             rejected = True
     return 1 if rejected else 0

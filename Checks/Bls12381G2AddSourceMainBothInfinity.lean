@@ -1,7 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainBothInfinity
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check step_mainBothInfinityCondition
-#check step_mainBothInfinity_return
-#check step_mainBothInfinity_continue

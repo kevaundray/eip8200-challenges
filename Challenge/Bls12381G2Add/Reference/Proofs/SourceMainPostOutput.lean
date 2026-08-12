@@ -1,4 +1,5 @@
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainPostAffine
+import Challenge.Bls12381.ProofSupport.CodecG2Core
 import Challenge.Bls12381.ProofSupport.CodecRepresentation
 
 set_option warningAsError true

@@ -696,12 +696,12 @@ private theorem run_valid_matches_decoded (yst : EvmState) (input : ByteArray)
         rw [mainBothInfinityValue, mainInf1_eq_one_of_ne yst hfirst,
           mainInf2_eq_one_of_ne yst hsecond]
         decide
-      have hrun := run_main_bothInfinity yst hlength hpadding hcanonical
-        hcurve1 hcurve2 hboth
-      refine ⟨_, hrun, ?_⟩
+      rcases run_main_bothInfinity_contract yst hlength hpadding hcanonical
+          hcurve1 hcurve2 hboth with ⟨final, contract⟩
+      refine ⟨final, contract.run, ?_⟩
       have hleft := decodeG1_first_eq_sourcePoint yst input hcalldata hsize
         hpadding hcanonical hcurve1
-      rw [mainBothInfinity_returned_inputWindow yst input hcalldata,
+      rw [contract.returned_inputWindow input hcalldata,
         Challenge.EvmProof.Bytes.readPadded_eq_extract input 0 128 (by omega)]
       have hencode := Codec.encodeG1_decodeG1 hleft
       rw [Codec.g1Bytes] at hencode

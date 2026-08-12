@@ -2,6 +2,7 @@ import Challenge.Bls12381G1Add.ProofSupport.YulDialect
 import Challenge.Bls12381G1Add.Reference.Bytecode
 import Challenge.Bls12381G1Add.Reference.Proofs.FrozenBlock
 import Challenge.Bls12381G1Add.Reference.Proofs.FrozenAssembly
+import Challenge.EvmProof.StackCertificate
 import YulEvmCompiler.Optimizer.Implementation.Pipeline
 
 set_option warningAsError true
@@ -72,28 +73,27 @@ theorem referenceComputedOptimizedAssembly_eq :
 /-- Compact, proof-facing form of a stack-layout certificate entry.  Program
 suffixes are reconstructed from their length instead of being duplicated in
 the frozen data. -/
-abbrev CompactStackEntry := Nat × FLayout × Nat × FLayout
+abbrev CompactStackEntry :=
+  Challenge.EvmProof.StackCertificate.CompactStackEntry
 
 /-- Stable numeric encoding used only to keep the frozen certificate compact. -/
-def encodeStackSlot : FSlot → Nat
-  | .word => 0
-  | .ret => 1
-  | .retTo l => l + 2
+abbrev encodeStackSlot : FSlot → Nat :=
+  Challenge.EvmProof.StackCertificate.encodeStackSlot
 
-def decodeStackSlot : Nat → FSlot
-  | 0 => .word
-  | 1 => .ret
-  | n + 2 => .retTo n
+abbrev decodeStackSlot : Nat → FSlot :=
+  Challenge.EvmProof.StackCertificate.decodeStackSlot
 
-abbrev FrozenStackEntry := Nat × List Nat × Nat × List Nat
+abbrev FrozenStackEntry :=
+  Challenge.EvmProof.StackCertificate.FrozenStackEntry
 
-def thawStackEntry (e : FrozenStackEntry) : CompactStackEntry :=
-  (e.1, e.2.1.map decodeStackSlot, e.2.2.1,
-    e.2.2.2.map decodeStackSlot)
+def thawStackEntry (entry : FrozenStackEntry) : CompactStackEntry :=
+  (entry.1, entry.2.1.map decodeStackSlot, entry.2.2.1,
+    entry.2.2.2.map decodeStackSlot)
 
-def materializeStackCertificate (prog : List Asm)
+def materializeStackCertificate (program : List Asm)
     (entries : List CompactStackEntry) : CertData where
-  entries := entries.map fun e =>
-    (e.1, prog.drop (prog.length - e.1), e.2.1, e.2.2.1, e.2.2.2)
+  entries := entries.map fun entry =>
+    (entry.1, program.drop (program.length - entry.1),
+      entry.2.1, entry.2.2.1, entry.2.2.2)
 
 end Challenge.Bls12381G1Add.Reference.Proofs.Compilation

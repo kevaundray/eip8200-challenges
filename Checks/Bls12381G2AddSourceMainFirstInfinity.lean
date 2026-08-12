@@ -1,6 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainFirstInfinity
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check step_mainFirstInfinity_return
-#check step_mainFirstInfinity_continue

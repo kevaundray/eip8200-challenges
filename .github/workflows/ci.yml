@@ -169,13 +169,10 @@ jobs:
 
       - name: Verify G1ADD soundness
         run: |
-          if grep -rnE --include='*.lean' \
-              '(^|[^[:alnum:]_])(sorry|admit|native_decide|CertifiedArtifact)([^[:alnum:]_]|$)' \
-              Challenge/Bls12381G1Add Challenge/Bls12381G1Add.lean \
-              Checks/Bls12381G1Add*.lean; then
-            echo "::error::found a forbidden G1ADD proof mechanism"
-            exit 1
-          fi
+          scripts/test-check-lean-proof-policy.sh
+          python3 scripts/check-lean-proof-policy.py \
+            Challenge/Bls12381G1Add Challenge/Bls12381G1Add.lean \
+            Checks/Bls12381G1Add*.lean
 
       - name: Build every G1ADD proof and axiom guard
         run: |

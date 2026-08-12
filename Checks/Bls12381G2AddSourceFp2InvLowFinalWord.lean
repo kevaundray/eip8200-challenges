@@ -1,5 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2InvLowFinalWord
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check fp2InvFinalState_loadWord_before_scratch

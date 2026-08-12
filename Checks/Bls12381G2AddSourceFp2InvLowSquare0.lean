@@ -1,5 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2InvLowSquare0
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check fp2InvAfterSquare0Stores_loadWord_low

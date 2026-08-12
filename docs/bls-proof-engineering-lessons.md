@@ -660,6 +660,34 @@ Share under `Challenge.EvmProof`:
 Do not concatenate all chunks into a giant reducible source term. Compose
 opaque chunk summaries with a shallow theorem.
 
+### Generic compact checker extraction
+
+The completed ADD challenges originally duplicated both a roughly 100-line
+finite checker core and a 224-line soundness bridge. The accepted extraction
+puts the generic representation, checker, chunk-composition lemma,
+suffix-restricted certificate, validity/boundedness proof, and final stack
+bound in `Challenge.EvmProof.StackCertificate`. G1ADD and G2ADD retain their
+frozen programs, numeric data, bounded decision chunks, and original public
+theorem names.
+
+Do not automatically put a new shared module in a broad umbrella. The compact
+checker is imported precisely by its two ADD consumers and shared trust check;
+unrelated bytecode proof support does not inherit the compiler stack-analysis
+closure.
+
+An all-`abbrev` compatibility layer initially kept chunk checking green but
+broke both soundness files. Their deliberately scoped `unfold` and `dsimp`
+steps used local data-projection names to control reduction. Retaining three
+tiny local projections while sharing the large algorithms restored the proofs.
+This is the appropriate trade: a handful of duplicated constructor lines can
+be proof firebreaks even when the semantic algorithm should live once.
+
+Warm before/after leaves were memory-neutral. G1 chunk 0 moved from
+3,489,692 to 3,489,648 KiB RSS; a repeated G2 chunk 0 moved from 3,997,984 to
+3,970,804 KiB. G1/G2 soundness moved from 2,444,200/2,111,160 KiB to
+2,410,840/2,062,832 KiB. The shared axiom footprints match the old adapters.
+Full shared, G1ADD, and G2ADD gates passed after extraction.
+
 ## Measurement workflow
 
 Before changing a proof boundary:

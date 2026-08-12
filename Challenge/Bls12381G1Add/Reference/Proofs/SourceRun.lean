@@ -284,6 +284,31 @@ private theorem run_of_mainValid (yst stend : EvmState)
     (D := Challenge.EvmProof.modexpExec.toDialect) hbody
   simpa [Run, mainFuns, restore] using hblock
 
+/-- A relational summary of the complete both-infinity source path.
+
+The returned state is intentionally abstract: consumers see the execution,
+selected return value, and the frame facts of the final `return(0, 128)` stage,
+but not the expanded `mainBothInfinityReturnState`. The comparison state for
+the frame is the state immediately before that return.
+
+Gas is not part of `YulSemantics.EVM.EvmState`; it remains a separate
+compiled-EVM contract rather than being approximated at this source layer. -/
+structure MainBothInfinityContract (yst final : EvmState) : Prop where
+  run : Run Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+    Compilation.referenceCompiledBlock yst [] final .halt
+  returned : final.halted = some (.ret,
+    readBytes (mainValidatedState yst).memory 0 128)
+  memory_eq : final.memory = (mainValidatedState yst).memory
+  activeWords_eq : final.activeWords = BitVec.ofNat 256
+    (activeWordsAfter (mainValidatedState yst).activeWords.toNat 0 128)
+  storage_eq : final.storage = (mainValidatedState yst).storage
+  transient_eq : final.transient = (mainValidatedState yst).transient
+  env_eq : final.env = (mainValidatedState yst).env
+  returndata_eq : final.returndata = (mainValidatedState yst).returndata
+  logs_eq : final.logs = (mainValidatedState yst).logs
+  selfdestructs_eq : final.selfdestructs =
+    (mainValidatedState yst).selfdestructs
+
 /-- The exact frozen source runs through the complete nonexceptional doubling
 path and halts with the already-refined canonical output state. -/
 theorem run_main_double (yst : EvmState)
@@ -369,6 +394,42 @@ theorem run_main_bothInfinity (yst : EvmState)
       (mainBothInfinityReturnState yst) .halt :=
   run_of_mainValid yst _ (step_mainValid_bothInfinity yst hsize hpadding
     hcanonical hcurve1 hcurve2 hboth)
+
+/-- The complete both-infinity path, exposed through a relational boundary
+instead of an equality to a fully expanded final state. -/
+theorem run_main_bothInfinity_contract (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hboth : mainBothInfinityValue yst ≠ 0) :
+    ∃ final, MainBothInfinityContract yst final := by
+  refine ⟨mainBothInfinityReturnState yst, ?_⟩
+  refine {
+    run := run_main_bothInfinity yst hsize hpadding hcanonical hcurve1 hcurve2 hboth
+    returned := ?_
+    memory_eq := ?_
+    activeWords_eq := ?_
+    storage_eq := ?_
+    transient_eq := ?_
+    env_eq := ?_
+    returndata_eq := ?_
+    logs_eq := ?_
+    selfdestructs_eq := ?_ }
+  all_goals simp only [mainBothInfinityReturnState, touchMemory]
+
+/-- The selected return-value view needed by the source specification. -/
+theorem MainBothInfinityContract.returned_inputWindow
+    {yst final : EvmState} (contract : MainBothInfinityContract yst final)
+    (input : ByteArray) (hcalldata : yst.env.calldata = input.toList) :
+    final.halted = some (HaltKind.ret,
+      (EvmSemantics.MachineState.readPadded input 0 128).toList) := by
+  calc
+    final.halted = (mainBothInfinityReturnState yst).halted := by
+      rw [contract.returned]
+      rfl
+    _ = _ := mainBothInfinity_returned_inputWindow yst input hcalldata
 
 theorem run_main_firstInfinity (yst : EvmState)
     (hsize : yst.env.calldata.length = 256)

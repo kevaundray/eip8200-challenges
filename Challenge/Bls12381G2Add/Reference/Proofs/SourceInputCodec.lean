@@ -1,4 +1,5 @@
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceInputWords
+import Challenge.Bls12381.ProofSupport.CodecFp2
 
 set_option warningAsError true
 

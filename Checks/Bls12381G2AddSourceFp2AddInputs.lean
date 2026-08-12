@@ -1,7 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2AddInputs
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check fp2AddScheduledA_eq_before_out
-#check fp2AddScheduledB_eq_before_out
-#check fp2AddScheduledA_eq_at_out

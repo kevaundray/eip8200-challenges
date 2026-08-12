@@ -1,7 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourcePointPredicatesRefinement
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check pointPaddingZeroValue_eq_one_iff
-#check pointValidValue_eq_one_iff
-#check pointZeroValue_eq_one_iff

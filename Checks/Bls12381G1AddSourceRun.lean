@@ -6,6 +6,22 @@ set_option warningAsError true
 
 namespace Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
 
+example (yst : YulSemantics.EVM.EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hboth : mainBothInfinityValue yst ≠ 0) :
+    ∃ final, MainBothInfinityContract yst final :=
+  run_main_bothInfinity_contract yst hsize hpadding hcanonical hcurve1 hcurve2 hboth
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.run_main_bothInfinity_contract' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms run_main_bothInfinity_contract
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.run_main_double' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/

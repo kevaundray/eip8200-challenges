@@ -13,6 +13,7 @@ expect_rejected() {
   local source="$3"
   local fixture="$fixture_dir/$name.lean"
   local stderr_file="$fixture_dir/$name.stderr"
+  mkdir -p -- "$(dirname "$fixture")"
   printf '%s\n' "$source" > "$fixture"
   if python3 "$scanner" "$fixture" 2> "$stderr_file"; then
     printf 'expected scanner to reject %s\n' "$name" >&2
@@ -55,6 +56,19 @@ expect_rejected raw_prefix_adjacency 'forbidden raw spelling: sorry' \
 expect_rejected sorry_ax_substring 'forbidden raw spelling: sorryAx' \
   '#check prefixsorryAxSuffix'
 
+expect_rejected 'Challenge/Bls12381G1Add/BroadImport' \
+  'forbidden broad BLS proof-support import' \
+  'import Challenge.Bls12381.ProofSupport'
+expect_rejected 'Challenge/Bls12381G2Add/BroadImport' \
+  'forbidden broad BLS proof-support import' \
+  'import Challenge.Bls12381.ProofSupport'
+expect_rejected 'Checks/Bls12381G1AddCheckImport' \
+  'forbidden completed-ADD check-to-check import' \
+  'import Checks.Bls12381G1AddFinalCorrectness'
+expect_rejected 'Checks/Bls12381G2AddCheckImport' \
+  'forbidden completed-ADD check-to-check import' \
+  'import Checks.Bls12381G2AddReference'
+
 expect_rejected private_axiom 'forbidden axiom declaration' \
   'private axiom hiddenEscape : True'
 expect_rejected multiline_axiom 'forbidden axiom declaration' $'private\naxiom hiddenEscape : True'
@@ -80,6 +94,18 @@ set_option maxHeartbeats 1000000 in
 example : True := by trivial
 EOF
 python3 "$scanner" "$fixture_dir/accepted.lean"
+
+mkdir -p "$fixture_dir/Challenge/Bls12381G1Add"
+cat > "$fixture_dir/Challenge/Bls12381G1Add/NarrowImport.lean" <<'EOF'
+import Challenge.Bls12381.ProofSupport.FpAddSub
+EOF
+python3 "$scanner" "$fixture_dir/Challenge/Bls12381G1Add/NarrowImport.lean"
+
+mkdir -p "$fixture_dir/Checks"
+cat > "$fixture_dir/Checks/Bls12381G2AddProductionImport.lean" <<'EOF'
+import Challenge.Bls12381G2Add.Reference.Proofs.FinalCorrectness
+EOF
+python3 "$scanner" "$fixture_dir/Checks/Bls12381G2AddProductionImport.lean"
 
 for literal in 1 01 1_0 0x1 0X10 0x1_0 0b1 0B10 0b1_0 0o1 0O10 0o1_0; do
   printf 'set_option maxHeartbeats %s in\nexample : True := by trivial\n' \

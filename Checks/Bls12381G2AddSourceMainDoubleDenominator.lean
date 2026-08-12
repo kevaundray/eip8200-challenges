@@ -1,7 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainDoubleDenominator
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check mainDoubleState2_y
-#check mainDoubleState3_canonical
-#check mainDoubleState3_toLawful

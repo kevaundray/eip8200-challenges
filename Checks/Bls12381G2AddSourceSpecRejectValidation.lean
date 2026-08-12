@@ -1,7 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceSpecRejectValidation
-
-set_option warningAsError true
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check mainValidation_reject_decode_none

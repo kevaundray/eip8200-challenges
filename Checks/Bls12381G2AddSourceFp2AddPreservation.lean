@@ -1,6 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2AddPreservation
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check fp2AddFinalState_loadWord_before_out
-#check fp2AddFinalState_fp2At_before_out

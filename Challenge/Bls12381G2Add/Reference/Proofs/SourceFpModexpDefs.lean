@@ -1,6 +1,7 @@
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFpCore
 import Challenge.Bls12381G1Add.Reference.Proofs.SourceFpInvRefinement
 import Challenge.Bls12381G1Add.Reference.Proofs.SourceFpMulRefinement
+import Challenge.Bls12381.ProofSupport.FpMul
 
 set_option warningAsError true
 

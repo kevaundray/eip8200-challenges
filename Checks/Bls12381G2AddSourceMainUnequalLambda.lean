@@ -1,7 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainUnequalLambda
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check mainUnequalFinalState_canonical
-#check mainUnequalFinalState_toLawful
-#check step_mainUnequalBody_canonical

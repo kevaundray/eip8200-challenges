@@ -1,6 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceOnCurveResult
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check fp2EqValue_eq_one_iff_repr
-#check onCurveResult_eq_one_iff_of_lawful_outputs

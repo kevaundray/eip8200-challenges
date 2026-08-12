@@ -19,6 +19,11 @@ example {a b : Fp.Limbs} (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
     Fp.toField (Fp.mulCanonical a b) = Fp.toField a * Fp.toField b :=
   Fp.toField_mulCanonical ha hb
 
+example {a b : Fp.Limbs} (ha : Fp.Canonical a) (hb : Fp.Canonical b) :
+    Fp.Canonical (Fp.mulCanonical a b) ∧
+      Fp.toField (Fp.mulCanonical a b) = Fp.toField a * Fp.toField b :=
+  Fp.mulCanonical_spec ha hb
+
 example {a : Fp.Limbs} (ha : Fp.Canonical a) :
     (Fp.squareSchoolbookProduct a).value = Fp.value a ^ 2 :=
   Fp.value_squareSchoolbookProduct ha
@@ -56,6 +61,10 @@ example {a : Fp.Limbs} (ha : Fp.Canonical a) :
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.toField_mulCanonical' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp.toField_mulCanonical
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp.mulCanonical_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp.mulCanonical_spec
 
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp.cross_double_fits' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

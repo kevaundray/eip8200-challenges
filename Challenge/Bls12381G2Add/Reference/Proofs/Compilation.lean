@@ -2,6 +2,7 @@ import Challenge.Bls12381G2Add.ProofSupport.YulDialect
 import Challenge.Bls12381G2Add.Reference.Bytecode
 import Challenge.Bls12381G2Add.Reference.Proofs.FrozenBlock
 import Challenge.Bls12381G2Add.Reference.Proofs.FrozenAssembly
+import Challenge.EvmProof.StackCertificate
 import YulEvmCompiler.Optimizer.Implementation.Pipeline
 
 set_option warningAsError true
@@ -62,19 +63,16 @@ theorem referenceComputedOptimizedAssembly_eq :
     with_unfolding_all decide
 
 abbrev CompactStackEntry :=
-  Nat × YulEvmCompiler.FLayout × Nat × YulEvmCompiler.FLayout
+  Challenge.EvmProof.StackCertificate.CompactStackEntry
 
-def encodeStackSlot : YulEvmCompiler.FSlot → Nat
-  | .word => 0
-  | .ret => 1
-  | .retTo label => label + 2
+abbrev encodeStackSlot : YulEvmCompiler.FSlot → Nat :=
+  Challenge.EvmProof.StackCertificate.encodeStackSlot
 
-def decodeStackSlot : Nat → YulEvmCompiler.FSlot
-  | 0 => .word
-  | 1 => .ret
-  | n + 2 => .retTo n
+abbrev decodeStackSlot : Nat → YulEvmCompiler.FSlot :=
+  Challenge.EvmProof.StackCertificate.decodeStackSlot
 
-abbrev FrozenStackEntry := Nat × List Nat × Nat × List Nat
+abbrev FrozenStackEntry :=
+  Challenge.EvmProof.StackCertificate.FrozenStackEntry
 
 def thawStackEntry (entry : FrozenStackEntry) : CompactStackEntry :=
   (entry.1, entry.2.1.map decodeStackSlot, entry.2.2.1,

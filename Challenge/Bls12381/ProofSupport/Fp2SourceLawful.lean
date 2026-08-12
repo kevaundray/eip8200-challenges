@@ -291,6 +291,15 @@ theorem toField_mulSource {a b : Repr} (ha : Canonical a)
     simp only [sub_eq_add_neg, neg_add_rev, add_assoc]
     ac_rfl
 
+/-- Consumer contract for the authoritative source multiplication program.
+Callers receive the representation invariant and mathematical field meaning
+together without reopening the Karatsuba schedule or its interpreter. -/
+theorem mulSource_spec {a b : Repr} (ha : Canonical a)
+    (hb : Canonical b) :
+    Canonical (mulSource a b) ∧
+      toField (mulSource a b) = toField a * toField b :=
+  ⟨canonical_mulSource ha hb, toField_mulSource ha hb⟩
+
 theorem toField_sqrRealSource {a : Repr} (ha : Canonical a) :
     Fp.toField (sqrRealSource a) =
       (Fp.toField a.c0 + Fp.toField a.c1) *

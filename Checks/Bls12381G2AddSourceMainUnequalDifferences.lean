@@ -1,9 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainUnequalDifferences
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check mainUnequalState0_canonical
-#check mainUnequalState0_toLawful
-#check mainUnequalState0_fp2At_low
-#check mainUnequalState1_canonical
-#check mainUnequalState1_toLawful

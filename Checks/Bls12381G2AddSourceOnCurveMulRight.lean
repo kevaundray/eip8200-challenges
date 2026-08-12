@@ -1,5 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceOnCurveMulRight
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check fp2MulScheduledRight_eq_of_low

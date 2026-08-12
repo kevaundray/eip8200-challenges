@@ -1,8 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceSpecRejectCurve
-
-set_option warningAsError true
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check decodeG2_first_eq_none_of_curve
-#check decodeG2_second_eq_none_of_curve

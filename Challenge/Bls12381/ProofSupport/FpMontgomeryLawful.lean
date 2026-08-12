@@ -45,10 +45,6 @@ theorem lawful_montMul2 {x y : Limbs}
     exact (ZMod.natCast_eq_natCast_iff _ _ p).2 hmod
   exact eq_mul_inv_of_mul_eq lawful_montgomeryRadix_ne_zero hcast
 
-@[simp] theorem finEquiv_toField (a : Limbs) :
-    PrimeField.finEquiv (toField a) = (value a : LawfulFp) := by
-  rfl
-
 /-- The same refinement stated through the explicit wire-`Fin`/lawful-field
 adapter consumed by higher tower arithmetic. -/
 theorem toLawful_montMul2 {x y : Limbs}

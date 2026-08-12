@@ -1,4 +1,5 @@
 import Challenge.Bls12381G1Add.Reference.Proofs.SourceOnCurveExec
+import Challenge.Bls12381.ProofSupport.FpMul
 import Challenge.Bls12381.ProofSupport.FpPredicates
 import Challenge.Bls12381.ProofSupport.G1Affine
 
@@ -52,14 +53,21 @@ private theorem fpMulOutput_eq_mulCanonical (yst : EvmState)
       Challenge.Bls12381.ProofSupport.Fp.mulCanonical
         (fpMulLeft ahi alo) (fpMulRight bhi blo) := by
   apply Challenge.Bls12381.ProofSupport.Fp.limbs_ext_of_value_eq
+  rcases Challenge.Bls12381.ProofSupport.Fp.mulCanonical_spec ha hb with
+    ⟨hcanonical, hshared⟩
   apply Challenge.Bls12381.ProofSupport.Fp.value_eq_of_lawful_eq
     (canonical_fpMulOutput yst ahi alo bhi blo)
-    (Challenge.Bls12381.ProofSupport.Fp.canonical_mulCanonical ha hb)
+    hcanonical
   have hfield := fpMulOutput_toField yst ahi alo bhi blo ha hb
-  have hshared := Challenge.Bls12381.ProofSupport.Fp.toField_mulCanonical ha hb
   have hfin := hfield.trans hshared.symm
-  simpa only [Challenge.Bls12381.ProofSupport.Fp.finEquiv_toField] using
-    congrArg Challenge.Bls12381.ProofSupport.PrimeField.finEquiv hfin
+  change Challenge.Bls12381.ProofSupport.PrimeField.finEquiv
+      (Challenge.Bls12381.ProofSupport.Fp.toField
+        (fpMulOutputLimbs yst ahi alo bhi blo)) =
+    Challenge.Bls12381.ProofSupport.PrimeField.finEquiv
+      (Challenge.Bls12381.ProofSupport.Fp.toField
+        (Challenge.Bls12381.ProofSupport.Fp.mulCanonical
+          (fpMulLeft ahi alo) (fpMulRight bhi blo)))
+  exact congrArg Challenge.Bls12381.ProofSupport.PrimeField.finEquiv hfin
 
 theorem onCurveLhs_eq (yst : EvmState) (yHi yLo : U256)
     (hy : Challenge.Bls12381.ProofSupport.Fp.Canonical

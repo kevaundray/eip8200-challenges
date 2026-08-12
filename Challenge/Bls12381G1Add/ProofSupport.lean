@@ -1,5 +1,4 @@
 import Challenge.Bls12381G1Add.Spec
-import Challenge.Bls12381.ProofSupport
 
 set_option warningAsError true
 
@@ -23,4 +22,3 @@ theorem incumbent_disabled :
   decide
 
 end Challenge.Bls12381G1Add
-

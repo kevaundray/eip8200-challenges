@@ -1,8 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainCurveLawful
-
-set_option warningAsError true
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check mainCurve1ConditionValue_eq_zero_iff
-#check mainCurve2ConditionValue_eq_zero_iff

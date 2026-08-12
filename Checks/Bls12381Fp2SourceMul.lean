@@ -10,6 +10,11 @@ example {a b : Fp2.Repr} (ha : Fp2.Canonical a) (hb : Fp2.Canonical b) :
     Fp2.toField (Fp2.mulSource a b) = Fp2.toField a * Fp2.toField b :=
   Fp2.toField_mulSource ha hb
 
+example {a b : Fp2.Repr} (ha : Fp2.Canonical a) (hb : Fp2.Canonical b) :
+    Fp2.Canonical (Fp2.mulSource a b) ∧
+      Fp2.toField (Fp2.mulSource a b) = Fp2.toField a * Fp2.toField b :=
+  Fp2.mulSource_spec ha hb
+
 example {a : Fp2.Repr} (ha : Fp2.Canonical a) :
     Fp2.toField (Fp2.sqrSource a) = _root_.Fp2.square (Fp2.toField a) :=
   Fp2.toField_sqrSource ha
@@ -33,6 +38,10 @@ example {a : Fp2.Repr} (ha : Fp2.Canonical a) :
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp2.toField_mulSource' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Fp2.toField_mulSource
+
+/-- info: 'Challenge.Bls12381.ProofSupport.Fp2.mulSource_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Fp2.mulSource_spec
 
 /-- info: 'Challenge.Bls12381.ProofSupport.Fp2.toField_sqrRealSource' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

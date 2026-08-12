@@ -9,6 +9,10 @@ namespace Challenge.Bls12381.ProofSupport.Fp
 
 open PrimeField
 
+@[simp] theorem finEquiv_toField (a : Limbs) :
+    PrimeField.finEquiv (toField a) = (value a : LawfulFp) := by
+  rfl
+
 /-- Canonical-value zero test. The byte-level equivalence to
 `LimbMath.isZeroBytes` belongs to codec refinement. -/
 def isZeroValue (a : Limbs) : Bool := value a == 0

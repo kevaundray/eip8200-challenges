@@ -1,7 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2MulCorrect
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check fp2Mul_source_components
-#check fp2MulFinalState_canonical
-#check fp2MulFinalState_toField_mul

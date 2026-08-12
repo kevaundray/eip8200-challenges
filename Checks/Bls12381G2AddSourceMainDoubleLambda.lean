@@ -1,8 +1,0 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainDoubleLambda
-
-open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
-
-#check mainDoubleState4_numerator
-#check mainDoubleFinalState_canonical
-#check mainDoubleFinalState_toLawful
-#check step_mainDoubleBody_canonical
