@@ -1,6 +1,7 @@
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFpMulExec
 import Challenge.EvmProof.CallMemory
 import Challenge.EvmProof.ModexpMemory
+import YulEvmCompiler.Optimizer.Implementation.MemorySpillStateSound
 
 set_option warningAsError true
 
@@ -14,6 +15,21 @@ input and call-return state graph.
 namespace Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 
 open YulSemantics.EVM
+
+theorem loadWord_storeWord_same (memory : Nat → UInt8) (slot : Nat)
+    (value : U256) :
+    loadWord (storeWord memory slot value) slot = value :=
+  YulEvmCompiler.Optimizer.MemorySpillStateSound.loadWord_storeWord
+    memory slot value
+
+theorem loadWord_storeWord_disjoint (memory : Nat → UInt8)
+    (writtenSlot untouchedSlot : Nat) (value : U256)
+    (hdisjoint : writtenSlot + 32 ≤ untouchedSlot ∨
+      untouchedSlot + 32 ≤ writtenSlot) :
+    loadWord (storeWord memory writtenSlot value) untouchedSlot =
+      loadWord memory untouchedSlot :=
+  YulEvmCompiler.Optimizer.MemorySpillStateSound.loadWord_storeWord_other
+    memory writtenSlot untouchedSlot value hdisjoint
 
 theorem fpMulFinalState_readBytes_after_scratch (yst : EvmState)
     (ahi alo bhi blo : U256) (start size : Nat)
