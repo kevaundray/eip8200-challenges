@@ -63,7 +63,7 @@ private def fpZeroLoads (hi lo : Nat) : Expr Op :=
 @[simp] private theorem touchMemory_memory (yst : EvmState)
     (offset size : Nat) : (touchMemory yst offset size).memory = yst.memory := rfl
 
-@[simp] private theorem afterFourLoads_memory (yst : EvmState)
+@[simp] theorem afterFourLoads_memory (yst : EvmState)
     (xHi xLo yHi yLo : Nat) :
     (afterFourLoads yst xHi xLo yHi yLo).memory = yst.memory := rfl
 
@@ -81,7 +81,7 @@ theorem mainFiniteYZeroArgsState_loadWord (yst : EvmState) (offset : Nat)
     mainFiniteXEqArgsState, afterFourLoads_memory]
   exact mainValidatedState_loadWord yst offset hend
 
-private theorem eval_fpEqLoads
+theorem eval_fpEqLoads
     (funs : FunEnv Challenge.EvmProof.modexpExec.toDialect)
     (V : VEnv Challenge.EvmProof.modexpExec.toDialect) (yst : EvmState)
     (aHi aLo bHi bLo : Nat)

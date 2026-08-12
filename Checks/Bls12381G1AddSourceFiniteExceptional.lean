@@ -140,4 +140,14 @@ example (yst : EvmState) (offset : Nat) (hend : offset + 32 ≤ 1024) :
 #guard_msgs in
 #print axioms mainFiniteYZeroArgsState_loadWord
 
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.afterFourLoads_memory' does not depend on any axioms -/
+#guard_msgs in
+#print axioms afterFourLoads_memory
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_fpEqLoads' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms eval_fpEqLoads
+
 end Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
