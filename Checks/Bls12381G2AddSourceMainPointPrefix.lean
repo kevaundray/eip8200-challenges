@@ -1,0 +1,7 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainPointPrefix
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check step_mainPointValidation_success
+#check step_mainPointValidation_curve1_reject
+#check step_mainPointValidation_curve2_reject
