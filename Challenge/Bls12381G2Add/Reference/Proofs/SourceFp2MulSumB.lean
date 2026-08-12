@@ -25,8 +25,8 @@ def fp2MulSumB (yst : EvmState) (out a b : U256) : U256 × U256 :=
 
 def fp2MulSumBEnv (yst : EvmState) (out a b : U256) :
     VEnv Challenge.EvmProof.modexpExec.toDialect :=
-  VEnv.setMany (fp2MulSumAEnv yst out a b) ["\x00113", "\x00114"]
-    [(fp2MulSumB yst out a b).1, (fp2MulSumB yst out a b).2]
+  [("\x00113", (fp2MulSumB yst out a b).1), ("\x00114", (fp2MulSumB yst out a b).2)] ++
+    fp2MulInitialEnv out a b
 
 def fp2MulAfterSumBHigh (yst : EvmState) (out a b : U256) : EvmState :=
   mstoreState (fp2MulAfterSumBReads yst out a b) 1728

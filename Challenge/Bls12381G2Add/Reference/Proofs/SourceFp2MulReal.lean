@@ -24,8 +24,8 @@ def fp2MulReal (yst : EvmState) (a b : U256) : U256 × U256 :=
 
 def fp2MulRealEnv (yst : EvmState) (out a b : U256) :
     VEnv Challenge.EvmProof.modexpExec.toDialect :=
-  VEnv.setMany (fp2MulV1Env yst out a b) ["\x00113", "\x00114"]
-    [(fp2MulReal yst a b).1, (fp2MulReal yst a b).2]
+  [("\x00113", (fp2MulReal yst a b).1), ("\x00114", (fp2MulReal yst a b).2)] ++
+    fp2MulInitialEnv out a b
 
 def fp2MulAfterRealHigh (yst : EvmState) (out a b : U256) : EvmState :=
   mstoreState (fp2MulAfterRealReads yst a b) out (fp2MulReal yst a b).1

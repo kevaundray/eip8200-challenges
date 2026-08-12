@@ -29,8 +29,8 @@ def fp2MulAfterCrossCall (yst : EvmState) (out a b : U256) : EvmState :=
 
 def fp2MulCrossEnv (yst : EvmState) (out a b : U256) :
     VEnv Challenge.EvmProof.modexpExec.toDialect :=
-  VEnv.setMany (fp2MulSumBEnv yst out a b) ["\x00113", "\x00114"]
-    [(fp2MulCross yst out a b).1, (fp2MulCross yst out a b).2]
+  [("\x00113", (fp2MulCross yst out a b).1), ("\x00114", (fp2MulCross yst out a b).2)] ++
+    fp2MulInitialEnv out a b
 
 def fp2MulAfterCrossHigh (yst : EvmState) (out a b : U256) : EvmState :=
   mstoreState (fp2MulAfterCrossCall yst out a b) 1792 (fp2MulCross yst out a b).1
