@@ -64,6 +64,15 @@ example (yst : EvmState) (input : ByteArray)
 #guard_msgs in
 #print axioms step_mainFirstInfinity_return
 
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainValidatedState_loadWord' depends on axioms: [propext,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms mainValidatedState_loadWord
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.eval_storePoint' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms eval_storePoint
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainFirstInfinity_returned_inputWindow' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/

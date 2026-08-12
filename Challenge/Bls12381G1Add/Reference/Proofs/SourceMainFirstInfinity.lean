@@ -54,7 +54,8 @@ private theorem mainFirstInfinityStmt_shape : mainFirstInfinityStmt =
         (.builtin .ret [.lit (.number 0), .lit (.number 128)])] := by
   rfl
 
-private theorem mainValidatedState_loadWord (yst : EvmState) (offset : Nat)
+/-- Point validation preserves every pre-scratch decoded input word. -/
+theorem mainValidatedState_loadWord (yst : EvmState) (offset : Nat)
     (hend : offset + 32 ≤ 1024) :
     loadWord (mainValidatedState yst).memory offset =
       mainDecodedWord yst offset := by
@@ -83,7 +84,8 @@ private theorem eval_mainCopySecondArgs
     Challenge.EvmProof.modexpExec, Challenge.EvmProof.modexpBuiltinFn,
     stepOp, EVM.litValue]
 
-private theorem eval_storePoint (xHi xLo yHi yLo : U256) (yst : EvmState) :
+/-- Exact source execution of the frozen four-word `storePoint` helper. -/
+theorem eval_storePoint (xHi xLo yHi yLo : U256) (yst : EvmState) :
     Interp.evalExpr Challenge.EvmProof.modexpExec 64 mainFuns
       [("\x0092", xHi), ("\x0093", xLo),
         ("\x0094", yHi), ("\x0095", yLo)] yst

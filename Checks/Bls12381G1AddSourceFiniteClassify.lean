@@ -21,6 +21,10 @@ example : mainFiniteOppositeStmt = mainFiniteEqualBody[0]! := rfl
 
 example : mainFiniteZeroYStmt = mainFiniteEqualBody[1]! := rfl
 
+example : mainFiniteEqualBody =
+    mainFiniteOppositeStmt :: mainFiniteZeroYStmt :: mainFiniteDoubleBody :=
+  mainFiniteEqualBody_eq
+
 example : mainFiniteOppositeStmt =
     .cond
       (.builtin .iszero
@@ -94,5 +98,9 @@ example (yst : EvmState) :
  Quot.sound] -/
 #guard_msgs in
 #print axioms mainFiniteYEq_eq_zero_iff
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainFiniteEqualBody_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms mainFiniteEqualBody_eq
 
 end Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics

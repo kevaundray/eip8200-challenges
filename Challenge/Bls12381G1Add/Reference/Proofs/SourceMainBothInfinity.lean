@@ -217,7 +217,8 @@ private theorem natToBytesPadded_zero (width : Nat) :
     rw [Array.getElem?_eq_getElem (by simpa using hi)]
     simp
 
-private theorem encodeG1_infinity_toList :
+/-- The local canonical G1 infinity encoding is exactly 128 zero bytes. -/
+theorem encodeG1_infinity_toList :
     (Challenge.Bls12381.ProofSupport.Codec.encodeG1
       (.infinity : EvmSemantics.Crypto.Bls12381.Point)).toList =
       List.replicate 128 0 := by

@@ -46,6 +46,12 @@ example (yst : EvmState)
 #guard_msgs in
 #print axioms mainValidatedState_readOutput
 
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.encodeG1_infinity_toList' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms encodeG1_infinity_toList
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainBothInfinity_returned_zero_bytes' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/

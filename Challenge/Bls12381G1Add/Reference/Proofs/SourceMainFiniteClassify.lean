@@ -34,6 +34,14 @@ def mainFiniteOppositeStmt : Stmt Op := mainFiniteEqualBody[0]!
 tangent infinity branch. -/
 def mainFiniteZeroYStmt : Stmt Op := mainFiniteEqualBody[1]!
 
+/-- The remaining equal-point doubling arithmetic after its two exceptional
+guards. -/
+def mainFiniteDoubleBody : Block Op := mainFiniteEqualBody.drop 2
+
+theorem mainFiniteEqualBody_eq : mainFiniteEqualBody =
+    mainFiniteOppositeStmt :: mainFiniteZeroYStmt :: mainFiniteDoubleBody := by
+  rfl
+
 /-- Exact source equality classification for the finite points' x words. -/
 def mainFiniteXEqValue (yst : EvmState) : U256 :=
   fpEqValue (mainDecodedWord yst 0) (mainDecodedWord yst 32)
