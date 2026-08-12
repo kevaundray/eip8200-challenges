@@ -57,31 +57,31 @@ theorem step_pointInfinityBody (yst : EvmState) (ptr : U256) :
       (pointInfinityFinalState yst ptr) .normal :=
   soundStmt (exec_pointInfinityStmt yst ptr)
 
-theorem step_pointInfinity_of_args {funs V yst args} (ptr : U256)
-    (hargs : EvalArgs Challenge.EvmProof.modexpExec.toDialect funs V yst args
-      (.vals [ptr] yst))
+theorem step_pointInfinity_of_args {funs V st argState args} (ptr : U256)
+    (hargs : EvalArgs Challenge.EvmProof.modexpExec.toDialect funs V st args
+      (.vals [ptr] argState))
     (hlookup : lookupFun funs "\x0015" =
       some (pointInfinityDecl, sourceFuns)) :
-    EvalExpr Challenge.EvmProof.modexpExec.toDialect funs V yst
+    EvalExpr Challenge.EvmProof.modexpExec.toDialect funs V st
       (.call "\x0015" args)
-      (.vals [pointInfinityResult yst ptr]
-        (pointInfinityFinalState yst ptr)) := by
+      (.vals [pointInfinityResult argState ptr]
+        (pointInfinityFinalState argState ptr)) := by
   have hseq : ExecStmts Challenge.EvmProof.modexpExec.toDialect
-      pointInfinityBodyFuns (pointInfinityInitialEnv ptr) yst
-      pointInfinityBody (pointInfinityReturnEnv yst ptr)
-      (pointInfinityFinalState yst ptr) .normal := by
+      pointInfinityBodyFuns (pointInfinityInitialEnv ptr) argState
+      pointInfinityBody (pointInfinityReturnEnv argState ptr)
+      (pointInfinityFinalState argState ptr) .normal := by
     rw [pointInfinityBody_eq]
-    exact Step.seqCons (step_pointInfinityBody yst ptr) Step.seqNil
+    exact Step.seqCons (step_pointInfinityBody argState ptr) Step.seqNil
   have hblock : ExecStmt Challenge.EvmProof.modexpExec.toDialect sourceFuns
-      (pointInfinityInitialEnv ptr) yst (.block pointInfinityBody)
-      (restore (pointInfinityInitialEnv ptr) (pointInfinityReturnEnv yst ptr))
-      (pointInfinityFinalState yst ptr) .normal := Step.block hseq
+      (pointInfinityInitialEnv ptr) argState (.block pointInfinityBody)
+      (restore (pointInfinityInitialEnv ptr) (pointInfinityReturnEnv argState ptr))
+      (pointInfinityFinalState argState ptr) .normal := Step.block hseq
   have hcall := Step.callOk hargs hlookup rfl hblock (Or.inl rfl)
-  change EvalExpr Challenge.EvmProof.modexpExec.toDialect funs V yst
+  change EvalExpr Challenge.EvmProof.modexpExec.toDialect funs V st
     (.call "\x0015" args)
     (.vals [(VEnv.get
-      (restore (pointInfinityInitialEnv ptr) (pointInfinityReturnEnv yst ptr))
-      "\x00106").getD 0] (pointInfinityFinalState yst ptr)) at hcall
+      (restore (pointInfinityInitialEnv ptr) (pointInfinityReturnEnv argState ptr))
+      "\x00106").getD 0] (pointInfinityFinalState argState ptr)) at hcall
   simpa [pointInfinityInitialEnv, pointInfinityReturnEnv, restore,
     VEnv.get, VEnv.setMany, VEnv.set] using hcall
 

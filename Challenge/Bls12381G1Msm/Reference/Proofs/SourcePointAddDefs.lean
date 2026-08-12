@@ -17,7 +17,17 @@ def pointAddBody : Block Op :=
 def pointAddStmt0 : Stmt Op := pointAddBody[0]!
 def pointAddStmt1 : Stmt Op := pointAddBody[1]!
 def pointAddStmt2 : Stmt Op := pointAddBody[2]!
+def pointAddStmt3 : Stmt Op := pointAddBody[3]!
 def pointAddAfterPrefix : Block Op := pointAddBody.drop 3
+
+def pointAddLeftInfinityCondition : Expr Op :=
+  match pointAddStmt3 with
+  | .cond condition _ => condition
+  | _ => .lit (.number 0)
+
+theorem pointAddLeftInfinityCondition_eq : pointAddLeftInfinityCondition =
+    .call "\x0015" [.builtin .mload [.lit (.number 1568)]] := by
+  rfl
 
 theorem pointAddBody_length : pointAddBody.length = 27 := by
   rfl
