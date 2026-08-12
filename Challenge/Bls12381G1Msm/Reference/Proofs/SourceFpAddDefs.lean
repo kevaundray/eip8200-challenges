@@ -70,4 +70,21 @@ def fpAddHighEnv (ahi alo bhi blo : U256) :
    ("\x0038", fpAddHighValue ahi alo bhi blo),
    ("\x0039", fpAddLowValue alo blo)]
 
+def fpAddCorrectLowValue (alo blo : U256) : U256 :=
+  fpAddLowValue alo blo - BitVec.ofNat 256
+    45442060874369865957053122457065728162598490762543039060009208264153100167851
+
+def fpAddCorrectHighValue (ahi alo bhi blo : U256) : U256 :=
+  fpAddHighValue ahi alo bhi blo -
+    (BitVec.ofNat 256 34565483545414906068789196026815425751 +
+      b2w (BitVec.ult (fpAddLowValue alo blo)
+        (BitVec.ofNat 256
+          45442060874369865957053122457065728162598490762543039060009208264153100167851)))
+
+def fpAddCorrectEnv (ahi alo bhi blo : U256) :
+    VEnv Challenge.EvmProof.modexpExec.toDialect :=
+  [("\x0034", ahi), ("\x0035", alo), ("\x0036", bhi), ("\x0037", blo),
+   ("\x0038", fpAddCorrectHighValue ahi alo bhi blo),
+   ("\x0039", fpAddCorrectLowValue alo blo)]
+
 end Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
