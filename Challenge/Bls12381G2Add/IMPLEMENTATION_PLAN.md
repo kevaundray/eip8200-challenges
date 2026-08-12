@@ -78,6 +78,35 @@
 4. Prove source output equals the local specification, including non-subgroup inputs.
 5. Commit each control-flow family separately.
 
+#### G2 point-add reuse map
+
+The finite/infinity case split is the same lawful affine program already used
+by G1ADD.  G2 should instantiate the shared endpoint instead of reproving its
+branch algebra:
+
+- Both infinity, left infinity, and right infinity map directly to the shared
+  `LawfulAffine.add` identity branches (with `G2Affine.curve`).
+- Equal finite points with distinct y-coordinates, and equal-x points with
+  zero y, map to the shared inverse/vertical-line infinity branch.
+- Equal finite nonzero-y points use the shared doubling equation.
+- Unequal finite points use the shared ordinary affine-add equation.
+- The final x/y formulas and preservation of on-curve membership come from
+  shared `LawfulAffine.add` / `G2Affine.onCurve_add`, not a G2-local replay of
+  the generic field algebra.
+
+Only the adapters around that endpoint remain G2/Fp2-specific:
+
+- four-word Fp2 equality/zero predicates and canonicality;
+- Fp2 add/sub/mul/inv source execution and lawful/field transport;
+- the twist equation `y² = x³ + 4(1+u)` and no-subgroup-check validation;
+- 512-byte G2 codec/padding, eight-word point copies/stores, and 256-byte
+  output encoding;
+- matching the Yul branch conditions and scratch-memory values to the shared
+  lawful affine branch inputs.
+
+The G1 branch-control theorem shapes may be followed for execution plumbing,
+but their scalar-Fp representation lemmas must not be copied as G2 algebra.
+
 ### Task 6: End-to-end EVM correctness and gas
 
 **Files:**
@@ -92,4 +121,3 @@
 4. Add exact expected-axiom guards and source-dependency checks.
 5. Run focused G2ADD gates, then the relevant BLS family/conformance gate single-job.
 6. Commit the verified G2ADD challenge.
-
