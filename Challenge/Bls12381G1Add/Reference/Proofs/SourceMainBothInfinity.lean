@@ -83,7 +83,8 @@ theorem step_mainBothInfinity_return (yst : EvmState)
     simpa [restore] using hblock'
   exact Step.ifTrue hcondition hboth hblock
 
-private theorem mainValidatedState_readOutput (yst : EvmState) :
+/-- Point validation preserves the 128-byte first-point output window. -/
+theorem mainValidatedState_readOutput (yst : EvmState) :
     readBytes (mainValidatedState yst).memory 0 128 =
       readBytes (mainDecodedState yst).memory 0 128 := by
   unfold mainValidatedState mainCurve2ArgsState mainAfterCurve1
