@@ -149,7 +149,7 @@ theorem step_nestedLoadAdd {funs V} (yst : EvmState)
     Step.builtinOk hloadArgs rfl
   simpa only [touchMemory_memory] using hraw
 
-private theorem step_nestedLoad {funs V} (yst : EvmState)
+theorem step_nestedLoad {funs V} (yst : EvmState)
     (slot : Nat) :
     EvalExpr Challenge.EvmProof.modexpExec.toDialect funs V yst
       (.builtin .mload [.builtin .mload [.lit (.number slot)]])

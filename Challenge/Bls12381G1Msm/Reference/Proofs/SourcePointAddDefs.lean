@@ -144,6 +144,39 @@ def pointAddXEqExceptionalBody : Block Op :=
 
 def pointAddYSumStmt : Stmt Op := pointAddXEqExceptionalBody[0]!
 def pointAddYZeroStmt : Stmt Op := pointAddXEqExceptionalBody[1]!
+def pointAddDoubleXSqStmt : Stmt Op := pointAddXEqMainBody[1]!
+def pointAddDoubleNum2Stmt : Stmt Op := pointAddXEqMainBody[2]!
+def pointAddDoubleNum3Stmt : Stmt Op := pointAddXEqMainBody[3]!
+def pointAddDoubleDenStmt : Stmt Op := pointAddXEqMainBody[4]!
+
+def pointAddDoubleXSqExpr : Expr Op :=
+  match pointAddDoubleXSqStmt with
+  | .letDecl _ (some expr) => expr
+  | _ => .lit (.number 0)
+
+def pointAddDoubleXSqArgs : List (Expr Op) :=
+  match pointAddDoubleXSqExpr with
+  | .call _ args => args
+  | _ => []
+
+theorem pointAddDoubleXSqStmt_eq : pointAddDoubleXSqStmt =
+    .letDecl ["\x00112", "\x00113"] (some pointAddDoubleXSqExpr) := by
+  rfl
+
+theorem pointAddDoubleXSqExpr_eq : pointAddDoubleXSqExpr =
+    .call "\x009" pointAddDoubleXSqArgs := by
+  rfl
+
+theorem pointAddDoubleXSqArgs_eq : pointAddDoubleXSqArgs =
+    [.builtin .mload [.builtin .mload [.lit (.number 1568)]],
+     .builtin .mload
+      [.builtin .add
+        [.builtin .mload [.lit (.number 1568)], .lit (.number 32)]],
+     .builtin .mload [.builtin .mload [.lit (.number 1568)]],
+     .builtin .mload
+      [.builtin .add
+        [.builtin .mload [.lit (.number 1568)], .lit (.number 32)]]] := by
+  rfl
 
 def pointAddYSumExpr : Expr Op :=
   match pointAddYSumStmt with
