@@ -25,8 +25,46 @@ def pointAddLeftInfinityCondition : Expr Op :=
   | .cond condition _ => condition
   | _ => .lit (.number 0)
 
+def pointAddLeftInfinityBody : Block Op :=
+  match pointAddStmt3 with
+  | .cond _ body => body
+  | _ => []
+
+def pointAddLeftCopyStmt : Stmt Op := pointAddLeftInfinityBody[0]!
+
+def pointAddLeftCopyBody : Block Op :=
+  match pointAddLeftCopyStmt with
+  | .block body => body
+  | _ => []
+
+def pointAddLeftCopyStmt0 : Stmt Op := pointAddLeftCopyBody[0]!
+def pointAddLeftCopyStmt1 : Stmt Op := pointAddLeftCopyBody[1]!
+def pointAddLeftCopyStmt2 : Stmt Op := pointAddLeftCopyBody[2]!
+def pointAddLeftCopyStmt3 : Stmt Op := pointAddLeftCopyBody[3]!
+def pointAddLeftCopyStmt4 : Stmt Op := pointAddLeftCopyBody[4]!
+def pointAddLeftCopyStmt5 : Stmt Op := pointAddLeftCopyBody[5]!
+def pointAddLeftCopyStmt6 : Stmt Op := pointAddLeftCopyBody[6]!
+
 theorem pointAddLeftInfinityCondition_eq : pointAddLeftInfinityCondition =
     .call "\x0015" [.builtin .mload [.lit (.number 1568)]] := by
+  rfl
+
+theorem pointAddStmt3_eq : pointAddStmt3 =
+    .cond pointAddLeftInfinityCondition pointAddLeftInfinityBody := by
+  rfl
+
+theorem pointAddLeftInfinityBody_eq : pointAddLeftInfinityBody =
+    [pointAddLeftCopyStmt, .leave] := by
+  rfl
+
+theorem pointAddLeftCopyStmt_eq : pointAddLeftCopyStmt =
+    .block pointAddLeftCopyBody := by
+  rfl
+
+theorem pointAddLeftCopyBody_eq : pointAddLeftCopyBody =
+    [pointAddLeftCopyStmt0, pointAddLeftCopyStmt1, pointAddLeftCopyStmt2,
+      pointAddLeftCopyStmt3, pointAddLeftCopyStmt4, pointAddLeftCopyStmt5,
+      pointAddLeftCopyStmt6] := by
   rfl
 
 theorem pointAddBody_length : pointAddBody.length = 27 := by
