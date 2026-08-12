@@ -8,3 +8,7 @@ open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 #check fp2InvNorm_eq_squares
 #check fp2InvNorm_canonical
 #check fp2InvNorm_hi_lt
+#check fp2InvAfterSquare0Stores_loadWord_high
+#check fp2InvSquare1Input_eq
+#check fp2InvSquares_canonical
+#check fp2InvNorm_hi_lt_of_input

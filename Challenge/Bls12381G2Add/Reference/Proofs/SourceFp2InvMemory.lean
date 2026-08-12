@@ -83,4 +83,57 @@ theorem fp2InvNorm_hi_lt (yst : EvmState) (a : U256)
     (fp2InvNorm yst a).1.toNat < 2 ^ 128 :=
   (fp2InvNorm_canonical yst a h0 h1).1
 
+theorem fp2InvAfterSquare0Stores_loadWord_high (yst : EvmState) (a : U256)
+    (offset : Nat) (hstart : 1600 ≤ offset) :
+    loadWord (fp2InvAfterSquare0Stores yst a).memory offset =
+      loadWord yst.memory offset := by
+  rw [fp2InvAfterSquare0Stores, fp2InvAfterSquare0High]
+  change loadWord
+    (storeWord
+      (storeWord (fp2InvAfterSquare0Call yst a).memory 1536
+        (fp2InvSquare0 yst a).1)
+      1568 (fp2InvSquare0 yst a).2) offset = _
+  rw [loadWord_storeWord_disjoint _ 1568 offset _ (by omega),
+    loadWord_storeWord_disjoint _ 1536 offset _ (by omega)]
+  unfold fp2InvAfterSquare0Call
+  rw [fpMulFinalState_loadWord_after_scratch (hstart := by omega)]
+  rfl
+
+theorem fp2InvSquare1Input_eq (yst : EvmState) (a : U256)
+    (haHigh : 1920 ≤ a.toNat) (ha : a.toNat + 96 < 2 ^ 256) :
+    fp2InvSquare1Input yst a = (fp2At yst a).c1 := by
+  have h64 : (a + BitVec.ofNat 256 64).toNat = a.toNat + 64 := by
+    bv_omega
+  have h96 : (a + BitVec.ofNat 256 96).toNat = a.toNat + 96 := by
+    bv_omega
+  rw [fp2InvSquare1Input, h64, h96,
+    fp2InvAfterSquare0Stores_loadWord_high _ _ (a.toNat + 64) (by omega),
+    fp2InvAfterSquare0Stores_loadWord_high _ _ (a.toNat + 96) (by omega)]
+  change fpWords (loadWord yst.memory (a.toNat + 64))
+    (loadWord yst.memory (a.toNat + 96)) =
+    fpWords (loadWord yst.memory (a + BitVec.ofNat 256 64).toNat)
+      (loadWord yst.memory (a + BitVec.ofNat 256 96).toNat)
+  rw [h64, h96]
+
+theorem fp2InvSquares_canonical (yst : EvmState) (a : U256)
+    (haCanonical : Fp2.Canonical (fp2At yst a))
+    (haHigh : 1920 ≤ a.toNat) (ha : a.toNat + 96 < 2 ^ 256) :
+    Fp.Canonical (pairWords (fp2InvSquare0 yst a)) ∧
+      Fp.Canonical (pairWords (fp2InvSquare1 yst a)) := by
+  constructor
+  · rw [fp2InvSquare0_eq_mulCanonical yst a haCanonical.c0.proof]
+    exact Fp.canonical_mulCanonical haCanonical.c0.proof haCanonical.c0.proof
+  · have hinput : Fp.Canonical (fp2InvSquare1Input yst a) := by
+      rw [fp2InvSquare1Input_eq yst a haHigh ha]
+      exact haCanonical.c1.proof
+    rw [fp2InvSquare1_eq_mulCanonical yst a hinput]
+    exact Fp.canonical_mulCanonical hinput hinput
+
+theorem fp2InvNorm_hi_lt_of_input (yst : EvmState) (a : U256)
+    (haCanonical : Fp2.Canonical (fp2At yst a))
+    (haHigh : 1920 ≤ a.toNat) (ha : a.toNat + 96 < 2 ^ 256) :
+    (fp2InvNorm yst a).1.toNat < 2 ^ 128 := by
+  have hs := fp2InvSquares_canonical yst a haCanonical haHigh ha
+  exact fp2InvNorm_hi_lt yst a hs.1 hs.2
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
