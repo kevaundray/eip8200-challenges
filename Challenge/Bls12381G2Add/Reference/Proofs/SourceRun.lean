@@ -87,6 +87,79 @@ theorem step_main_unequal (yst : EvmState)
   step_main_finite yst hsize hvalid hcurve1 hcurve2 hfirst hsecond
     (step_mainFiniteDispatcher_unequal yst hxeq1 hxeq2 hinv)
 
+private theorem step_main_pointHalt (yst stend : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hpoint : ExecStmt Challenge.EvmProof.modexpExec.toDialect mainFuns []
+      (mainAfterValidationReads yst) mainPointScope [] stend .halt) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody [] stend .halt := by
+  rw [mainValidBody_eq]
+  exact step_append_normal (step_mainPrefix_success yst hsize hvalid)
+    (Step.seqStop hpoint (by decide))
+
+theorem step_main_bothInfinity (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hboth : mainBothInfinityValue yst ≠ 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody [] (mainBothInfinityReturnState yst) .halt :=
+  step_main_pointHalt yst _ hsize hvalid
+    (step_mainPointScope_bothInfinity yst hcurve1 hcurve2 hboth)
+
+theorem step_main_firstInfinity (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst ≠ 0) (hsecond : mainInf2 yst = 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody [] (mainFirstInfinityReturnState yst) .halt :=
+  step_main_pointHalt yst _ hsize hvalid
+    (step_mainPointScope_firstInfinity yst hcurve1 hcurve2 hfirst hsecond)
+
+theorem step_main_secondInfinity (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst ≠ 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody [] (mainSecondInfinityReturnState yst) .halt :=
+  step_main_pointHalt yst _ hsize hvalid
+    (step_mainPointScope_secondInfinity yst hcurve1 hcurve2 hfirst hsecond)
+
+theorem step_main_opposite (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst = 0)
+    (hxeq : mainFiniteXEq1 yst ≠ 0)
+    (hyeq : mainDoubleYEq yst = 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody []
+      (mainFiniteClearReturnState (mainAfterDoubleYEq yst)) .halt :=
+  step_main_finite yst hsize hvalid hcurve1 hcurve2 hfirst hsecond
+    (step_mainFiniteDispatcher_opposite yst hxeq hyeq)
+
+theorem step_main_zeroY (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst = 0)
+    (hxeq : mainFiniteXEq1 yst ≠ 0)
+    (hyeq : mainDoubleYEq yst ≠ 0)
+    (hyzero : mainDoubleYZero yst ≠ 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody []
+      (mainFiniteClearReturnState (mainAfterDoubleYZero yst)) .halt :=
+  step_main_finite yst hsize hvalid hcurve1 hcurve2 hfirst hsecond
+    (step_mainFiniteDispatcher_zeroY yst hxeq hyeq hyzero)
+
 private def isFunctionDefinition : Stmt Op → Bool
   | .funDef .. => true
   | _ => false
@@ -161,5 +234,68 @@ theorem run_main_unequal (yst : EvmState)
       (mainPostReturnState (mainUnequalFinalState yst)) .halt :=
   run_of_mainValid yst _ (step_main_unequal yst hsize hvalid hcurve1 hcurve2
     hfirst hsecond hxeq1 hxeq2 hinv)
+
+theorem run_main_bothInfinity (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hboth : mainBothInfinityValue yst ≠ 0) :
+    Run Challenge.Bls12381G2Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainBothInfinityReturnState yst) .halt :=
+  run_of_mainValid yst _
+    (step_main_bothInfinity yst hsize hvalid hcurve1 hcurve2 hboth)
+
+theorem run_main_firstInfinity (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst ≠ 0) (hsecond : mainInf2 yst = 0) :
+    Run Challenge.Bls12381G2Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainFirstInfinityReturnState yst) .halt :=
+  run_of_mainValid yst _
+    (step_main_firstInfinity yst hsize hvalid hcurve1 hcurve2 hfirst hsecond)
+
+theorem run_main_secondInfinity (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst ≠ 0) :
+    Run Challenge.Bls12381G2Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainSecondInfinityReturnState yst) .halt :=
+  run_of_mainValid yst _
+    (step_main_secondInfinity yst hsize hvalid hcurve1 hcurve2 hfirst hsecond)
+
+theorem run_main_opposite (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst = 0)
+    (hxeq : mainFiniteXEq1 yst ≠ 0) (hyeq : mainDoubleYEq yst = 0) :
+    Run Challenge.Bls12381G2Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainFiniteClearReturnState (mainAfterDoubleYEq yst)) .halt :=
+  run_of_mainValid yst _ (step_main_opposite yst hsize hvalid hcurve1 hcurve2
+    hfirst hsecond hxeq hyeq)
+
+theorem run_main_zeroY (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst = 0)
+    (hxeq : mainFiniteXEq1 yst ≠ 0) (hyeq : mainDoubleYEq yst ≠ 0)
+    (hyzero : mainDoubleYZero yst ≠ 0) :
+    Run Challenge.Bls12381G2Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainFiniteClearReturnState (mainAfterDoubleYZero yst)) .halt :=
+  run_of_mainValid yst _ (step_main_zeroY yst hsize hvalid hcurve1 hcurve2
+    hfirst hsecond hxeq hyeq hyzero)
 
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
