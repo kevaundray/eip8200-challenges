@@ -61,4 +61,13 @@ def fpAddLowEnv (ahi alo bhi blo : U256) :
   [("\x0034", ahi), ("\x0035", alo), ("\x0036", bhi), ("\x0037", blo),
    ("\x0038", 0), ("\x0039", fpAddLowValue alo blo)]
 
+def fpAddHighValue (ahi alo bhi blo : U256) : U256 :=
+  ahi + (bhi + b2w (BitVec.ult (fpAddLowValue alo blo) alo))
+
+def fpAddHighEnv (ahi alo bhi blo : U256) :
+    VEnv Challenge.EvmProof.modexpExec.toDialect :=
+  [("\x0034", ahi), ("\x0035", alo), ("\x0036", bhi), ("\x0037", blo),
+   ("\x0038", fpAddHighValue ahi alo bhi blo),
+   ("\x0039", fpAddLowValue alo blo)]
+
 end Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
