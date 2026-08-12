@@ -22,7 +22,7 @@ def mainFiniteXEqArgsState (yst : EvmState) : EvmState :=
 def mainFiniteYEqArgsState (yst : EvmState) : EvmState :=
   afterFourLoads (mainFiniteXEqArgsState yst) 64 96 192 224
 
-private def afterTwoLoads (yst : EvmState) (hiOffset loOffset : Nat) :
+def afterTwoLoads (yst : EvmState) (hiOffset loOffset : Nat) :
     EvmState := touchMemory (touchMemory yst loOffset 32) hiOffset 32
 
 /-- Exact source zero test used by the equal-point `y = 0` branch. -/
@@ -67,7 +67,7 @@ private def fpZeroLoads (hi lo : Nat) : Expr Op :=
     (xHi xLo yHi yLo : Nat) :
     (afterFourLoads yst xHi xLo yHi yLo).memory = yst.memory := rfl
 
-@[simp] private theorem afterTwoLoads_memory (yst : EvmState)
+@[simp] theorem afterTwoLoads_memory (yst : EvmState)
     (hi lo : Nat) : (afterTwoLoads yst hi lo).memory = yst.memory := rfl
 
 /-- The finite exceptional tests only read memory, so every decoded word is

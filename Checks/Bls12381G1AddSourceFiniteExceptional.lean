@@ -150,4 +150,8 @@ example (yst : EvmState) (offset : Nat) (hend : offset + 32 ≤ 1024) :
 #guard_msgs in
 #print axioms eval_fpEqLoads
 
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.afterTwoLoads_memory' does not depend on any axioms -/
+#guard_msgs in
+#print axioms afterTwoLoads_memory
+
 end Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics

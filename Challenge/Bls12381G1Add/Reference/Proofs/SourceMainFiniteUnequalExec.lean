@@ -20,7 +20,7 @@ private theorem sound_execStmt {n funs V st stmt V' st' outcome}
       Challenge.EvmProof.modexpBuiltinFn_sound hbuiltin) n).2.2.1
     funs V st stmt V' st' outcome h
 
-private theorem eval_fpSubLoads
+theorem eval_fpSubLoads
     (V : VEnv Challenge.EvmProof.modexpExec.toDialect) (yst : EvmState)
     (aHi aLo bHi bLo : Nat)
     (haHi : aHi < 2 ^ 256) (haLo : aLo < 2 ^ 256)
