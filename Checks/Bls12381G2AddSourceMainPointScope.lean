@@ -1,0 +1,10 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainPointScope
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check step_mainPointScope_finite
+#check step_mainPointScope_bothInfinity
+#check step_mainPointScope_firstInfinity
+#check step_mainPointScope_secondInfinity
+#check step_mainPointScope_curve1_reject
+#check step_mainPointScope_curve2_reject
