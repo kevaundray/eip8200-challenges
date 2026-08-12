@@ -4,6 +4,7 @@ import Challenge.Bls12381G2Add.Reference.Proofs.SourceFpMulMemory
 set_option warningAsError true
 /-! # Memory refinement for frozen G2ADD `fp2Inv` -/
 namespace Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+open YulSemantics
 open YulSemantics.EVM
 open Challenge.Bls12381.ProofSupport
 
@@ -135,5 +136,15 @@ theorem fp2InvNorm_hi_lt_of_input (yst : EvmState) (a : U256)
     (fp2InvNorm yst a).1.toNat < 2 ^ 128 := by
   have hs := fp2InvSquares_canonical yst a haCanonical haHigh ha
   exact fp2InvNorm_hi_lt yst a hs.1 hs.2
+
+theorem step_fp2Inv_of_input (yst : EvmState) (out a : U256)
+    (haCanonical : Fp2.Canonical (fp2At yst a))
+    (haHigh : 1920 ≤ a.toNat) (ha : a.toNat + 96 < 2 ^ 256) :
+    EvalExpr Challenge.EvmProof.modexpExec.toDialect fp2InvFuns
+      [("out", out), ("a", a)] yst
+      (.call "\x0017" [.var "out", .var "a"])
+      (.vals [] (fp2InvFinalState yst out a)) :=
+  step_fp2Inv yst out a
+    (fp2InvNorm_hi_lt_of_input yst a haCanonical haHigh ha)
 
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics

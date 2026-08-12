@@ -12,3 +12,4 @@ open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 #check fp2InvSquare1Input_eq
 #check fp2InvSquares_canonical
 #check fp2InvNorm_hi_lt_of_input
+#check step_fp2Inv_of_input
