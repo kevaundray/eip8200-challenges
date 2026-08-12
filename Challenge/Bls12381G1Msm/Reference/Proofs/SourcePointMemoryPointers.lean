@@ -82,7 +82,7 @@ private theorem loadWord_storeWord_disjoint (memory : Nat → UInt8)
   simp only [pointAddPrefixState, pointAddStore]
   rw [loadWord_storeWord_same]
 
-private theorem pointAddPrefix_loadPoint (yst : EvmState)
+theorem pointAddPrefix_loadPoint (yst : EvmState)
     (out left right : U256) (address : Nat)
     (hregion : 1632 ≤ address) :
     loadWord (pointAddPrefixState yst out left right).memory
