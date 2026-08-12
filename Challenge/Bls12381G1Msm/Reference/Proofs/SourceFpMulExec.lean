@@ -8,22 +8,22 @@ namespace Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
 
 open YulSemantics YulSemantics.EVM
 
-theorem step_fpMul_of_args {funs V yst args} (ahi alo bhi blo : U256)
-    (hargs : EvalArgs Challenge.EvmProof.modexpExec.toDialect funs V yst args
-      (.vals [ahi, alo, bhi, blo] yst))
+theorem step_fpMul_of_args {funs V st argState args} (ahi alo bhi blo : U256)
+    (hargs : EvalArgs Challenge.EvmProof.modexpExec.toDialect funs V st args
+      (.vals [ahi, alo, bhi, blo] argState))
     (hlookup : lookupFun funs "\x009" = some (fpMulDecl, sourceFuns)) :
-    EvalExpr Challenge.EvmProof.modexpExec.toDialect funs V yst
+    EvalExpr Challenge.EvmProof.modexpExec.toDialect funs V st
       (.call "\x009" args)
-      (.vals [(fpMulResult yst ahi alo bhi blo).1,
-        (fpMulResult yst ahi alo bhi blo).2]
-        (fpMulFinalState yst ahi alo bhi blo)) := by
-  have hcall : EvalExpr Challenge.EvmProof.modexpExec.toDialect funs V yst
+      (.vals [(fpMulResult argState ahi alo bhi blo).1,
+        (fpMulResult argState ahi alo bhi blo).2]
+        (fpMulFinalState argState ahi alo bhi blo)) := by
+  have hcall : EvalExpr Challenge.EvmProof.modexpExec.toDialect funs V st
       (.call "\x009" args)
       (.vals
-        [(VEnv.get (fpMulBodyResultEnv yst ahi alo bhi blo) "\x0077").getD 0,
-         (VEnv.get (fpMulBodyResultEnv yst ahi alo bhi blo) "\x0078").getD 0]
-        (fpMulFinalState yst ahi alo bhi blo)) :=
-    Step.callOk hargs hlookup rfl (step_fpMulBody ahi alo bhi blo yst)
+        [(VEnv.get (fpMulBodyResultEnv argState ahi alo bhi blo) "\x0077").getD 0,
+         (VEnv.get (fpMulBodyResultEnv argState ahi alo bhi blo) "\x0078").getD 0]
+        (fpMulFinalState argState ahi alo bhi blo)) :=
+    Step.callOk hargs hlookup rfl (step_fpMulBody ahi alo bhi blo argState)
       (Or.inl rfl)
   rw [fpMulBodyResultEnv_hi, fpMulBodyResultEnv_lo] at hcall
   exact hcall
