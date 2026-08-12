@@ -97,6 +97,12 @@ def mainUnequalBody : Block Op :=
   | .cond _ body => body
   | _ => []
 
+def mainDoubleXEq2 (yst : EvmState) : U256 :=
+  fp2EqValue (mainDoubleFinalState yst) 0 256
+
+def mainAfterDoubleXEq2 (yst : EvmState) : EvmState :=
+  fp2EqReadState (mainDoubleFinalState yst) 0 256
+
 def mainPostState0 (yst : EvmState) : EvmState :=
   fp2MulFinalState yst 2688 2048 2048
 
