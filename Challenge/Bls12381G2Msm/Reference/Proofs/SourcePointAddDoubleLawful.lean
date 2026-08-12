@@ -79,7 +79,7 @@ theorem pointAddDoubleNum2State_toLawful (st : EvmState)
     (by decide) (by decide) (by decide)]
   ring
 
-private theorem pointAddDoubleNum2State_square (st : EvmState) :
+theorem pointAddDoubleNum2State_square (st : EvmState) :
     fp2At (pointAddDoubleNum2State st) 2176 = fp2At st 2176 := by
   unfold pointAddDoubleNum2State
   exact fp2AddFinalState_fp2At_before_out _ _ _ _ _
