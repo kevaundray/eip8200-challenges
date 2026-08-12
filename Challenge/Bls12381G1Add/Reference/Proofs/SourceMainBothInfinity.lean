@@ -198,6 +198,51 @@ private theorem mainDecodedState_readOutput_zero (yst : EvmState)
     _ 0 128 128 _ (by omega)]
   exact fourZeroWords yst.memory
 
+/-- The both-infinity return path preserves the exact first canonical point
+window loaded by the source, independently of the initial memory contents. -/
+theorem mainBothInfinity_returned_inputWindow (yst : EvmState)
+    (input : ByteArray) (hcalldata : yst.env.calldata = input.toList) :
+    (mainBothInfinityReturnState yst).halted =
+      some (HaltKind.ret,
+        (EvmSemantics.MachineState.readPadded input 0 128).toList) := by
+  change some (HaltKind.ret,
+    readBytes (mainValidatedState yst).memory 0 128) = _
+  rw [mainValidatedState_readOutput, mainDecodedState_memory]
+  repeat' rw [Challenge.EvmProof.ModexpMemory.readBytes_storeWord_disjoint
+    _ 0 128 224 _ (by omega)]
+  repeat' rw [Challenge.EvmProof.ModexpMemory.readBytes_storeWord_disjoint
+    _ 0 128 192 _ (by omega)]
+  repeat' rw [Challenge.EvmProof.ModexpMemory.readBytes_storeWord_disjoint
+    _ 0 128 160 _ (by omega)]
+  repeat' rw [Challenge.EvmProof.ModexpMemory.readBytes_storeWord_disjoint
+    _ 0 128 128 _ (by omega)]
+  simp only [mainInputWord, hcalldata]
+  rw [show 128 = 32 + 96 by omega,
+    Challenge.EvmProof.ModexpMemory.readBytes_add,
+    Challenge.EvmProof.ModexpMemory.readBytes_storeWord_disjoint
+      _ 0 32 96 _ (by omega),
+    Challenge.EvmProof.ModexpMemory.readBytes_storeWord_disjoint
+      _ 0 32 64 _ (by omega),
+    Challenge.EvmProof.ModexpMemory.readBytes_storeWord_disjoint
+      _ 0 32 32 _ (by omega),
+    Challenge.EvmProof.ModexpMemory.readBytes_storeWord_wordFrom,
+    show 96 = 32 + 64 by omega,
+    Challenge.EvmProof.ModexpMemory.readBytes_add,
+    Challenge.EvmProof.ModexpMemory.readBytes_storeWord_disjoint
+      _ 32 32 96 _ (by omega),
+    Challenge.EvmProof.ModexpMemory.readBytes_storeWord_disjoint
+      _ 32 32 64 _ (by omega),
+    Challenge.EvmProof.ModexpMemory.readBytes_storeWord_wordFrom,
+    show 64 = 32 + 32 by omega,
+    Challenge.EvmProof.ModexpMemory.readBytes_add,
+    Challenge.EvmProof.ModexpMemory.readBytes_storeWord_disjoint
+      _ 64 32 96 _ (by omega),
+    Challenge.EvmProof.ModexpMemory.readBytes_storeWord_wordFrom,
+    Challenge.EvmProof.ModexpMemory.readBytes_storeWord_wordFrom]
+  rw [← Challenge.EvmProof.Bytes.readPadded_toList_add input 64 32 32,
+    ← Challenge.EvmProof.Bytes.readPadded_toList_add input 32 32 64,
+    ← Challenge.EvmProof.Bytes.readPadded_toList_add input 0 32 96]
+
 private theorem natToBytesPadded_zero (width : Nat) :
     EvmSemantics.Data.Bytes.natToBytesPadded 0 width =
       ByteArray.mk (Array.replicate width 0) := by

@@ -35,6 +35,13 @@ example (yst : EvmState)
           (.infinity : EvmSemantics.Crypto.Bls12381.Point) |>.toList) :=
   mainBothInfinity_returned_infinity yst hcalldata
 
+example (yst : EvmState) (input : ByteArray)
+    (hcalldata : yst.env.calldata = input.toList) :
+    (mainBothInfinityReturnState yst).halted =
+      some (HaltKind.ret,
+        (EvmSemantics.MachineState.readPadded input 0 128).toList) :=
+  mainBothInfinity_returned_inputWindow yst input hcalldata
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainBothInfinity_return' depends on axioms: [propext,
  Quot.sound] -/
 #guard_msgs in
@@ -63,5 +70,11 @@ example (yst : EvmState)
  Quot.sound] -/
 #guard_msgs in
 #print axioms mainBothInfinity_returned_infinity
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainBothInfinity_returned_inputWindow' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms mainBothInfinity_returned_inputWindow
 
 end Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
