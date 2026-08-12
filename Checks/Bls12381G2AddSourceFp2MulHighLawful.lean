@@ -1,0 +1,6 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2MulHighLawful
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check fp2MulFinalState_canonical_of_high_after_out
+#check fp2MulFinalState_toLawful_mul_of_high_after_out
