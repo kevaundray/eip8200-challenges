@@ -1,0 +1,10 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2InvMemory
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check fp2InvAfterSquare0Stores_square0
+#check fp2InvAfterSquare1Stores_square0
+#check fp2InvAfterSquare1Stores_square1
+#check fp2InvNorm_eq_squares
+#check fp2InvNorm_canonical
+#check fp2InvNorm_hi_lt
