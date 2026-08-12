@@ -16,6 +16,13 @@ private def storePointer (yst : EvmState) (offset : Nat) (value : U256) :
 def pointAddPrefixState (yst : EvmState) (out left right : U256) : EvmState :=
   storePointer (storePointer (storePointer yst 1920 out) 1952 left) 1984 right
 
+/-- The pointer prefix changes exactly its three low memory words. -/
+theorem pointAddPrefixState_memory (yst : EvmState) (out left right : U256) :
+    (pointAddPrefixState yst out left right).memory =
+      storeWord (storeWord (storeWord yst.memory 1920 out) 1952 left)
+        1984 right := by
+  rfl
+
 private theorem exec_pointAddPrefix (yst : EvmState) (out left right : U256) :
     Interp.execStmts Challenge.EvmProof.modexpExec 70 pointAddBodyFuns
       (pointAddInitialEnv out left right) yst

@@ -125,4 +125,41 @@ theorem pointAt_storePoint_3840 (yst : EvmState)
   norm_num
   rw [msmStorePointState_3840_fp2At_y]
 
+theorem pointAddLeftPointer_eq (yst : EvmState) (out left right : U256) :
+    pointAddLeftPointer yst out left right = left := by
+  unfold pointAddLeftPointer
+  rw [pointAddPrefixState_memory]
+  simp [loadWord_storeWord_same, loadWord_storeWord_disjoint]
+
+theorem pointAddRightPointer_eq (yst : EvmState) (out left right : U256) :
+    pointAddRightPointer yst out left right = right := by
+  unfold pointAddRightPointer pointAddLeftInfinityState
+  change loadWord (pointAddPrefixState yst out left right).memory 1984 = right
+  rw [pointAddPrefixState_memory]
+  simp [loadWord_storeWord_same]
+
+theorem pointAddFiniteStart_memory (yst : EvmState)
+    (out left right : U256) :
+    (pointAddFiniteStart yst out left right).memory =
+      (pointAddPrefixState yst out left right).memory := by
+  rfl
+
+theorem pointAddFiniteStart_fp2At_3072 (yst : EvmState)
+    (out left right : U256) :
+    fp2At (pointAddFiniteStart yst out left right) 3072 = fp2At yst 3072 := by
+  unfold fp2At Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At
+  norm_num
+  constructor <;> constructor <;>
+    rw [pointAddFiniteStart_memory, pointAddPrefixState_memory] <;>
+    simp [loadWord_storeWord_disjoint]
+
+theorem pointAddFiniteStart_fp2At_3840 (yst : EvmState)
+    (out left right : U256) :
+    fp2At (pointAddFiniteStart yst out left right) 3840 = fp2At yst 3840 := by
+  unfold fp2At Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At
+  norm_num
+  constructor <;> constructor <;>
+    rw [pointAddFiniteStart_memory, pointAddPrefixState_memory] <;>
+    simp [loadWord_storeWord_disjoint]
+
 end Challenge.Bls12381G2Msm.Reference.Proofs.SourceSemantics
