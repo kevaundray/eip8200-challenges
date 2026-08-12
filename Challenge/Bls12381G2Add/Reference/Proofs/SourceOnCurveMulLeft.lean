@@ -31,4 +31,15 @@ theorem fp2MulScheduledLeft_eq_of_low (yst : EvmState)
     exact fp2MulAfterRealStores_loadWord_before_scratch yst out a b _
       (by bv_omega) houtHigh hout
 
+theorem fp2MulFinalState_fp2At_before_scratch (yst : EvmState)
+    (out a b ptr : U256)
+    (hptrEnd : ptr.toNat + 96 < 2 ^ 256)
+    (hptrLow : ptr.toNat + 128 ≤ 1024)
+    (houtHigh : 1920 ≤ out.toNat) (hout : out.toNat + 96 < 2 ^ 256) :
+    fp2At (fp2MulFinalState yst out a b) ptr = fp2At yst ptr := by
+  apply fp2At_eq_of_loads
+  all_goals
+    exact fp2MulFinalState_loadWord_before_scratch yst out a b _
+      (by bv_omega) houtHigh hout
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
