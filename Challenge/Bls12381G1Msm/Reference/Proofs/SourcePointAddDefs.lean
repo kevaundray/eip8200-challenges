@@ -64,12 +64,41 @@ def pointAddRightInfinityBody : Block Op :=
   | .cond _ body => body
   | _ => []
 
+def pointAddRightCopyStmt : Stmt Op := pointAddRightInfinityBody[0]!
+
+def pointAddRightCopyBody : Block Op :=
+  match pointAddRightCopyStmt with
+  | .block body => body
+  | _ => []
+
+def pointAddRightCopyStmt0 : Stmt Op := pointAddRightCopyBody[0]!
+def pointAddRightCopyStmt1 : Stmt Op := pointAddRightCopyBody[1]!
+def pointAddRightCopyStmt2 : Stmt Op := pointAddRightCopyBody[2]!
+def pointAddRightCopyStmt3 : Stmt Op := pointAddRightCopyBody[3]!
+def pointAddRightCopyStmt4 : Stmt Op := pointAddRightCopyBody[4]!
+def pointAddRightCopyStmt5 : Stmt Op := pointAddRightCopyBody[5]!
+def pointAddRightCopyStmt6 : Stmt Op := pointAddRightCopyBody[6]!
+
 theorem pointAddRightInfinityCondition_eq : pointAddRightInfinityCondition =
     .call "\x0015" [.builtin .mload [.lit (.number 1600)]] := by
   rfl
 
 theorem pointAddStmt4_eq : pointAddStmt4 =
     .cond pointAddRightInfinityCondition pointAddRightInfinityBody := by
+  rfl
+
+theorem pointAddRightInfinityBody_eq : pointAddRightInfinityBody =
+    [pointAddRightCopyStmt, .leave] := by
+  rfl
+
+theorem pointAddRightCopyStmt_eq : pointAddRightCopyStmt =
+    .block pointAddRightCopyBody := by
+  rfl
+
+theorem pointAddRightCopyBody_eq : pointAddRightCopyBody =
+    [pointAddRightCopyStmt0, pointAddRightCopyStmt1, pointAddRightCopyStmt2,
+      pointAddRightCopyStmt3, pointAddRightCopyStmt4, pointAddRightCopyStmt5,
+      pointAddRightCopyStmt6] := by
   rfl
 
 theorem pointAddLeftInfinityBody_eq : pointAddLeftInfinityBody =
