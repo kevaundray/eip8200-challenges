@@ -1,4 +1,5 @@
-import Challenge.Bls12381G2Msm.Reference.Proofs.FrozenBlock
+import Challenge.Bls12381G2Msm.Reference.Proofs.Compilation
+import Challenge.Bls12381G2Msm.Reference.Proofs.FrozenAssembly
 
 set_option warningAsError true
 
@@ -20,3 +21,20 @@ open Challenge.Bls12381G2Msm.Reference.Proofs.Compilation
 #guard referenceNormalizedChunk8Matches
 #guard referenceNormalizedChunk9Matches
 #guard referenceNormalizedChunk10Matches
+
+example : (YulEvmCompiler.compileProgram referenceCompiledBlock).isSome :=
+  referenceCompileProgramSucceeded
+
+example : YulEvmCompiler.compileProgram referenceCompiledBlock =
+    some referenceAssembly :=
+  referenceCompiled_compileProgram
+#guard referenceAssemblyChunk0Matches
+#guard referenceAssemblyChunk1Matches
+#guard referenceAssemblyChunk2Matches
+#guard referenceAssemblyChunk3Matches
+#guard referenceAssemblyChunk4Matches
+#guard referenceAssemblyChunk5Matches
+#guard referenceAssemblyChunk6Matches
+#guard referenceAssemblyChunk7Matches
+#guard referenceAssemblyChunk8Matches
+#guard referenceAssemblyChunk9Matches
