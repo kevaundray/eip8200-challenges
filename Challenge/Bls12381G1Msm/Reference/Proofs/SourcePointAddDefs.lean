@@ -168,6 +168,10 @@ def pointAddDoubleXSubLeftBody : Block Op :=
 
 def pointAddDoubleXSubRightTail : Block Op := pointAddDoubleXSubBody.drop 1
 
+def pointAddDoubleXSubLeftRepairStmt : Stmt Op := pointAddDoubleXSubLeftBody[2]!
+def pointAddDoubleXSubLeftOutHiStmt : Stmt Op := pointAddDoubleXSubLeftBody[3]!
+def pointAddDoubleXSubLeftOutLoStmt : Stmt Op := pointAddDoubleXSubLeftBody[4]!
+
 def pointAddDoubleInvBody : Block Op :=
   match pointAddDoubleInvStmt with
   | .block body => body
@@ -293,6 +297,58 @@ theorem pointAddDoubleXSubLeftRawPrefix_shape :
         (.builtin .sub
           [.builtin .sub [.var "fc0_33", .var "fc0_31"],
            .builtin .gt [.var "fc0_30", .var "fc0_32"]])]] := by
+  rfl
+
+theorem pointAddDoubleXSubLeftTail_shape :
+    pointAddDoubleXSubLeftBody.drop 2 =
+    [.cond
+      (.builtin .gt
+        [.var "fc0_28",
+         .lit (.number 34565483545414906068789196026815425751)])
+      [.letDecl ["\x0051"]
+        (some (.builtin .add
+          [.var "fc0_29",
+           .lit (.number
+            45442060874369865957053122457065728162598490762543039060009208264153100167851)])),
+       .assign ["fc0_28"]
+        (.builtin .add
+          [.var "fc0_28",
+           .builtin .add
+            [.lit (.number 34565483545414906068789196026815425751),
+             .builtin .lt [.var "\x0051", .var "fc0_29"]]]),
+       .assign ["fc0_29"] (.var "\x0051")],
+     .assign ["\x00122"] (.var "fc0_28"),
+     .assign ["\x00123"] (.var "fc0_29")] := by
+  rfl
+
+theorem pointAddDoubleXSubLeftRepairStmt_eq :
+    pointAddDoubleXSubLeftRepairStmt =
+    .cond
+      (.builtin .gt
+        [.var "fc0_28",
+         .lit (.number 34565483545414906068789196026815425751)])
+      [.letDecl ["\x0051"]
+        (some (.builtin .add
+          [.var "fc0_29",
+           .lit (.number
+            45442060874369865957053122457065728162598490762543039060009208264153100167851)])),
+       .assign ["fc0_28"]
+        (.builtin .add
+          [.var "fc0_28",
+           .builtin .add
+            [.lit (.number 34565483545414906068789196026815425751),
+             .builtin .lt [.var "\x0051", .var "fc0_29"]]]),
+       .assign ["fc0_29"] (.var "\x0051")] := by
+  rfl
+
+theorem pointAddDoubleXSubLeftOutHiStmt_eq :
+    pointAddDoubleXSubLeftOutHiStmt =
+      .assign ["\x00122"] (.var "fc0_28") := by
+  rfl
+
+theorem pointAddDoubleXSubLeftOutLoStmt_eq :
+    pointAddDoubleXSubLeftOutLoStmt =
+      .assign ["\x00123"] (.var "fc0_29") := by
   rfl
 
 theorem pointAddDoubleXSubRightTail_length :
