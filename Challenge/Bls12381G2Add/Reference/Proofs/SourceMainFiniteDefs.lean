@@ -62,6 +62,24 @@ def mainDoubleBody : Block Op :=
   | .cond _ body => body.drop 2
   | _ => []
 
+def mainDoubleYEq (yst : EvmState) : U256 :=
+  fp2EqValue (mainAfterFiniteXEq1 yst) 128 384
+
+def mainAfterDoubleYEq (yst : EvmState) : EvmState :=
+  fp2EqReadState (mainAfterFiniteXEq1 yst) 128 384
+
+def mainDoubleYZero (yst : EvmState) : U256 :=
+  fp2ZeroValue (mainAfterDoubleYEq yst) 128
+
+def mainAfterDoubleYZero (yst : EvmState) : EvmState :=
+  fp2ReadState (mainAfterDoubleYEq yst) 128
+
+def mainFiniteClearState (yst : EvmState) : EvmState := clearPointState yst
+
+def mainFiniteClearReturnState (yst : EvmState) : EvmState :=
+  { touchMemory (mainFiniteClearState yst) 0 256 with
+    halted := some (.ret, readBytes (mainFiniteClearState yst).memory 0 256) }
+
 def mainUnequalState0 (yst : EvmState) : EvmState :=
   fp2SubFinalState (mainAfterFiniteXEq2 yst) 2304 384 128
 

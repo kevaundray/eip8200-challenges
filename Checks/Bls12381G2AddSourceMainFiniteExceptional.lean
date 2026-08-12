@@ -1,0 +1,7 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainFiniteExceptional
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check step_mainDoubleExceptional_continue
+#check step_mainDoubleExceptional_opposite
+#check step_mainDoubleExceptional_zeroY
