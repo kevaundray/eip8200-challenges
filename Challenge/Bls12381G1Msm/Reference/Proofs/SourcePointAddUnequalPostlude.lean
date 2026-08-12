@@ -9,20 +9,97 @@ namespace Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
 open YulSemantics YulSemantics.EVM
 
 structure PointAddUnequalPostContext where
-  env : VEnv Challenge.EvmProof.modexpExec.toDialect
-  state : EvmState
   xHi : U256
   xLo : U256
   yHi : U256
   yLo : U256
   tempHi : U256
   tempLo : U256
+  env : VEnv Challenge.EvmProof.modexpExec.toDialect
+  state : EvmState
   env_xHi : VEnv.get env "\x00136" = some xHi
   env_xLo : VEnv.get env "\x00137" = some xLo
   env_yHi : VEnv.get env "\x00140" = some yHi
   env_yLo : VEnv.get env "\x00141" = some yLo
   env_tempHi : VEnv.get env "\x00138" = some tempHi
   env_tempLo : VEnv.get env "\x00139" = some tempLo
+
+def makePointAddUnequalPostContext
+    (xHi xLo yHi yLo tempHi tempLo : U256)
+    (env : VEnv Challenge.EvmProof.modexpExec.toDialect) (state : EvmState)
+    (env_xHi : VEnv.get env "\x00136" = some xHi)
+    (env_xLo : VEnv.get env "\x00137" = some xLo)
+    (env_yHi : VEnv.get env "\x00140" = some yHi)
+    (env_yLo : VEnv.get env "\x00141" = some yLo)
+    (env_tempHi : VEnv.get env "\x00138" = some tempHi)
+    (env_tempLo : VEnv.get env "\x00139" = some tempLo) :
+    PointAddUnequalPostContext where
+  xHi := xHi
+  xLo := xLo
+  yHi := yHi
+  yLo := yLo
+  tempHi := tempHi
+  tempLo := tempLo
+  env := env
+  state := state
+  env_xHi := env_xHi
+  env_xLo := env_xLo
+  env_yHi := env_yHi
+  env_yLo := env_yLo
+  env_tempHi := env_tempHi
+  env_tempLo := env_tempLo
+
+@[simp] theorem makePointAddUnequalPostContext_xHi
+    (xHi xLo yHi yLo tempHi tempLo : U256)
+    (env : VEnv Challenge.EvmProof.modexpExec.toDialect) (state : EvmState)
+    (env_xHi : VEnv.get env "\x00136" = some xHi)
+    (env_xLo : VEnv.get env "\x00137" = some xLo)
+    (env_yHi : VEnv.get env "\x00140" = some yHi)
+    (env_yLo : VEnv.get env "\x00141" = some yLo)
+    (env_tempHi : VEnv.get env "\x00138" = some tempHi)
+    (env_tempLo : VEnv.get env "\x00139" = some tempLo) :
+    (makePointAddUnequalPostContext xHi xLo yHi yLo tempHi tempLo env state
+      env_xHi env_xLo env_yHi env_yLo env_tempHi env_tempLo).xHi = xHi := by
+  rfl
+
+@[simp] theorem makePointAddUnequalPostContext_xLo
+    (xHi xLo yHi yLo tempHi tempLo : U256)
+    (env : VEnv Challenge.EvmProof.modexpExec.toDialect) (state : EvmState)
+    (env_xHi : VEnv.get env "\x00136" = some xHi)
+    (env_xLo : VEnv.get env "\x00137" = some xLo)
+    (env_yHi : VEnv.get env "\x00140" = some yHi)
+    (env_yLo : VEnv.get env "\x00141" = some yLo)
+    (env_tempHi : VEnv.get env "\x00138" = some tempHi)
+    (env_tempLo : VEnv.get env "\x00139" = some tempLo) :
+    (makePointAddUnequalPostContext xHi xLo yHi yLo tempHi tempLo env state
+      env_xHi env_xLo env_yHi env_yLo env_tempHi env_tempLo).xLo = xLo := by
+  rfl
+
+@[simp] theorem makePointAddUnequalPostContext_env
+    (xHi xLo yHi yLo tempHi tempLo : U256)
+    (env : VEnv Challenge.EvmProof.modexpExec.toDialect) (state : EvmState)
+    (env_xHi : VEnv.get env "\x00136" = some xHi)
+    (env_xLo : VEnv.get env "\x00137" = some xLo)
+    (env_yHi : VEnv.get env "\x00140" = some yHi)
+    (env_yLo : VEnv.get env "\x00141" = some yLo)
+    (env_tempHi : VEnv.get env "\x00138" = some tempHi)
+    (env_tempLo : VEnv.get env "\x00139" = some tempLo) :
+    (makePointAddUnequalPostContext xHi xLo yHi yLo tempHi tempLo env state
+      env_xHi env_xLo env_yHi env_yLo env_tempHi env_tempLo).env = env := by
+  rfl
+
+@[simp] theorem makePointAddUnequalPostContext_state
+    (xHi xLo yHi yLo tempHi tempLo : U256)
+    (env : VEnv Challenge.EvmProof.modexpExec.toDialect) (state : EvmState)
+    (env_xHi : VEnv.get env "\x00136" = some xHi)
+    (env_xLo : VEnv.get env "\x00137" = some xLo)
+    (env_yHi : VEnv.get env "\x00140" = some yHi)
+    (env_yLo : VEnv.get env "\x00141" = some yLo)
+    (env_tempHi : VEnv.get env "\x00138" = some tempHi)
+    (env_tempLo : VEnv.get env "\x00139" = some tempLo) :
+    (makePointAddUnequalPostContext xHi xLo yHi yLo tempHi tempLo env state
+      env_xHi env_xLo env_yHi env_yLo env_tempHi env_tempLo).state = state := by
+  rfl
 
 def pointAddUnequalPostlude : Block Op := pointAddUnequalCode.drop 13
 def pointAddUnequalPostStmt0 : Stmt Op := pointAddUnequalPostlude[0]!

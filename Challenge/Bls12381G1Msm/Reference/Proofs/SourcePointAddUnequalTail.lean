@@ -25,7 +25,8 @@ theorem step_pointAddUnequalTail (yst : EvmState) (out left right : U256) :
       (pointAddUnequalYSubConcreteState yst out left right)
       pointAddUnequalPostlude (pointAddUnequalFinalEnv yst out left right)
       (pointAddUnequalFinalState yst out left right) .normal := by
-    simpa only [pointAddUnequalPostContext, pointAddUnequalFinalEnv,
+    simpa only [pointAddUnequalPostContext_env,
+      pointAddUnequalPostContext_state, pointAddUnequalFinalEnv,
       pointAddUnequalFinalState] using
         (step_pointAddUnequalPostlude yst out left right)
   rw [pointAddUnequalTailCode]

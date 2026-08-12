@@ -9,26 +9,85 @@ namespace Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
 
 open YulSemantics YulSemantics.EVM
 
+def pointAddUnequalPostX (yst : EvmState)
+    (out left right : U256) : U256 × U256 :=
+  pointAddUnequalXSubResult yst out left right
+
+theorem pointAddUnequalPostX_eq (yst : EvmState)
+    (out left right : U256) :
+    pointAddUnequalPostX yst out left right =
+      pointAddUnequalXSubResult yst out left right := by
+  rfl
+
+def pointAddUnequalPostY (yst : EvmState)
+    (out left right : U256) : U256 × U256 :=
+  pointAddUnequalYSubResult
+    (pointAddUnequalYSubContext yst out left right)
+
+theorem pointAddUnequalPostY_eq (yst : EvmState)
+    (out left right : U256) :
+    pointAddUnequalPostY yst out left right =
+      pointAddUnequalYSubResult
+        (pointAddUnequalYSubContext yst out left right) := by
+  rfl
+
+attribute [irreducible] pointAddUnequalPostX pointAddUnequalPostY
+
 def pointAddUnequalPostContext (yst : EvmState)
-    (out left right : U256) : PointAddUnequalPostContext where
-  env := pointAddUnequalYSubConcreteEnv yst out left right
-  state := pointAddUnequalYSubConcreteState yst out left right
-  xHi := (pointAddUnequalXSubResult yst out left right).1
-  xLo := (pointAddUnequalXSubResult yst out left right).2
-  yHi := (pointAddUnequalYSubResult
-    (pointAddUnequalYSubContext yst out left right)).1
-  yLo := (pointAddUnequalYSubResult
-    (pointAddUnequalYSubContext yst out left right)).2
-  tempHi := (pointAddUnequalDeltaResult
-    (pointAddUnequalDeltaContext yst out left right)).1
-  tempLo := (pointAddUnequalDeltaResult
-    (pointAddUnequalDeltaContext yst out left right)).2
-  env_xHi := pointAddUnequalYSubConcreteEnv_xHi yst out left right
-  env_xLo := pointAddUnequalYSubConcreteEnv_xLo yst out left right
-  env_yHi := pointAddUnequalYSubConcreteEnv_yHi yst out left right
-  env_yLo := pointAddUnequalYSubConcreteEnv_yLo yst out left right
-  env_tempHi := pointAddUnequalYSubConcreteEnv_tempHi yst out left right
-  env_tempLo := pointAddUnequalYSubConcreteEnv_tempLo yst out left right
+    (out left right : U256) : PointAddUnequalPostContext :=
+  makePointAddUnequalPostContext
+    (pointAddUnequalPostX yst out left right).1
+    (pointAddUnequalPostX yst out left right).2
+    (pointAddUnequalPostY yst out left right).1
+    (pointAddUnequalPostY yst out left right).2
+    (pointAddUnequalDeltaResult
+      (pointAddUnequalDeltaContext yst out left right)).1
+    (pointAddUnequalDeltaResult
+      (pointAddUnequalDeltaContext yst out left right)).2
+    (pointAddUnequalYSubConcreteEnv yst out left right)
+    (pointAddUnequalYSubConcreteState yst out left right)
+    (by
+      rw [pointAddUnequalPostX_eq]
+      exact pointAddUnequalYSubConcreteEnv_xHi yst out left right)
+    (by
+      rw [pointAddUnequalPostX_eq]
+      exact pointAddUnequalYSubConcreteEnv_xLo yst out left right)
+    (by
+      rw [pointAddUnequalPostY_eq]
+      exact pointAddUnequalYSubConcreteEnv_yHi yst out left right)
+    (by
+      rw [pointAddUnequalPostY_eq]
+      exact pointAddUnequalYSubConcreteEnv_yLo yst out left right)
+    (pointAddUnequalYSubConcreteEnv_tempHi yst out left right)
+    (pointAddUnequalYSubConcreteEnv_tempLo yst out left right)
+
+theorem pointAddUnequalPostContext_xHi (yst : EvmState)
+    (out left right : U256) :
+    (pointAddUnequalPostContext yst out left right).xHi =
+      (pointAddUnequalPostX yst out left right).1 := by
+  rw [pointAddUnequalPostContext,
+    makePointAddUnequalPostContext_xHi]
+
+theorem pointAddUnequalPostContext_xLo (yst : EvmState)
+    (out left right : U256) :
+    (pointAddUnequalPostContext yst out left right).xLo =
+      (pointAddUnequalPostX yst out left right).2 := by
+  rw [pointAddUnequalPostContext,
+    makePointAddUnequalPostContext_xLo]
+
+theorem pointAddUnequalPostContext_env (yst : EvmState)
+    (out left right : U256) :
+    (pointAddUnequalPostContext yst out left right).env =
+      pointAddUnequalYSubConcreteEnv yst out left right := by
+  rw [pointAddUnequalPostContext,
+    makePointAddUnequalPostContext_env]
+
+theorem pointAddUnequalPostContext_state (yst : EvmState)
+    (out left right : U256) :
+    (pointAddUnequalPostContext yst out left right).state =
+      pointAddUnequalYSubConcreteState yst out left right := by
+  rw [pointAddUnequalPostContext,
+    makePointAddUnequalPostContext_state]
 
 def pointAddUnequalFinalEnv (yst : EvmState)
     (out left right : U256) : VEnv Challenge.EvmProof.modexpExec.toDialect :=
