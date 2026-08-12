@@ -1,6 +1,8 @@
 import Challenge.Bls12381G1Msm.Reference.Bytecode
 import Challenge.Bls12381G1Msm.Reference.Proofs.FrozenRawBlock
 import Challenge.Bls12381G1Msm.Reference.Proofs.FrozenOptimizedBlock
+import Challenge.Bls12381G1Msm.Reference.Proofs.FrozenBackendBlock
+import Challenge.Bls12381G1Msm.Reference.Proofs.FrozenAssembly
 import YulEvmCompiler.Optimizer.Implementation.Pipeline
 
 set_option warningAsError true
@@ -50,11 +52,21 @@ def referenceCleanedLayoutBlock : Block Op :=
 def referenceLayoutBlock : Block Op :=
   Optimizer.stackLayoutBlock referenceCompiledBlock
 
-/-- Exact first optimized fallback chain used by `compileSource`. -/
-def referenceCompile? : Option (List Instr) :=
-  compile referenceCompiledBlock <|>
-    compile referenceCleanedLayoutBlock <|>
-    compile referenceLayoutBlock
+/-- Proof-facing cleaned stack-layout block accepted by the backend. -/
+def referenceBackendBlock : Block Op := frozenReferenceBackendBlock
+
+def referenceComputedAssembly : List Asm :=
+  (compileProgram referenceBackendBlock).getD []
+
+def referenceAssembly : List Asm := frozenReferenceAssembly
+
+def referenceComputedOptimizedAssembly : List Asm :=
+  optimizeAsm referenceAssembly
+
+def referenceOptimizedAssembly : List Asm := frozenReferenceOptimizedAssembly
+
+/-- Exact first successful optimized fallback used by `compileSource`. -/
+def referenceCompile? : Option (List Instr) := compile referenceBackendBlock
 
 def referenceCompiledBytecode? : Option ByteArray :=
   referenceCompile?.map assemble
