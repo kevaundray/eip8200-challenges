@@ -1,0 +1,8 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceSpecFiniteExceptional
+
+set_option warningAsError true
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check run_main_opposite_matches_add
+#check run_main_zeroY_matches_add
