@@ -128,6 +128,73 @@ theorem pointAddXEqCondition_eq : pointAddXEqCondition =
           [.builtin .mload [.lit (.number 1600)], .lit (.number 32)]]] := by
   rfl
 
+def pointAddXEqMainStmt : Stmt Op := pointAddXEqBody[0]!
+
+def pointAddXEqMainBody : Block Op :=
+  match pointAddXEqMainStmt with
+  | .block body => body
+  | _ => []
+
+def pointAddXEqExceptionalStmt : Stmt Op := pointAddXEqMainBody[0]!
+
+def pointAddXEqExceptionalBody : Block Op :=
+  match pointAddXEqExceptionalStmt with
+  | .block body => body
+  | _ => []
+
+def pointAddYSumStmt : Stmt Op := pointAddXEqExceptionalBody[0]!
+def pointAddYZeroStmt : Stmt Op := pointAddXEqExceptionalBody[1]!
+
+def pointAddYSumExpr : Expr Op :=
+  match pointAddYSumStmt with
+  | .letDecl _ (some expr) => expr
+  | _ => .lit (.number 0)
+
+def pointAddYSumArgs : List (Expr Op) :=
+  match pointAddYSumExpr with
+  | .call _ args => args
+  | _ => []
+
+theorem pointAddXEqBody_eq : pointAddXEqBody =
+    [pointAddXEqMainStmt, .leave] := by
+  rfl
+
+theorem pointAddXEqMainStmt_eq : pointAddXEqMainStmt =
+    .block pointAddXEqMainBody := by
+  rfl
+
+theorem pointAddXEqExceptionalStmt_eq : pointAddXEqExceptionalStmt =
+    .block pointAddXEqExceptionalBody := by
+  rfl
+
+theorem pointAddXEqExceptionalBody_eq : pointAddXEqExceptionalBody =
+    [pointAddYSumStmt, pointAddYZeroStmt] := by
+  rfl
+
+theorem pointAddYSumStmt_eq : pointAddYSumStmt =
+    .letDecl ["\x00110", "\x00111"]
+      (some pointAddYSumExpr) := by
+  rfl
+
+theorem pointAddYSumExpr_eq : pointAddYSumExpr =
+    .call "\x004" pointAddYSumArgs := by
+  rfl
+
+theorem pointAddYSumArgs_eq : pointAddYSumArgs =
+    [.builtin .mload
+          [.builtin .add
+            [.builtin .mload [.lit (.number 1568)], .lit (.number 64)]],
+         .builtin .mload
+          [.builtin .add
+            [.builtin .mload [.lit (.number 1568)], .lit (.number 96)]],
+         .builtin .mload
+          [.builtin .add
+            [.builtin .mload [.lit (.number 1600)], .lit (.number 64)]],
+         .builtin .mload
+          [.builtin .add
+            [.builtin .mload [.lit (.number 1600)], .lit (.number 96)]]] := by
+  rfl
+
 theorem pointAddLeftInfinityBody_eq : pointAddLeftInfinityBody =
     [pointAddLeftCopyStmt, .leave] := by
   rfl

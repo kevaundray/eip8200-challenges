@@ -86,7 +86,7 @@ def pointAddXEqState (yst : EvmState) (out left right : U256) : EvmState :=
       (pointAddFiniteState yst out left right).memory := by
   simp [pointAddXEqState6, pointAddXEqState5]
 
-private theorem step_nestedLoadAdd {funs V} (yst : EvmState)
+theorem step_nestedLoadAdd {funs V} (yst : EvmState)
     (slot delta : Nat) :
     EvalExpr Challenge.EvmProof.modexpExec.toDialect funs V yst
       (.builtin .mload
