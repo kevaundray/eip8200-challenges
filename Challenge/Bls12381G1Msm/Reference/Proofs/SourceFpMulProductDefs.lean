@@ -18,6 +18,19 @@ def fpMulProductCallStmt : Stmt Op := fpMulProductBlock[0]!
 
 def fpMulProductStores : Block Op := fpMulProductBlock.drop 1
 
+theorem fpMulStmt0_eq : fpMulStmt0 = .block fpMulProductBlock := by
+  rfl
+
+theorem fpMulProductCallStmt_shape : fpMulProductCallStmt =
+    .letDecl ["\x0079", "\x0080", "\x0081"]
+      (some (.call "\x006"
+        [.var "\x0073", .var "\x0074", .var "\x0075", .var "\x0076"])) := by
+  rfl
+
+theorem fpMulProductBlock_eq :
+    fpMulProductBlock = fpMulProductCallStmt :: fpMulProductStores := by
+  rfl
+
 theorem fpMulProductBlock_length : fpMulProductBlock.length = 7 := by
   rfl
 
@@ -34,6 +47,12 @@ def fpMulProductEnv (ahi alo bhi blo : U256) :
    ("\x0080", (fullMulValue ahi alo bhi blo).r1),
    ("\x0081", (fullMulValue ahi alo bhi blo).r0)] ++
     fpMulInitialEnv ahi alo bhi blo
+
+theorem restore_fpMulProductEnv (ahi alo bhi blo : U256) :
+    restore (fpMulInitialEnv ahi alo bhi blo)
+      (fpMulProductEnv ahi alo bhi blo) =
+    fpMulInitialEnv ahi alo bhi blo := by
+  rfl
 
 private def mstoreState (yst : EvmState) (offset value : U256) : EvmState :=
   { touchMemory yst offset.toNat 32 with
