@@ -92,4 +92,37 @@ theorem step_fp2InvLiteral (V) (yst : EvmState) (out a : Nat)
       (fp2InvFinalState yst out a)) at hcall
   simpa [fp2InvDecl] using hcall
 
+theorem step_fp2EqLiteral (V) (yst : EvmState) (a b : Nat) :
+    EvalExpr Challenge.EvmProof.modexpExec.toDialect mainFuns V yst
+      (.call "\x0013" [.lit (.number a), .lit (.number b)])
+      (.vals [fp2EqValue yst a b] (fp2EqReadState yst a b)) := by
+  have hargs : Interp.evalArgs Challenge.EvmProof.modexpExec 67 mainFuns V yst
+      [.lit (.number a), .lit (.number b)] =
+    Interp.evalArgs Challenge.EvmProof.modexpExec 67 fp2Funs
+      [("a", BitVec.ofNat 256 a), ("b", BitVec.ofNat 256 b)] yst
+      [.var "a", .var "b"] := by rfl
+  have h : Interp.evalExpr Challenge.EvmProof.modexpExec 68 mainFuns V yst
+      (.call "\x0013" [.lit (.number a), .lit (.number b)]) =
+      .ok (.vals [fp2EqValue yst a b] (fp2EqReadState yst a b)) := by
+    rw [Interp.evalExpr_call_of_evalArgs_lookup_eq
+      (fn := "\x0013") hargs (by rfl)]
+    exact eval_fp2Eq _ _ _
+  exact sound_evalExpr h
+
+theorem step_fp2ZeroLiteral (V) (yst : EvmState) (a : Nat) :
+    EvalExpr Challenge.EvmProof.modexpExec.toDialect mainFuns V yst
+      (.call "\x0012" [.lit (.number a)])
+      (.vals [fp2ZeroValue yst a] (fp2ReadState yst a)) := by
+  have hargs : Interp.evalArgs Challenge.EvmProof.modexpExec 67 mainFuns V yst
+      [.lit (.number a)] =
+    Interp.evalArgs Challenge.EvmProof.modexpExec 67 fp2Funs
+      [("a", BitVec.ofNat 256 a)] yst [.var "a"] := by rfl
+  have h : Interp.evalExpr Challenge.EvmProof.modexpExec 68 mainFuns V yst
+      (.call "\x0012" [.lit (.number a)]) =
+      .ok (.vals [fp2ZeroValue yst a] (fp2ReadState yst a)) := by
+    rw [Interp.evalExpr_call_of_evalArgs_lookup_eq
+      (fn := "\x0012") hargs (by rfl)]
+    exact eval_fp2Zero _ _
+  exact sound_evalExpr h
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics

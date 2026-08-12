@@ -6,3 +6,5 @@ open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 #check step_fp2SubLiteral
 #check step_fp2MulLiteral
 #check step_fp2InvLiteral
+#check step_fp2EqLiteral
+#check step_fp2ZeroLiteral
