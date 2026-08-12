@@ -93,7 +93,7 @@ def pointAddUnequalInvGenericWorkEnv
   apply restore_append_of_length_eq (outer := V) (locals := []) (inner := V)
   rfl
 
-private def pointAddUnequalInvMstoreState (yst : EvmState)
+def pointAddUnequalInvMstoreState (yst : EvmState)
     (offset : Nat) (value : U256) : EvmState :=
   { touchMemory yst offset 32 with
     memory := storeWord yst.memory offset value }
