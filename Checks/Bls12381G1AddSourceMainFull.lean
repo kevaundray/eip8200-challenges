@@ -50,6 +50,18 @@ namespace Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
 #guard_msgs in
 #print axioms step_mainPointScope_secondInfinity
 
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointScope_curve1_reject' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_mainPointScope_curve1_reject
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointScope_curve2_reject' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_mainPointScope_curve2_reject
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointDispatcher_double' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
