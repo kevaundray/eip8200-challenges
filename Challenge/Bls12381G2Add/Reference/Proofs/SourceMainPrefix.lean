@@ -68,6 +68,15 @@ theorem step_mainPrefix_success (yst : EvmState)
       (Step.seqCons
         (sound_execStmt (exec_mainValidation_success yst hvalid)) Step.seqNil))
 
+theorem step_mainPrefix_length_reject (yst : EvmState)
+    (hfit : yst.env.calldata.length < 2 ^ 256)
+    (hsize : yst.env.calldata.length ≠ 512) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainPrefixBody [] (mainInvalidState yst) .halt := by
+  rw [mainPrefixBody_eq]
+  exact Step.seqStop
+    (sound_execStmt (exec_mainLength_reject yst hfit hsize)) (by decide)
+
 theorem step_mainPrefix_validation_reject (yst : EvmState)
     (hsize : yst.env.calldata.length = 512)
     (hvalid : mainValidationValue yst = 0) :

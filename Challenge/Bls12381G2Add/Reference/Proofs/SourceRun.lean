@@ -160,6 +160,42 @@ theorem step_main_zeroY (yst : EvmState)
   step_main_finite yst hsize hvalid hcurve1 hcurve2 hfirst hsecond
     (step_mainFiniteDispatcher_zeroY yst hxeq hyeq hyzero)
 
+theorem step_main_length_reject (yst : EvmState)
+    (hfit : yst.env.calldata.length < 2 ^ 256)
+    (hsize : yst.env.calldata.length ≠ 512) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody [] (mainInvalidState yst) .halt := by
+  rw [mainValidBody_eq]
+  exact step_append_halt (step_mainPrefix_length_reject yst hfit hsize)
+
+theorem step_main_validation_reject (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst = 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody []
+      (mainInvalidState (mainAfterValidationReads yst)) .halt := by
+  rw [mainValidBody_eq]
+  exact step_append_halt (step_mainPrefix_validation_reject yst hsize hvalid)
+
+theorem step_main_curve1_reject (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst ≠ 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody [] (mainInvalidState (mainAfterCurve1 yst)) .halt :=
+  step_main_pointHalt yst _ hsize hvalid
+    (step_mainPointScope_curve1_reject yst hcurve1)
+
+theorem step_main_curve2_reject (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst ≠ 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody [] (mainInvalidState (mainValidatedState yst)) .halt :=
+  step_main_pointHalt yst _ hsize hvalid
+    (step_mainPointScope_curve2_reject yst hcurve1 hcurve2)
+
 private def isFunctionDefinition : Stmt Op → Bool
   | .funDef .. => true
   | _ => false
@@ -297,5 +333,42 @@ theorem run_main_zeroY (yst : EvmState)
       (mainFiniteClearReturnState (mainAfterDoubleYZero yst)) .halt :=
   run_of_mainValid yst _ (step_main_zeroY yst hsize hvalid hcurve1 hcurve2
     hfirst hsecond hxeq hyeq hyzero)
+
+theorem run_main_length_reject (yst : EvmState)
+    (hfit : yst.env.calldata.length < 2 ^ 256)
+    (hsize : yst.env.calldata.length ≠ 512) :
+    Run Challenge.Bls12381G2Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainInvalidState yst) .halt :=
+  run_of_mainValid yst _ (step_main_length_reject yst hfit hsize)
+
+theorem run_main_validation_reject (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst = 0) :
+    Run Challenge.Bls12381G2Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainInvalidState (mainAfterValidationReads yst)) .halt :=
+  run_of_mainValid yst _ (step_main_validation_reject yst hsize hvalid)
+
+theorem run_main_curve1_reject (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst ≠ 0) :
+    Run Challenge.Bls12381G2Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainInvalidState (mainAfterCurve1 yst)) .halt :=
+  run_of_mainValid yst _
+    (step_main_curve1_reject yst hsize hvalid hcurve1)
+
+theorem run_main_curve2_reject (yst : EvmState)
+    (hsize : yst.env.calldata.length = 512)
+    (hvalid : mainValidationValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst ≠ 0) :
+    Run Challenge.Bls12381G2Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainInvalidState (mainValidatedState yst)) .halt :=
+  run_of_mainValid yst _
+    (step_main_curve2_reject yst hsize hvalid hcurve1 hcurve2)
 
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
