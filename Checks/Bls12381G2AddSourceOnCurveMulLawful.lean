@@ -1,0 +1,6 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceOnCurveMulLawful
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check fp2MulFinalState_canonical_of_low
+#check fp2MulFinalState_toLawful_mul_of_low
