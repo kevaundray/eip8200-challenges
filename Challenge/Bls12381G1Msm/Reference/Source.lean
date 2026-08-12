@@ -7,8 +7,7 @@ namespace Challenge.Bls12381G1Msm
 open YulSemantics (Block)
 open YulSemantics.EVM (Op)
 
-/-- Proof-friendly naive G1MSM Yul implementation, with an explicit guarded
-scratch region available to the verified compiler's stack-spill fallback. -/
+/-- Proof-friendly naive G1MSM Yul implementation. -/
 def referenceSource : String := include_str "reference.yul"
 
 def referenceSourcePath : String :=

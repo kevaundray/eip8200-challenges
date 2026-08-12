@@ -6,5 +6,5 @@ open Challenge.Bls12381G1Msm
 
 #guard referenceSource.length > 0
 #guard referenceBlock?.isSome
-#guard referenceBytecode.size = 2259
+#guard referenceBytecode.size = 3688
 #guard referenceBytecode? = some referenceBytecode

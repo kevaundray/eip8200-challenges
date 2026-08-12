@@ -6,11 +6,6 @@
 // subgroup check and requested scalar multiplication deliberately use this
 // same naive routine. Only native G1MSM is disabled by the challenge profile.
 {
-    // Fixed source memory ends at 0xa00. Grant the compiler the interval above
-    // that boundary for stack spilling; the guarded-source proof will later
-    // discharge the corresponding memory-footprint contract.
-    mstore(0x40, memoryguard(0xa00))
-
     function fpGeModulus(hi, lo) -> yes {
         let pHi := 0x1a0111ea397fe69a4b1ba7b6434bacd7
         let pLo := 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
@@ -158,75 +153,97 @@
     // Alias-safe lawful affine addition. All inputs are loaded before the
     // final store in each finite branch, so out may equal left or right.
     function pointAdd(out, left, right) {
-        if pointInfinity(left) {
-            copyPoint(out, right)
+        // Consume the pointer parameters before entering arithmetic helpers.
+        // Keeping all three live across nested field calls exceeds the EVM's
+        // pre-EIP-8024 stack-depth rule even though the values are just fixed
+        // memory addresses.
+        mstore(0x600, out)
+        mstore(0x620, left)
+        mstore(0x640, right)
+
+        if pointInfinity(mload(0x620)) {
+            copyPoint(mload(0x600), mload(0x640))
             leave
         }
-        if pointInfinity(right) {
-            copyPoint(out, left)
+        if pointInfinity(mload(0x640)) {
+            copyPoint(mload(0x600), mload(0x620))
             leave
         }
 
         if fpEq(
-            mload(left), mload(add(left, 32)),
-            mload(right), mload(add(right, 32))
+            mload(mload(0x620)), mload(add(mload(0x620), 32)),
+            mload(mload(0x640)), mload(add(mload(0x640), 32))
         ) {
             let sumHi, sumLo := fpAdd(
-                mload(add(left, 64)), mload(add(left, 96)),
-                mload(add(right, 64)), mload(add(right, 96))
+                mload(add(mload(0x620), 64)), mload(add(mload(0x620), 96)),
+                mload(add(mload(0x640), 64)), mload(add(mload(0x640), 96))
             )
             if fpZero(sumHi, sumLo) {
-                storeInfinity(out)
+                storeInfinity(mload(0x600))
                 leave
             }
 
             let xSqHi, xSqLo := fpMul(
-                mload(left), mload(add(left, 32)),
-                mload(left), mload(add(left, 32))
+                mload(mload(0x620)), mload(add(mload(0x620), 32)),
+                mload(mload(0x620)), mload(add(mload(0x620), 32))
             )
             let numHi, numLo := fpAdd(xSqHi, xSqLo, xSqHi, xSqLo)
             numHi, numLo := fpAdd(numHi, numLo, xSqHi, xSqLo)
             let denHi, denLo := fpAdd(
-                mload(add(left, 64)), mload(add(left, 96)),
-                mload(add(left, 64)), mload(add(left, 96))
+                mload(add(mload(0x620), 64)), mload(add(mload(0x620), 96)),
+                mload(add(mload(0x620), 64)), mload(add(mload(0x620), 96))
             )
             let denInvHi, denInvLo := fpInv(denHi, denLo)
             let lamHi, lamLo := fpMul(numHi, numLo, denInvHi, denInvLo)
             let x3Hi, x3Lo := fpMul(lamHi, lamLo, lamHi, lamLo)
-            x3Hi, x3Lo := fpSub(x3Hi, x3Lo, mload(left), mload(add(left, 32)))
-            x3Hi, x3Lo := fpSub(x3Hi, x3Lo, mload(right), mload(add(right, 32)))
+            x3Hi, x3Lo := fpSub(
+                x3Hi, x3Lo,
+                mload(mload(0x620)), mload(add(mload(0x620), 32))
+            )
+            x3Hi, x3Lo := fpSub(
+                x3Hi, x3Lo,
+                mload(mload(0x640)), mload(add(mload(0x640), 32))
+            )
             let deltaHi, deltaLo := fpSub(
-                mload(left), mload(add(left, 32)), x3Hi, x3Lo
+                mload(mload(0x620)), mload(add(mload(0x620), 32)), x3Hi, x3Lo
             )
             let y3Hi, y3Lo := fpMul(lamHi, lamLo, deltaHi, deltaLo)
             y3Hi, y3Lo := fpSub(
-                y3Hi, y3Lo, mload(add(left, 64)), mload(add(left, 96))
+                y3Hi, y3Lo,
+                mload(add(mload(0x620), 64)), mload(add(mload(0x620), 96))
             )
-            storePoint(out, x3Hi, x3Lo, y3Hi, y3Lo)
+            storePoint(mload(0x600), x3Hi, x3Lo, y3Hi, y3Lo)
             leave
         }
 
         let numHi, numLo := fpSub(
-            mload(add(right, 64)), mload(add(right, 96)),
-            mload(add(left, 64)), mload(add(left, 96))
+            mload(add(mload(0x640), 64)), mload(add(mload(0x640), 96)),
+            mload(add(mload(0x620), 64)), mload(add(mload(0x620), 96))
         )
         let denHi, denLo := fpSub(
-            mload(right), mload(add(right, 32)),
-            mload(left), mload(add(left, 32))
+            mload(mload(0x640)), mload(add(mload(0x640), 32)),
+            mload(mload(0x620)), mload(add(mload(0x620), 32))
         )
         let denInvHi, denInvLo := fpInv(denHi, denLo)
         let lamHi, lamLo := fpMul(numHi, numLo, denInvHi, denInvLo)
         let x3Hi, x3Lo := fpMul(lamHi, lamLo, lamHi, lamLo)
-        x3Hi, x3Lo := fpSub(x3Hi, x3Lo, mload(left), mload(add(left, 32)))
-        x3Hi, x3Lo := fpSub(x3Hi, x3Lo, mload(right), mload(add(right, 32)))
+        x3Hi, x3Lo := fpSub(
+            x3Hi, x3Lo,
+            mload(mload(0x620)), mload(add(mload(0x620), 32))
+        )
+        x3Hi, x3Lo := fpSub(
+            x3Hi, x3Lo,
+            mload(mload(0x640)), mload(add(mload(0x640), 32))
+        )
         let deltaHi, deltaLo := fpSub(
-            mload(left), mload(add(left, 32)), x3Hi, x3Lo
+            mload(mload(0x620)), mload(add(mload(0x620), 32)), x3Hi, x3Lo
         )
         let y3Hi, y3Lo := fpMul(lamHi, lamLo, deltaHi, deltaLo)
         y3Hi, y3Lo := fpSub(
-            y3Hi, y3Lo, mload(add(left, 64)), mload(add(left, 96))
+            y3Hi, y3Lo,
+            mload(add(mload(0x620), 64)), mload(add(mload(0x620), 96))
         )
-        storePoint(out, x3Hi, x3Lo, y3Hi, y3Lo)
+        storePoint(mload(0x600), x3Hi, x3Lo, y3Hi, y3Lo)
     }
 
     function scalarMul(scalar, point, out) {
