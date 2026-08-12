@@ -14,6 +14,32 @@ def fpAddResult (ahi alo bhi blo : U256) : U256 × U256 :=
   ((VEnv.get final "\x0038").getD (0#256),
    (VEnv.get final "\x0039").getD (0#256))
 
+theorem step_fpAdd_of_args {funs V yst args} (ahi alo bhi blo : U256)
+    (hargs : EvalArgs modexpExec.toDialect funs V yst args
+      (.vals [ahi, alo, bhi, blo] yst))
+    (hlookup : lookupFun funs "\x004" = some (fpAddDecl, sourceFuns)) :
+    EvalExpr modexpExec.toDialect funs V yst (.call "\x004" args)
+      (.vals [(fpAddResult ahi alo bhi blo).1,
+        (fpAddResult ahi alo bhi blo).2] yst) := by
+  have hbody : ExecStmt modexpExec.toDialect sourceFuns
+      (fpAddInitialEnv ahi alo bhi blo) yst (.block fpAddBody)
+      (fpAddFinalEnv ahi alo bhi blo) yst .normal := by
+    have hseq : ExecStmts modexpExec.toDialect
+        (hoist modexpExec.toDialect fpAddBody :: sourceFuns)
+        (fpAddInitialEnv ahi alo bhi blo) yst fpAddBody
+        (fpAddFinalEnv ahi alo bhi blo) yst .normal := by
+      rw [hoist_fpAddBody]
+      exact step_fpAddBody ahi alo bhi blo yst
+    have h := Step.block (D := modexpExec.toDialect) hseq
+    by_cases hc : fpGeModulusValue (fpAddHighValue ahi alo bhi blo)
+        (fpAddLowValue alo blo) = (0#256)
+    · simpa [restore, fpAddInitialEnv, fpAddFinalEnv, hc,
+        fpAddHighEnv] using h
+    · simpa [restore, fpAddInitialEnv, fpAddFinalEnv, hc,
+        fpAddCorrectEnv] using h
+  have hcall := Step.callOk hargs hlookup rfl hbody (Or.inl rfl)
+  simpa [fpAddDecl, fpAddResult, Dialect.zero, litValue] using hcall
+
 theorem step_fpAdd (ahi alo bhi blo : U256) (yst : EvmState) :
     EvalExpr modexpExec.toDialect sourceFuns
       [("ahi", ahi), ("alo", alo), ("bhi", bhi), ("blo", blo)] yst
@@ -35,23 +61,6 @@ theorem step_fpAdd (ahi alo bhi blo : U256) (yst : EvmState) :
       (.vals [ahi, alo, bhi, blo] yst) :=
     Step.argsCons (Step.argsCons (Step.argsCons (Step.argsCons Step.argsNil
       hblo) hbhi) halo) hhi
-  have hbody : ExecStmt modexpExec.toDialect sourceFuns
-      (fpAddInitialEnv ahi alo bhi blo) yst (.block fpAddBody)
-      (fpAddFinalEnv ahi alo bhi blo) yst .normal := by
-    have hseq : ExecStmts modexpExec.toDialect
-        (hoist modexpExec.toDialect fpAddBody :: sourceFuns)
-        (fpAddInitialEnv ahi alo bhi blo) yst fpAddBody
-        (fpAddFinalEnv ahi alo bhi blo) yst .normal := by
-      rw [hoist_fpAddBody]
-      exact step_fpAddBody ahi alo bhi blo yst
-    have h := Step.block (D := modexpExec.toDialect) hseq
-    by_cases hc : fpGeModulusValue (fpAddHighValue ahi alo bhi blo)
-        (fpAddLowValue alo blo) = (0#256)
-    · simpa [restore, fpAddInitialEnv, fpAddFinalEnv, hc,
-        fpAddHighEnv] using h
-    · simpa [restore, fpAddInitialEnv, fpAddFinalEnv, hc,
-        fpAddCorrectEnv] using h
-  have hcall := Step.callOk hargs lookup_fpAdd rfl hbody (Or.inl rfl)
-  simpa [outer, fpAddDecl, fpAddResult, Dialect.zero, litValue] using hcall
+  exact step_fpAdd_of_args ahi alo bhi blo hargs lookup_fpAdd
 
 end Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
