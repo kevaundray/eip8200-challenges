@@ -1,0 +1,7 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainFiniteEqualExec
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check step_mainFiniteEqual_double
+#check step_mainFiniteEqual_opposite
+#check step_mainFiniteEqual_zeroY
