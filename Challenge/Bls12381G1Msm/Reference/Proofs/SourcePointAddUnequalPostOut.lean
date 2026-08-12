@@ -83,7 +83,7 @@ private theorem pointAddUnequalXSubLeftState3_memory (yst : EvmState)
   rw [pointAddUnequalXSubLeftState3,
     pointAddUnequal_touchMemory_memory]
 
-private theorem pointAddUnequalXSubLeftRawState_memory (yst : EvmState)
+theorem pointAddUnequalXSubLeftRawState_memory (yst : EvmState)
     (out left right : U256) :
     (pointAddUnequalXSubLeftRawState yst out left right).memory =
       (pointAddUnequalX3State yst out left right).memory := by
