@@ -14,41 +14,41 @@ set_option warningAsError true
 namespace Challenge.Bls12381G1Add.Reference.Proofs.Compilation
 
 set_option maxRecDepth 10000 in
-theorem referenceStackLengthEntryChecks :
-    stackLengthEntryChecks referenceStackCertificate.entries = true := by
-  have h10 : stackLengthEntryChecks
-      (referenceStackCertificate.entries.drop 1000) = true := by
+theorem referenceStackFrozenEntryChecks :
+    stackFrozenEntryChecks frozenStackEntries = true := by
+  have h10 : stackFrozenEntryChecks
+      (frozenStackEntries.drop 1000) = true := by
     rfl
-  have h9 := stackLengthEntryChecks_take_drop
-    (referenceStackCertificate.entries.drop 900) 100
-    stackLengthEntryChecks_chunk9 h10
-  have h8 := stackLengthEntryChecks_take_drop
-    (referenceStackCertificate.entries.drop 800) 100
-    stackLengthEntryChecks_chunk8 (by simpa [List.drop_drop] using h9)
-  have h7 := stackLengthEntryChecks_take_drop
-    (referenceStackCertificate.entries.drop 700) 100
-    stackLengthEntryChecks_chunk7 (by simpa [List.drop_drop] using h8)
-  have h6 := stackLengthEntryChecks_take_drop
-    (referenceStackCertificate.entries.drop 600) 100
-    stackLengthEntryChecks_chunk6 (by simpa [List.drop_drop] using h7)
-  have h5 := stackLengthEntryChecks_take_drop
-    (referenceStackCertificate.entries.drop 500) 100
-    stackLengthEntryChecks_chunk5 (by simpa [List.drop_drop] using h6)
-  have h4 := stackLengthEntryChecks_take_drop
-    (referenceStackCertificate.entries.drop 400) 100
-    stackLengthEntryChecks_chunk4 (by simpa [List.drop_drop] using h5)
-  have h3 := stackLengthEntryChecks_take_drop
-    (referenceStackCertificate.entries.drop 300) 100
-    stackLengthEntryChecks_chunk3 (by simpa [List.drop_drop] using h4)
-  have h2 := stackLengthEntryChecks_take_drop
-    (referenceStackCertificate.entries.drop 200) 100
-    stackLengthEntryChecks_chunk2 (by simpa [List.drop_drop] using h3)
-  have h1 := stackLengthEntryChecks_take_drop
-    (referenceStackCertificate.entries.drop 100) 100
-    stackLengthEntryChecks_chunk1 (by simpa [List.drop_drop] using h2)
-  exact stackLengthEntryChecks_take_drop
-    referenceStackCertificate.entries 100
-    stackLengthEntryChecks_chunk0 (by simpa [List.drop_drop] using h1)
+  have h9 := stackFrozenEntryChecks_take_drop
+    (frozenStackEntries.drop 900) 100
+    stackFrozenEntryChecks_chunk9 h10
+  have h8 := stackFrozenEntryChecks_take_drop
+    (frozenStackEntries.drop 800) 100
+    stackFrozenEntryChecks_chunk8 (by simpa [List.drop_drop] using h9)
+  have h7 := stackFrozenEntryChecks_take_drop
+    (frozenStackEntries.drop 700) 100
+    stackFrozenEntryChecks_chunk7 (by simpa [List.drop_drop] using h8)
+  have h6 := stackFrozenEntryChecks_take_drop
+    (frozenStackEntries.drop 600) 100
+    stackFrozenEntryChecks_chunk6 (by simpa [List.drop_drop] using h7)
+  have h5 := stackFrozenEntryChecks_take_drop
+    (frozenStackEntries.drop 500) 100
+    stackFrozenEntryChecks_chunk5 (by simpa [List.drop_drop] using h6)
+  have h4 := stackFrozenEntryChecks_take_drop
+    (frozenStackEntries.drop 400) 100
+    stackFrozenEntryChecks_chunk4 (by simpa [List.drop_drop] using h5)
+  have h3 := stackFrozenEntryChecks_take_drop
+    (frozenStackEntries.drop 300) 100
+    stackFrozenEntryChecks_chunk3 (by simpa [List.drop_drop] using h4)
+  have h2 := stackFrozenEntryChecks_take_drop
+    (frozenStackEntries.drop 200) 100
+    stackFrozenEntryChecks_chunk2 (by simpa [List.drop_drop] using h3)
+  have h1 := stackFrozenEntryChecks_take_drop
+    (frozenStackEntries.drop 100) 100
+    stackFrozenEntryChecks_chunk1 (by simpa [List.drop_drop] using h2)
+  exact stackFrozenEntryChecks_take_drop
+    frozenStackEntries 100
+    stackFrozenEntryChecks_chunk0 (by simpa [List.drop_drop] using h1)
 
 /-! The public soundness bridge belongs at the aggregate certificate boundary:
 the individual chunk modules remain data/decision memory firebreaks. -/
@@ -84,7 +84,8 @@ private theorem sharedChecks :
       (Challenge.EvmProof.StackCertificate.lengthLookup frozenStackEntries)
       (Challenge.EvmProof.StackCertificate.certificateData
         referenceOptimizedAssembly frozenStackEntries).entries = true := by
-  exact referenceStackLengthEntryChecks
+  rw [← Challenge.EvmProof.StackCertificate.frozenEntryChecks_eq_lengthEntryChecks]
+  exact referenceStackFrozenEntryChecks
 
 theorem referenceCheckedCert_valid :
     referenceCheckedCert.Valid referenceOptimizedAssembly :=

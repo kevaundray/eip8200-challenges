@@ -4,13 +4,12 @@ set_option warningAsError true
 
 namespace Challenge.Bls12381G1Add.Reference.Proofs.Compilation
 
-private def entries := referenceStackCertificate.entries
+private def entries := frozenStackEntries
+private def chunkEntries := (entries.drop 200).take 100
 
-set_option maxRecDepth 50000 in
-set_option maxHeartbeats 1000000 in
-theorem stackLengthEntryChecks_chunk2 :
-    stackLengthEntryChecks ((entries.drop 200).take 100) = true := by
-  with_unfolding_all decide
+prove_frozen_entry_chunk stackFrozenEntryChecks_chunk2 :
+    stackFrozenEntryChecks ((entries.drop 200).take 100) = true
+  using chunkEntries with stackFrozenEntryChecks
+  at referenceOptimizedAssembly via referenceLengthLookup
 
 end Challenge.Bls12381G1Add.Reference.Proofs.Compilation
-

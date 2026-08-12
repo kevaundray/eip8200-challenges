@@ -4,6 +4,5 @@ set_option warningAsError true
 
 open Challenge.Bls12381G1Add.Reference.Proofs.Compilation
 
-example : stackLengthEntryChecks
-    (referenceStackCertificate.entries.take 100) = true :=
-  stackLengthEntryChecks_chunk0
+example : stackFrozenEntryChecks (frozenStackEntries.take 100) = true :=
+  stackFrozenEntryChecks_chunk0

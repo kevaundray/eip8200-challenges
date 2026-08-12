@@ -30,22 +30,16 @@ abbrev stackIndexedEntryChecks (entries : List CertEntry) : Bool :=
   Challenge.EvmProof.StackCertificate.indexedEntryChecks
     referenceOptimizedAssembly referenceStackCertificate entries
 
-abbrev FrozenCertValue :=
-  Challenge.EvmProof.StackCertificate.FrozenCertValue
-
-def thawCertValue (value : FrozenCertValue) : CertValue :=
-  (value.1.map decodeStackSlot, value.2.1,
-    value.2.2.map decodeStackSlot)
-
-def frozenLayoutAt (key : Nat) : Option CertValue :=
-  (frozenStackEntries.find? fun entry => entry.1 == key).map fun entry =>
-    thawCertValue (entry.2.1, entry.2.2.1, entry.2.2.2)
-
-def referenceLengthLookup : CertLookup :=
-  fun suffix => frozenLayoutAt suffix.length
+abbrev referenceLengthLookup : CertLookup :=
+  Challenge.EvmProof.StackCertificate.lengthLookup frozenStackEntries
 
 abbrev stackLengthEntryChecks (entries : List CertEntry) : Bool :=
   Challenge.EvmProof.StackCertificate.lengthEntryChecks
+    referenceOptimizedAssembly referenceLengthLookup entries
+
+abbrev stackFrozenEntryChecks
+    (entries : List Challenge.EvmProof.StackCertificate.FrozenStackEntry) : Bool :=
+  Challenge.EvmProof.StackCertificate.frozenEntryChecks
     referenceOptimizedAssembly referenceLengthLookup entries
 
 theorem stackIndexedEntryChecks_eq (entries : List CertEntry) :
@@ -71,6 +65,14 @@ theorem stackLengthEntryChecks_take_drop (entries : List CertEntry) (n : Nat)
     (htail : stackLengthEntryChecks (entries.drop n) = true) :
     stackLengthEntryChecks entries = true :=
   Challenge.EvmProof.StackCertificate.lengthEntryChecks_take_drop
+    referenceOptimizedAssembly referenceLengthLookup entries n hhead htail
+
+theorem stackFrozenEntryChecks_take_drop
+    (entries : List Challenge.EvmProof.StackCertificate.FrozenStackEntry) (n : Nat)
+    (hhead : stackFrozenEntryChecks (entries.take n) = true)
+    (htail : stackFrozenEntryChecks (entries.drop n) = true) :
+    stackFrozenEntryChecks entries = true :=
+  Challenge.EvmProof.StackCertificate.frozenEntryChecks_take_drop
     referenceOptimizedAssembly referenceLengthLookup entries n hhead htail
 
 end Challenge.Bls12381G1Add.Reference.Proofs.Compilation

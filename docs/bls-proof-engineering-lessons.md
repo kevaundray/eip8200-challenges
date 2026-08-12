@@ -758,6 +758,62 @@ Warm before/after leaves were memory-neutral. G1 chunk 0 moved from
 2,410,840/2,062,832 KiB. The shared axiom footprints match the old adapters.
 Full shared, G1ADD, and G2ADD gates passed after extraction.
 
+### Checking frozen entries before suffix materialization
+
+A later measurement isolated another representation problem. Each 100-entry
+decision chunk began with:
+
+```lean
+private def entries := referenceStackCertificate.entries
+```
+
+`referenceStackCertificate.entries` materializes a complete assembly suffix in
+every certificate entry. Applying `drop` and `take` afterwards does not prevent
+Lean from constructing that large certificate representation. A shared
+`frozenEntryChecks` now consumes the numeric `FrozenStackEntry` list directly,
+constructing only the suffix needed by the entry currently under test. One
+generic theorem proves this checker equal to the existing proof-facing
+`lengthEntryChecks` over `certificateData`; certificate soundness continues to
+flow through the established checker API.
+
+Changing only the input representation did not lower the measured G2 chunk-0
+peak: it remained approximately 3,967,000 KiB. The remaining cost was the
+reduction trace for 100 suffix-dependent checks in one declaration. Splitting
+that closed computation into ten private ten-entry theorems inside the same
+source file, then composing their opaque results, produced the actual memory
+reduction:
+
+| Direct source elaboration | Before (KiB) | Observed after range (KiB) | Change range |
+|---|---:|---:|---:|
+| G2ADD chunk 0 | 3,968,004 | 3,014,120–3,246,312 | -18% to -24% |
+| G2ADD chunk 14 | 4,212,800 | 3,162,728–3,217,856 | -24% to -25% |
+| G1ADD chunk 0 | 3,422,300 | 3,034,524–3,195,480 | -7% to -11% |
+
+The repeated boilerplate is represented once by the shared
+`prove_frozen_entry_chunk` command. Each challenge chunk names only its compact
+100-entry window and public theorem; macro expansion still emits distinct
+opaque declarations, so source readability does not undo the memory boundary.
+
+This establishes two distinct opacity boundaries:
+
+- separate theorem declarations inside one file can release large temporary
+  elaboration graphs; and
+- separate `.olean` files still prevent completed proof payloads from
+  accumulating in one Lean environment.
+
+An attempted merge of two G2 100-entry groups into one file raised the peak to
+4,162,892 KiB, so the existing cross-file chunks remain justified. The result
+supports smaller declarations within measured compilation units, not wholesale
+concatenation of certificate files.
+
+The trust census also exposed a composition trap. `List.drop_take` depends on
+`Classical.choice` and `Quot.sound` in this toolchain. Using it to align the ten
+subproofs widened a chunk theorem from `[propext]` to
+`[propext, Classical.choice, Quot.sound]`. Defining an exact local 100-entry
+window and composing only with `List.drop_drop` restored the original
+`[propext]` boundary. Treat axiom guards as architectural tests, not just final
+release checks.
+
 ### Removing shallow certificate adapters
 
 After the shared extraction, the aggregate `StackCertificateChunks.lean`

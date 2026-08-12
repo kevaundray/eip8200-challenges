@@ -52,6 +52,26 @@ example {α : Type} (f : α → Bool) (xs : List α) (n : Nat)
   Challenge.EvmProof.StackCertificate.all_take_drop
     f xs n hhead htail
 
+example (program : List YulEvmCompiler.Asm)
+    (lookup : YulEvmCompiler.CertLookup)
+    (entries : List Challenge.EvmProof.StackCertificate.FrozenStackEntry) :
+    Challenge.EvmProof.StackCertificate.frozenEntryChecks
+        program lookup entries =
+      Challenge.EvmProof.StackCertificate.lengthEntryChecks
+        program lookup
+          (Challenge.EvmProof.StackCertificate.certificateData
+            program entries).entries :=
+  Challenge.EvmProof.StackCertificate.frozenEntryChecks_eq_lengthEntryChecks
+    program lookup entries
+
+/-- info: 'Challenge.EvmProof.StackCertificate.frozenEntryChecks_eq_lengthEntryChecks' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.EvmProof.StackCertificate.frozenEntryChecks_eq_lengthEntryChecks
+
+/-- info: 'Challenge.EvmProof.StackCertificate.frozenEntryChecks_ten_parts' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Challenge.EvmProof.StackCertificate.frozenEntryChecks_ten_parts
+
 /-- info: 'Challenge.EvmProof.StackCertificate.indexedEntryChecks_eq' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Challenge.EvmProof.StackCertificate.indexedEntryChecks_eq

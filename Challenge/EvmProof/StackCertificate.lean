@@ -95,6 +95,21 @@ def lengthEntryChecks (program : List Asm) (lookup : CertLookup)
           instruction suffix entry.2.2.1 entry.2.2.2.1 entry.2.2.2.2
       | [] => true
 
+/-- Check frozen entries directly, materializing only the program suffix for the
+entry currently being checked. In particular, callers can `drop` and `take` a
+compact entry list before any suffixes are constructed. -/
+def frozenEntryChecks (program : List Asm) (lookup : CertLookup)
+    (entries : List FrozenStackEntry) : Bool :=
+  entries.all fun entry =>
+    let stack := entry.2.1.map decodeStackSlot
+    let frameBase := entry.2.2.1
+    let returns := entry.2.2.2.map decodeStackSlot
+    decide (stack.length + frameBase ≤ 1023) &&
+      match program.drop (program.length - entry.1) with
+      | instruction :: suffix => frameStepLookupB program lookup
+          instruction suffix stack frameBase returns
+      | [] => true
+
 theorem indexedEntryChecks_eq (program : List Asm) (certificate : CertData)
     (entries : List CertEntry) :
     indexedEntryChecks program certificate entries =
@@ -131,11 +146,130 @@ theorem lengthEntryChecks_take_drop (program : List Asm)
   unfold lengthEntryChecks at hhead htail ⊢
   exact all_take_drop _ _ _ hhead htail
 
+theorem frozenEntryChecks_take_drop (program : List Asm)
+    (lookup : CertLookup) (entries : List FrozenStackEntry) (n : Nat)
+    (hhead : frozenEntryChecks program lookup (entries.take n) = true)
+    (htail : frozenEntryChecks program lookup (entries.drop n) = true) :
+    frozenEntryChecks program lookup entries = true := by
+  unfold frozenEntryChecks at hhead htail ⊢
+  exact all_take_drop _ _ _ hhead htail
+
+/-- Compose ten independently checked ten-entry blocks. Keeping the closed
+blocks as separate opaque declarations bounds elaboration without requiring a
+separate source file for every hundred entries. -/
+theorem frozenEntryChecks_ten_parts (program : List Asm)
+    (lookup : CertLookup) (entries : List FrozenStackEntry)
+    (h0 : frozenEntryChecks program lookup ((entries.drop 0).take 10) = true)
+    (h1 : frozenEntryChecks program lookup ((entries.drop 10).take 10) = true)
+    (h2 : frozenEntryChecks program lookup ((entries.drop 20).take 10) = true)
+    (h3 : frozenEntryChecks program lookup ((entries.drop 30).take 10) = true)
+    (h4 : frozenEntryChecks program lookup ((entries.drop 40).take 10) = true)
+    (h5 : frozenEntryChecks program lookup ((entries.drop 50).take 10) = true)
+    (h6 : frozenEntryChecks program lookup ((entries.drop 60).take 10) = true)
+    (h7 : frozenEntryChecks program lookup ((entries.drop 70).take 10) = true)
+    (h8 : frozenEntryChecks program lookup ((entries.drop 80).take 10) = true)
+    (h9 : frozenEntryChecks program lookup (entries.drop 90) = true) :
+    frozenEntryChecks program lookup entries = true := by
+  have h80 := frozenEntryChecks_take_drop program lookup
+    (entries.drop 80) 10 h8 (by simpa [List.drop_drop] using h9)
+  have h70 := frozenEntryChecks_take_drop program lookup
+    (entries.drop 70) 10 h7 (by simpa [List.drop_drop] using h80)
+  have h60 := frozenEntryChecks_take_drop program lookup
+    (entries.drop 60) 10 h6 (by simpa [List.drop_drop] using h70)
+  have h50 := frozenEntryChecks_take_drop program lookup
+    (entries.drop 50) 10 h5 (by simpa [List.drop_drop] using h60)
+  have h40 := frozenEntryChecks_take_drop program lookup
+    (entries.drop 40) 10 h4 (by simpa [List.drop_drop] using h50)
+  have h30 := frozenEntryChecks_take_drop program lookup
+    (entries.drop 30) 10 h3 (by simpa [List.drop_drop] using h40)
+  have h20 := frozenEntryChecks_take_drop program lookup
+    (entries.drop 20) 10 h2 (by simpa [List.drop_drop] using h30)
+  have h10 := frozenEntryChecks_take_drop program lookup
+    (entries.drop 10) 10 h1 (by simpa [List.drop_drop] using h20)
+  exact frozenEntryChecks_take_drop program lookup entries 10 h0
+    (by simpa [List.drop_drop] using h10)
+
+/-- Generate ten opaque ten-entry decision theorems and their public
+100-entry composition theorem. The terms are parameters so challenge modules
+retain precise control over the program, lookup, checker, and public statement. -/
+syntax "prove_frozen_entry_chunk " ident " : " term " using " term
+  " with " term " at " term " via " term : command
+
+macro_rules
+  | `(prove_frozen_entry_chunk $theoremName:ident : $goal:term
+        using $entries:term with $checker:term at $program:term via $lookup:term) =>
+    `(section
+      set_option maxRecDepth 50000 in
+      set_option maxHeartbeats 1000000 in
+      private theorem frozenPart0 :
+          $checker ((($entries).drop 0).take 10) = true := by
+        with_unfolding_all decide
+      set_option maxRecDepth 50000 in
+      set_option maxHeartbeats 1000000 in
+      private theorem frozenPart1 :
+          $checker ((($entries).drop 10).take 10) = true := by
+        with_unfolding_all decide
+      set_option maxRecDepth 50000 in
+      set_option maxHeartbeats 1000000 in
+      private theorem frozenPart2 :
+          $checker ((($entries).drop 20).take 10) = true := by
+        with_unfolding_all decide
+      set_option maxRecDepth 50000 in
+      set_option maxHeartbeats 1000000 in
+      private theorem frozenPart3 :
+          $checker ((($entries).drop 30).take 10) = true := by
+        with_unfolding_all decide
+      set_option maxRecDepth 50000 in
+      set_option maxHeartbeats 1000000 in
+      private theorem frozenPart4 :
+          $checker ((($entries).drop 40).take 10) = true := by
+        with_unfolding_all decide
+      set_option maxRecDepth 50000 in
+      set_option maxHeartbeats 1000000 in
+      private theorem frozenPart5 :
+          $checker ((($entries).drop 50).take 10) = true := by
+        with_unfolding_all decide
+      set_option maxRecDepth 50000 in
+      set_option maxHeartbeats 1000000 in
+      private theorem frozenPart6 :
+          $checker ((($entries).drop 60).take 10) = true := by
+        with_unfolding_all decide
+      set_option maxRecDepth 50000 in
+      set_option maxHeartbeats 1000000 in
+      private theorem frozenPart7 :
+          $checker ((($entries).drop 70).take 10) = true := by
+        with_unfolding_all decide
+      set_option maxRecDepth 50000 in
+      set_option maxHeartbeats 1000000 in
+      private theorem frozenPart8 :
+          $checker ((($entries).drop 80).take 10) = true := by
+        with_unfolding_all decide
+      set_option maxRecDepth 50000 in
+      set_option maxHeartbeats 1000000 in
+      private theorem frozenPart9 :
+          $checker (($entries).drop 90) = true := by
+        with_unfolding_all decide
+      set_option maxRecDepth 50000 in
+      theorem $theoremName : $goal := by
+        exact Challenge.EvmProof.StackCertificate.frozenEntryChecks_ten_parts
+          $program $lookup $entries frozenPart0 frozenPart1 frozenPart2
+          frozenPart3 frozenPart4 frozenPart5 frozenPart6 frozenPart7
+          frozenPart8 frozenPart9
+      end)
+
 /-! ## Soundness bridge from compact length keys -/
 
 def certificateData (program : List Asm) (entries : List FrozenStackEntry) :
     CertData :=
   materializeStackCertificate program (entries.map thawStackEntry)
+
+theorem frozenEntryChecks_eq_lengthEntryChecks (program : List Asm)
+    (lookup : CertLookup) (entries : List FrozenStackEntry) :
+    frozenEntryChecks program lookup entries =
+      lengthEntryChecks program lookup (certificateData program entries).entries := by
+  simp [frozenEntryChecks, lengthEntryChecks, certificateData,
+    materializeStackCertificate, thawStackEntry, List.map_map,
+    Function.comp_def]
 
 def suffixLookup (program : List Asm) (entries : List FrozenStackEntry) :
     CertLookup := fun suffix =>
