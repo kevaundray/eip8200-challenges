@@ -30,4 +30,22 @@ namespace Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
 #guard_msgs in
 #print axioms run_main_zeroY
 
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.run_main_bothInfinity' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms run_main_bothInfinity
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.run_main_firstInfinity' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms run_main_firstInfinity
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.run_main_secondInfinity' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms run_main_secondInfinity
+
 end Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
