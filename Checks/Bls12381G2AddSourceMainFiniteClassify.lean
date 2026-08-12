@@ -1,0 +1,7 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainFiniteClassify
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check step_mainFiniteEq1
+#check step_mainFiniteEqual_skip
+#check step_mainFiniteEq2Condition
