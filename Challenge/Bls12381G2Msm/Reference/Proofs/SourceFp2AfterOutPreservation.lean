@@ -3,6 +3,7 @@ import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2AddPreservation
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2SubPreservation
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2MulHighInputs
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2MulHighLawful
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2MulBeforeOutLawful
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2InvPreservation
 
 set_option warningAsError true
@@ -60,6 +61,38 @@ theorem fp2MulFinalState_toLawful_after (yst : EvmState)
   rw [fp2MulFinalState_eq_shared]
   exact fp2MulFinalState_toLawful_mul_of_high_after_out yst out a b ha hb
     haEnd haHigh haAfter hbEnd hbHigh hbAfter houtHigh hout
+
+theorem fp2MulFinalState_canonical_before (yst : EvmState)
+    (out a b : U256)
+    (ha : Challenge.Bls12381.ProofSupport.Fp2.Canonical (fp2At yst a))
+    (hb : Challenge.Bls12381.ProofSupport.Fp2.Canonical (fp2At yst b))
+    (haEnd : a.toNat + 96 < 2 ^ 256) (haHigh : 1664 ≤ a.toNat)
+    (haBefore : a.toNat + 128 ≤ out.toNat)
+    (hbEnd : b.toNat + 96 < 2 ^ 256) (hbHigh : 1728 ≤ b.toNat)
+    (hbBefore : b.toNat + 128 ≤ out.toNat)
+    (houtHigh : 1920 ≤ out.toNat) (hout : out.toNat + 96 < 2 ^ 256) :
+    Challenge.Bls12381.ProofSupport.Fp2.Canonical
+      (fp2At (fp2MulFinalState yst out a b) out) := by
+  rw [fp2MulFinalState_eq_shared]
+  exact fp2MulFinalState_canonical_of_high_before_out yst out a b ha hb
+    haEnd haHigh haBefore hbEnd hbHigh hbBefore houtHigh hout
+
+theorem fp2MulFinalState_toLawful_before (yst : EvmState)
+    (out a b : U256)
+    (ha : Challenge.Bls12381.ProofSupport.Fp2.Canonical (fp2At yst a))
+    (hb : Challenge.Bls12381.ProofSupport.Fp2.Canonical (fp2At yst b))
+    (haEnd : a.toNat + 96 < 2 ^ 256) (haHigh : 1664 ≤ a.toNat)
+    (haBefore : a.toNat + 128 ≤ out.toNat)
+    (hbEnd : b.toNat + 96 < 2 ^ 256) (hbHigh : 1728 ≤ b.toNat)
+    (hbBefore : b.toNat + 128 ≤ out.toNat)
+    (houtHigh : 1920 ≤ out.toNat) (hout : out.toNat + 96 < 2 ^ 256) :
+    Challenge.Bls12381.ProofSupport.Fp2.toLawful
+        (fp2At (fp2MulFinalState yst out a b) out) =
+      Challenge.Bls12381.ProofSupport.Fp2.toLawful (fp2At yst a) *
+        Challenge.Bls12381.ProofSupport.Fp2.toLawful (fp2At yst b) := by
+  rw [fp2MulFinalState_eq_shared]
+  exact fp2MulFinalState_toLawful_mul_of_high_before_out yst out a b ha hb
+    haEnd haHigh haBefore hbEnd hbHigh hbBefore houtHigh hout
 
 theorem fp2AddFinalState_fp2At_after_out (yst : EvmState)
     (out a b ptr : U256)
