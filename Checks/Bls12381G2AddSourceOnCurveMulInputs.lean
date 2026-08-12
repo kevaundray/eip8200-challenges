@@ -1,0 +1,6 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceOnCurveMulInputs
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check fp2MulLeftInput_eq_fp2At_of_low
+#check fp2MulRightInput_eq_fp2At_of_low
