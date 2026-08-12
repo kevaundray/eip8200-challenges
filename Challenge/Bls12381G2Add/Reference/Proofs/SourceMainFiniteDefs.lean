@@ -62,4 +62,21 @@ def mainDoubleBody : Block Op :=
   | .cond _ body => body.drop 2
   | _ => []
 
+def mainUnequalState0 (yst : EvmState) : EvmState :=
+  fp2SubFinalState (mainAfterFiniteXEq2 yst) 2304 384 128
+
+def mainUnequalState1 (yst : EvmState) : EvmState :=
+  fp2SubFinalState (mainUnequalState0 yst) 2432 256 0
+
+def mainUnequalState2 (yst : EvmState) : EvmState :=
+  fp2InvFinalState (mainUnequalState1 yst) 2560 2432
+
+def mainUnequalFinalState (yst : EvmState) : EvmState :=
+  fp2MulFinalState (mainUnequalState2 yst) 2048 2304 2560
+
+def mainUnequalBody : Block Op :=
+  match mainFiniteStmt1 with
+  | .cond _ body => body
+  | _ => []
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
