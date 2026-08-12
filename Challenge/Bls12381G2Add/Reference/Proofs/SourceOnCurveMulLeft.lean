@@ -7,7 +7,7 @@ namespace Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 
 open YulSemantics.EVM
 
-private theorem fp2At_eq_of_loads (left right : EvmState) (ptr : U256)
+theorem fp2At_eq_of_loads (left right : EvmState) (ptr : U256)
     (h0 : loadWord left.memory ptr.toNat = loadWord right.memory ptr.toNat)
     (h1 : loadWord left.memory (ptr + BitVec.ofNat 256 32).toNat =
       loadWord right.memory (ptr + BitVec.ofNat 256 32).toNat)
