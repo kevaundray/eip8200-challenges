@@ -26,7 +26,7 @@ private theorem mainBothInfinityStmt_shape_full : mainBothInfinityStmt =
   rfl
 
 private theorem step_mainBothInfinity_skip (yst : EvmState)
-    (hfirst : mainInf1 yst = 0) :
+    (hboth : mainBothInfinityValue yst = 0) :
     ExecStmt Challenge.EvmProof.modexpExec.toDialect mainFuns
       (mainPointEnv yst) (mainValidatedState yst) mainBothInfinityStmt
       (mainPointEnv yst) (mainValidatedState yst) .normal := by
@@ -45,8 +45,8 @@ private theorem step_mainBothInfinity_skip (yst : EvmState)
       (Step.argsCons (Step.argsCons Step.argsNil hsecondEval) hfirstEval) rfl
   have hzero : mainBothInfinityValue yst =
       Challenge.EvmProof.modexpExec.toDialect.zero := by
-    apply BitVec.eq_of_toNat_eq
-    simp [mainBothInfinityValue, hfirst, Dialect.zero, EVM.litValue]
+    rw [hboth]
+    rfl
   exact Step.ifFalse hcondition hzero
 
 private theorem mainFirstInfinityStmt_shape_full : mainFirstInfinityStmt =
@@ -104,10 +104,55 @@ theorem step_mainPointDispatcher_finite (yst : EvmState)
       (mainPointEnv yst) (mainValidatedState yst)
       mainPointDispatcherBody (mainPointEnv yst)
       (mainValidatedState yst) .normal := by
+  have hboth : mainBothInfinityValue yst = 0 := by
+    apply BitVec.eq_of_toNat_eq
+    simp [mainBothInfinityValue, hfirst]
   rw [mainPointDispatcherBody_eq]
-  exact Step.seqCons (step_mainBothInfinity_skip yst hfirst)
+  exact Step.seqCons (step_mainBothInfinity_skip yst hboth)
     (Step.seqCons (step_mainFirstInfinity_skip yst hfirst)
       (Step.seqCons (step_mainSecondInfinity_skip yst hsecond) Step.seqNil))
+
+/-- The complete lexical dispatcher returns immediately when both points are
+infinity. -/
+theorem step_mainPointDispatcher_bothInfinity (yst : EvmState)
+    (hboth : mainBothInfinityValue yst ≠ 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns
+      (mainPointEnv yst) (mainValidatedState yst)
+      mainPointDispatcherBody (mainPointEnv yst)
+      (mainBothInfinityReturnState yst) .halt := by
+  rw [mainPointDispatcherBody_eq]
+  exact Step.seqStop (step_mainBothInfinity_return yst hboth) (by decide)
+
+/-- The complete lexical dispatcher returns the second point when only the
+first point is infinity. -/
+theorem step_mainPointDispatcher_firstInfinity (yst : EvmState)
+    (hfirst : mainInf1 yst ≠ 0) (hsecond : mainInf2 yst = 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns
+      (mainPointEnv yst) (mainValidatedState yst)
+      mainPointDispatcherBody (mainPointEnv yst)
+      (mainFirstInfinityReturnState yst) .halt := by
+  have hboth : mainBothInfinityValue yst = 0 := by
+    apply BitVec.eq_of_toNat_eq
+    simp [mainBothInfinityValue, hsecond]
+  rw [mainPointDispatcherBody_eq]
+  exact Step.seqCons (step_mainBothInfinity_skip yst hboth)
+    (Step.seqStop (step_mainFirstInfinity_return yst hfirst) (by decide))
+
+/-- The complete lexical dispatcher returns the first point when only the
+second point is infinity. -/
+theorem step_mainPointDispatcher_secondInfinity (yst : EvmState)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst ≠ 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns
+      (mainPointEnv yst) (mainValidatedState yst)
+      mainPointDispatcherBody (mainPointEnv yst)
+      (mainSecondInfinityReturnState yst) .halt := by
+  have hboth : mainBothInfinityValue yst = 0 := by
+    apply BitVec.eq_of_toNat_eq
+    simp [mainBothInfinityValue, hfirst]
+  rw [mainPointDispatcherBody_eq]
+  exact Step.seqCons (step_mainBothInfinity_skip yst hboth)
+    (Step.seqCons (step_mainFirstInfinity_skip yst hfirst)
+      (Step.seqStop (step_mainSecondInfinity_return yst hsecond) (by decide)))
 
 private theorem step_append_normal
     {funs V st pre Vmid stmid suffix Vend stend outcome}
@@ -174,6 +219,75 @@ theorem step_mainPointScope_finite (yst : EvmState)
   have hscope : mainPointScope = .block mainPointScopeBody := by rfl
   rw [hscope]
   simpa [restore] using hblock
+
+private theorem step_mainPointScope_of_dispatcher (yst stend : EvmState)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hdispatch : ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns
+      (mainPointEnv yst) (mainValidatedState yst)
+      mainPointDispatcherBody (mainPointEnv yst) stend .halt) :
+    ExecStmt Challenge.EvmProof.modexpExec.toDialect mainFuns
+      [] (mainAfterCanonicalReads yst) mainPointScope [] stend .halt := by
+  have hvalidation : ExecStmts Challenge.EvmProof.modexpExec.toDialect
+      ([] :: mainFuns) [] (mainAfterCanonicalReads yst)
+      mainPointValidationPrefix (mainPointEnv yst)
+      (mainValidatedState yst) .normal :=
+    YulEvmCompiler.Optimizer.Step.emptyScope_congr
+      (step_mainPointValidation_success yst hcurve1 hcurve2)
+      (YulEvmCompiler.Optimizer.EmptyScopeRel.add mainFuns)
+  have hdispatcher : ExecStmts Challenge.EvmProof.modexpExec.toDialect
+      ([] :: mainFuns) (mainPointEnv yst) (mainValidatedState yst)
+      mainPointDispatcherBody (mainPointEnv yst) stend .halt :=
+    YulEvmCompiler.Optimizer.Step.emptyScope_congr hdispatch
+      (YulEvmCompiler.Optimizer.EmptyScopeRel.add mainFuns)
+  have hcombined : ExecStmts Challenge.EvmProof.modexpExec.toDialect
+      ([] :: mainFuns) [] (mainAfterCanonicalReads yst)
+      mainPointScopeBody (mainPointEnv yst) stend .halt := by
+    rw [mainPointScopeBody_decompose]
+    exact step_append_normal hvalidation hdispatcher
+  have hbody : ExecStmts Challenge.EvmProof.modexpExec.toDialect
+      (hoist Challenge.EvmProof.modexpExec.toDialect mainPointScopeBody ::
+        mainFuns) [] (mainAfterCanonicalReads yst)
+      mainPointScopeBody (mainPointEnv yst) stend .halt := by
+    have hhoist : hoist Challenge.EvmProof.modexpExec.toDialect
+        mainPointScopeBody = [] := by rfl
+    rw [hhoist]
+    exact hcombined
+  have hblock := Step.block
+    (D := Challenge.EvmProof.modexpExec.toDialect) hbody
+  have hscope : mainPointScope = .block mainPointScopeBody := by rfl
+  rw [hscope]
+  simpa [restore] using hblock
+
+theorem step_mainPointScope_bothInfinity (yst : EvmState)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hboth : mainBothInfinityValue yst ≠ 0) :
+    ExecStmt Challenge.EvmProof.modexpExec.toDialect mainFuns
+      [] (mainAfterCanonicalReads yst) mainPointScope []
+      (mainBothInfinityReturnState yst) .halt :=
+  step_mainPointScope_of_dispatcher yst _ hcurve1 hcurve2
+    (step_mainPointDispatcher_bothInfinity yst hboth)
+
+theorem step_mainPointScope_firstInfinity (yst : EvmState)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst ≠ 0) (hsecond : mainInf2 yst = 0) :
+    ExecStmt Challenge.EvmProof.modexpExec.toDialect mainFuns
+      [] (mainAfterCanonicalReads yst) mainPointScope []
+      (mainFirstInfinityReturnState yst) .halt :=
+  step_mainPointScope_of_dispatcher yst _ hcurve1 hcurve2
+    (step_mainPointDispatcher_firstInfinity yst hfirst hsecond)
+
+theorem step_mainPointScope_secondInfinity (yst : EvmState)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst = 0) (hsecond : mainInf2 yst ≠ 0) :
+    ExecStmt Challenge.EvmProof.modexpExec.toDialect mainFuns
+      [] (mainAfterCanonicalReads yst) mainPointScope []
+      (mainSecondInfinityReturnState yst) .halt :=
+  step_mainPointScope_of_dispatcher yst _ hcurve1 hcurve2
+    (step_mainPointDispatcher_secondInfinity yst hfirst hsecond)
 
 /-- The top-level source suffix beginning with the two-word slope
 declaration. -/

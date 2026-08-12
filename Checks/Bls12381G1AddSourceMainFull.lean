@@ -11,11 +11,44 @@ namespace Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
 #guard_msgs in
 #print axioms step_mainPointDispatcher_finite
 
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointDispatcher_bothInfinity' depends on axioms: [propext,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_mainPointDispatcher_bothInfinity
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointDispatcher_firstInfinity' depends on axioms: [propext,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_mainPointDispatcher_firstInfinity
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointDispatcher_secondInfinity' depends on axioms: [propext,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_mainPointDispatcher_secondInfinity
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointScope_finite' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
 #guard_msgs in
 #print axioms step_mainPointScope_finite
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointScope_bothInfinity' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_mainPointScope_bothInfinity
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointScope_firstInfinity' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_mainPointScope_firstInfinity
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointScope_secondInfinity' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_mainPointScope_secondInfinity
 
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointDispatcher_double' depends on axioms: [propext,
  Classical.choice,
