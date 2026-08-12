@@ -510,6 +510,43 @@ contract check, and all permanent G2ADD gates rebuilt successfully in 1:35.28
 at 2,907,560 KiB peak RSS. This is a post-change verification figure, not a
 performance comparison with the rejected bridge.
 
+### Safe G2 Fp2 multiplication bridge
+
+The accepted follow-up does not prove that the concrete frozen result equals
+`Fp2.mulSource` as a representation. `Fp2MulLowContract` instead bundles:
+
+- the complete staged `fp2Mul` expression evaluation;
+- canonicality of the selected output;
+- equality with `mulSource` only after applying `Fp2.toField`;
+- the lawful multiplication equation; and
+- preservation of every selected 32-byte word below the scratch region.
+
+The field-projected bridge composes the existing opaque concrete result theorem
+with `Fp2.mulSource_spec`. Lean never unfolds or compares the two full
+implementations. The first `onCurveY2` caller now consumes the contract's
+canonicality and lawful-result projections rather than calling the individual
+stage theorems itself. No facade or production file was added.
+
+The boundary check was written first and failed on the absent contract. The
+producer leaf moved from 2,704,512 to 2,713,660 KiB RSS; the migrated caller
+moved from 2,717,384 to 2,710,556 KiB. Both differences are noise. The contract
+has the guarded trust footprint `[propext, Classical.choice, Quot.sound]`. The
+full G2ADD root and all 46 retained checks passed 2,534 jobs in 1:25.67 at
+2,897,300 KiB peak RSS. A per-process monitor observed 2,881,032 KiB and never
+crossed the 6 GiB stop threshold.
+
+A virtual-address limit is not a valid substitute for RSS monitoring. Applying
+`ulimit -v 6291456` caused Lean to fail while mapping a Mathlib `.olean.private`
+artifact at only 816,500 KiB RSS. For memory stop rules, run the proof in an
+isolated process group, sample the maximum resident set of each process, and
+terminate the group if a Lean process crosses the threshold. Do not sum RSS
+across the group because shared mapped pages are counted once per process.
+
+This slice avoids the known 16.7 GiB equality failure but does not make the
+staged multiplication modules obsolete. They remain the implementation of the
+compact contract and the exact states remain necessary for subsequent source
+execution.
+
 ### First relational G1ADD stage contract
 
 The first complete relational slice used the G1ADD both-infinity return path.

@@ -235,6 +235,16 @@ passed the full 2,342-job G1ADD gate at 2,716,696 KiB. These contracts reduce
 consumer exposure to exact states, but the exact execution chains still
 implement the bridges and therefore are not yet removable memory barriers.
 
+The same selected-field principle is now validated for one G2ADD Fp2
+multiplication caller. `Fp2MulLowContract` relates the frozen staged output to
+the authoritative `mulSource` program only through `Fp2.toField`, while also
+carrying execution, canonicality, lawful meaning, and low-memory preservation.
+This avoided the rejected 16.7 GiB whole-representation equality. The producer
+and consumer leaves remained around 2.71 GiB, and the full 2,534-job G2ADD gate
+passed at 2,897,300 KiB. The improvement is removal of the pathological proof
+shape, not a measurable reduction in ordinary leaf RSS, and no production
+stage is obsolete yet.
+
 ### 5. Extract the generic certificate checker later
 
 After import narrowing and check consolidation are measured, extract the

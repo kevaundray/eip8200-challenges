@@ -247,6 +247,27 @@ frame facts without constructing the complete EVM and interpreter graphs
 together. This finding moves the relational-contract spike ahead of further
 Fp2 migration.
 
+**Completed safe follow-up 2026-08-12.** `Fp2MulLowContract` now bundles the
+existing staged evaluation, canonical selected output, lawful multiplication,
+low-memory frame preservation, and equality to `Fp2.mulSource` only after
+`Fp2.toField` projection. It lives in the existing low-memory lawful boundary;
+no module was added. `onCurveY2` consumes the bundled canonicality and lawful
+result projections.
+
+The producer leaf measured 2,704,512 KiB before and 2,713,660 KiB after; the
+consumer measured 2,717,384 KiB before and 2,710,556 KiB after. These small
+changes are noise. The contract's trust footprint is `[propext,
+Classical.choice, Quot.sound]`. The full G2ADD root and all 46 retained checks
+passed 2,534 jobs in 1:25.67 at 2,897,300 KiB maximum child RSS. A process-group
+monitor observed no individual process above 2,881,032 KiB, so the 6 GiB stop
+condition was not approached.
+
+An attempted 6 GiB virtual-address limit was rejected as a measurement method:
+Lean could not map a Mathlib `.olean.private` file even though RSS was only
+816,500 KiB. Future stop guards must monitor per-process RSS instead of setting
+`ulimit -v`, and must not sum RSS across processes because mapped shared pages
+would be double-counted.
+
 ## Task 6: Spike a relational G1ADD stage contract
 
 **Files:** New or existing generic EVM contract module chosen only after a
