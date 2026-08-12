@@ -1,6 +1,7 @@
 import Challenge.Bls12381G2Add.Spec
 import Challenge.Bls12381G2Add.AdditionalGoals
 import Challenge.Bls12381G2Add.ProofSupport
+import Challenge.Bls12381G2Add.Reference
 import Challenge.Bls12381G2Add.Scorer
 
 set_option warningAsError true

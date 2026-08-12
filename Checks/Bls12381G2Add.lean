@@ -1,4 +1,6 @@
 import Challenge.Bls12381G2Add
+import Checks.Bls12381G2AddFinalCorrectness
+import Checks.Bls12381G2AddReference
 set_option warningAsError true
 
 /--
