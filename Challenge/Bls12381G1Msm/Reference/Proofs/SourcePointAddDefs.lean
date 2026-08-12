@@ -148,6 +148,43 @@ def pointAddDoubleXSqStmt : Stmt Op := pointAddXEqMainBody[1]!
 def pointAddDoubleNum2Stmt : Stmt Op := pointAddXEqMainBody[2]!
 def pointAddDoubleNum3Stmt : Stmt Op := pointAddXEqMainBody[3]!
 def pointAddDoubleDenStmt : Stmt Op := pointAddXEqMainBody[4]!
+def pointAddDoubleInvInitStmt : Stmt Op := pointAddXEqMainBody[5]!
+def pointAddDoubleInvStmt : Stmt Op := pointAddXEqMainBody[6]!
+
+def pointAddDoubleInvBody : Block Op :=
+  match pointAddDoubleInvStmt with
+  | .block body => body
+  | _ => []
+
+def pointAddDoubleInvStmt0 : Stmt Op := pointAddDoubleInvBody[0]!
+def pointAddDoubleInvStmt1 : Stmt Op := pointAddDoubleInvBody[1]!
+def pointAddDoubleInvStmt2 : Stmt Op := pointAddDoubleInvBody[2]!
+def pointAddDoubleInvStmt3 : Stmt Op := pointAddDoubleInvBody[3]!
+def pointAddDoubleInvStmt4 : Stmt Op := pointAddDoubleInvBody[4]!
+def pointAddDoubleInvStmt5 : Stmt Op := pointAddDoubleInvBody[5]!
+def pointAddDoubleInvStmt6 : Stmt Op := pointAddDoubleInvBody[6]!
+def pointAddDoubleInvStmt7 : Stmt Op := pointAddDoubleInvBody[7]!
+def pointAddDoubleInvStmt8 : Stmt Op := pointAddDoubleInvBody[8]!
+def pointAddDoubleInvStmt9 : Stmt Op := pointAddDoubleInvBody[9]!
+def pointAddDoubleInvStmt10 : Stmt Op := pointAddDoubleInvBody[10]!
+def pointAddDoubleInvStmt11 : Stmt Op := pointAddDoubleInvBody[11]!
+def pointAddDoubleInvStmt12 : Stmt Op := pointAddDoubleInvBody[12]!
+def pointAddDoubleInvStmt13 : Stmt Op := pointAddDoubleInvBody[13]!
+
+theorem pointAddDoubleInvInitStmt_eq : pointAddDoubleInvInitStmt =
+    .letDecl ["\x00118", "\x00119"] none := by rfl
+
+theorem pointAddDoubleInvStmt_eq : pointAddDoubleInvStmt =
+    .block pointAddDoubleInvBody := by rfl
+
+theorem pointAddDoubleInvBody_eq : pointAddDoubleInvBody =
+    [pointAddDoubleInvStmt0, pointAddDoubleInvStmt1,
+      pointAddDoubleInvStmt2, pointAddDoubleInvStmt3,
+      pointAddDoubleInvStmt4, pointAddDoubleInvStmt5,
+      pointAddDoubleInvStmt6, pointAddDoubleInvStmt7,
+      pointAddDoubleInvStmt8, pointAddDoubleInvStmt9,
+      pointAddDoubleInvStmt10, pointAddDoubleInvStmt11,
+      pointAddDoubleInvStmt12, pointAddDoubleInvStmt13] := by rfl
 
 def pointAddDoubleXSqExpr : Expr Op :=
   match pointAddDoubleXSqStmt with
