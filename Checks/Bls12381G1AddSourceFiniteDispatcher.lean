@@ -1,4 +1,4 @@
-import Challenge.Bls12381G1Add.Reference.Proofs.SourceMainFiniteDispatcher
+import Challenge.Bls12381G1Add.Reference.Proofs.SourceMainFiniteDispatcherLawful
 
 set_option warningAsError true
 
@@ -45,5 +45,29 @@ example : mainFiniteDispatcherBody =
  Quot.sound] -/
 #guard_msgs in
 #print axioms step_mainFiniteDispatcher_unequal
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainFiniteDispatcher_double_returned_add' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms mainFiniteDispatcher_double_returned_add
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainFiniteDispatcher_unequal_returned_add' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms mainFiniteDispatcher_unequal_returned_add
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainFiniteDispatcher_opposite_returned_add' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms mainFiniteDispatcher_opposite_returned_add
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainFiniteDispatcher_zeroY_returned_add' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms mainFiniteDispatcher_zeroY_returned_add
 
 end Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
