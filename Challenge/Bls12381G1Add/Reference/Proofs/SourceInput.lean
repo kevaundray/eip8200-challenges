@@ -235,6 +235,40 @@ private theorem paddingZero_iff_inputWord_lt (input : ByteArray) (offset : Nat)
       omega
     exact hprefix
 
+private theorem word_shift_128_eq_zero_iff (word : U256) :
+    word >>> 128 = 0 ↔ word.toNat < 2 ^ 128 := by
+  constructor
+  · intro h
+    have hnat := congrArg BitVec.toNat h
+    rw [BitVec.toNat_ushiftRight, Nat.shiftRight_eq_div_pow] at hnat
+    simpa using (Nat.div_eq_zero_iff.mp hnat)
+  · intro h
+    apply BitVec.eq_of_toNat_eq
+    rw [BitVec.toNat_ushiftRight, Nat.shiftRight_eq_div_pow,
+      Nat.div_eq_of_lt h]
+    rfl
+
+/-- The source's four-way high-half OR is zero exactly when all four EIP
+field padding windows are canonical zero padding. -/
+theorem mainPaddingValue_eq_zero_iff_codec (yst : EvmState)
+    (input : ByteArray) (hcalldata : yst.env.calldata = input.toList)
+    (hsize : input.size = 256) :
+    mainPaddingValue yst = 0 ↔
+      Codec.PaddingZero input 0 ∧ Codec.PaddingZero input 64 ∧
+      Codec.PaddingZero input 128 ∧ Codec.PaddingZero input 192 := by
+  rw [mainPaddingValue_eq_zero_iff]
+  have h0 := mainDecodedWord_eq_input yst input hcalldata 0 (by omega)
+  have h64 := mainDecodedWord_eq_input yst input hcalldata 2 (by omega)
+  have h128 := mainDecodedWord_eq_input yst input hcalldata 4 (by omega)
+  have h192 := mainDecodedWord_eq_input yst input hcalldata 6 (by omega)
+  norm_num at h0 h64 h128 h192
+  rw [h0, h64, h128, h192]
+  repeat rw [word_shift_128_eq_zero_iff]
+  rw [← paddingZero_iff_inputWord_lt input 0 (by omega),
+    ← paddingZero_iff_inputWord_lt input 64 (by omega),
+    ← paddingZero_iff_inputWord_lt input 128 (by omega),
+    ← paddingZero_iff_inputWord_lt input 192 (by omega)]
+
 private theorem fpWindowValue_eq_sourceField (yst : EvmState)
     (input : ByteArray) (hcalldata : yst.env.calldata = input.toList)
     (i : Nat) (hi : i < 4) (hsize : 64 * i + 64 ≤ input.size)

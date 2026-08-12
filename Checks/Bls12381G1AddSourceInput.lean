@@ -6,6 +6,7 @@ open Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
 
 #check mainDecodedWord_eq_input
 #check decodeFp_eq_some_sourceField
+#check mainPaddingValue_eq_zero_iff_codec
 
 /--
 info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainDecodedWord_eq_input' depends on axioms: [propext,
@@ -22,3 +23,11 @@ info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.decodeFp_eq_some
 -/
 #guard_msgs in
 #print axioms decodeFp_eq_some_sourceField
+
+/--
+info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainPaddingValue_eq_zero_iff_codec' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms mainPaddingValue_eq_zero_iff_codec
