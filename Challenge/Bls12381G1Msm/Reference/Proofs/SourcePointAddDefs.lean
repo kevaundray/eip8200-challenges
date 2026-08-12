@@ -275,6 +275,26 @@ theorem pointAddDoubleXSubLeftBody_length :
     pointAddDoubleXSubLeftBody.length = 5 := by
   rfl
 
+theorem pointAddDoubleXSubLeftRawPrefix_shape :
+    pointAddDoubleXSubLeftBody.take 2 =
+    [.letDecl ["fc0_28", "fc0_29"] none,
+     .block
+      [.letDecl ["fc0_30"]
+        (some (.builtin .mload
+          [.builtin .add
+            [.builtin .mload [.lit (.number 1568)], .lit (.number 32)]])),
+       .letDecl ["fc0_31"]
+        (some (.builtin .mload
+          [.builtin .mload [.lit (.number 1568)]])),
+       .letDecl ["fc0_32"] (some (.var "\x00123")),
+       .letDecl ["fc0_33"] (some (.var "\x00122")),
+       .assign ["fc0_29"] (.builtin .sub [.var "fc0_32", .var "fc0_30"]),
+       .assign ["fc0_28"]
+        (.builtin .sub
+          [.builtin .sub [.var "fc0_33", .var "fc0_31"],
+           .builtin .gt [.var "fc0_30", .var "fc0_32"]])]] := by
+  rfl
+
 theorem pointAddDoubleXSubRightTail_length :
     pointAddDoubleXSubRightTail.length = 5 := by
   rfl
