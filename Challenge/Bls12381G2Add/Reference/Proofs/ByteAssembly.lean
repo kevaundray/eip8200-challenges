@@ -117,5 +117,9 @@ theorem referenceInstructions_assemble :
     referenceInstructionByteChunks_eq,
     referenceFrozenByteChunks_flatten]
 
-end Challenge.Bls12381G2Add.Reference.Proofs.Compilation
+/-- The frozen runtime is far below the 256-bit program-counter bound. -/
+theorem referenceBytecode_size_lt : referenceBytecode.size < 2 ^ 256 := by
+  set_option maxRecDepth 20000 in
+    decide
 
+end Challenge.Bls12381G2Add.Reference.Proofs.Compilation
