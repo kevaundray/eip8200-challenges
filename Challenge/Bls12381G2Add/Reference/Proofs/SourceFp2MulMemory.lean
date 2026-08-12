@@ -201,4 +201,87 @@ theorem fp2MulCross_inputs (yst : EvmState) (out a b : U256) :
   exact ⟨fp2MulAfterSumBStores_sumA yst out a b,
     fp2MulAfterSumBStores_sumB yst out a b⟩
 
+theorem fp2MulCross_eq_sums (yst : EvmState) (out a b : U256)
+    (ha : Challenge.Bls12381.ProofSupport.Fp.Canonical
+      (pairWords (fp2MulSumA yst out a b)))
+    (hb : Challenge.Bls12381.ProofSupport.Fp.Canonical
+      (pairWords (fp2MulSumB yst out a b))) :
+    pairWords (fp2MulCross yst out a b) =
+      Challenge.Bls12381.ProofSupport.Fp.mulCanonical
+        (pairWords (fp2MulSumA yst out a b))
+        (pairWords (fp2MulSumB yst out a b)) := by
+  have hinputs := fp2MulCross_inputs yst out a b
+  rw [fp2MulCross_eq_mulCanonical _ _ _ _
+    (hinputs.1 ▸ ha) (hinputs.2 ▸ hb), hinputs.1, hinputs.2]
+
+theorem fp2MulAfterCrossStores_cross (yst : EvmState) (out a b : U256) :
+    fpWords (loadWord (fp2MulAfterCrossStores yst out a b).memory 1792)
+        (loadWord (fp2MulAfterCrossStores yst out a b).memory 1824) =
+      pairWords (fp2MulCross yst out a b) := by
+  rw [fp2MulAfterCrossStores, fp2MulAfterCrossHigh]
+  change fpWords
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterCrossCall yst out a b).memory 1792
+          (fp2MulCross yst out a b).1)
+        1824 (fp2MulCross yst out a b).2) 1792)
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterCrossCall yst out a b).memory 1792
+          (fp2MulCross yst out a b).1)
+        1824 (fp2MulCross yst out a b).2) 1824) = _
+  rw [loadWord_storeWord_disjoint _ 1824 1792 _ (by omega),
+    loadWord_storeWord_same, loadWord_storeWord_same]
+  rfl
+
+theorem fp2MulAfterVSumStores_cross (yst : EvmState) (out a b : U256) :
+    fpWords (loadWord (fp2MulAfterVSumStores yst out a b).memory 1792)
+        (loadWord (fp2MulAfterVSumStores yst out a b).memory 1824) =
+      pairWords (fp2MulCross yst out a b) := by
+  rw [fp2MulAfterVSumStores, fp2MulAfterVSumHigh]
+  change fpWords
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterCrossStores yst out a b).memory 1856
+          (fp2MulVSum yst out a b).1)
+        1888 (fp2MulVSum yst out a b).2) 1792)
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterCrossStores yst out a b).memory 1856
+          (fp2MulVSum yst out a b).1)
+        1888 (fp2MulVSum yst out a b).2) 1824) = _
+  rw [loadWord_storeWord_disjoint _ 1888 1792 _ (by omega),
+    loadWord_storeWord_disjoint _ 1856 1792 _ (by omega),
+    loadWord_storeWord_disjoint _ 1888 1824 _ (by omega),
+    loadWord_storeWord_disjoint _ 1856 1824 _ (by omega),
+    fp2MulAfterCrossStores_cross]
+
+theorem fp2MulAfterVSumStores_vsum (yst : EvmState) (out a b : U256) :
+    fpWords (loadWord (fp2MulAfterVSumStores yst out a b).memory 1856)
+        (loadWord (fp2MulAfterVSumStores yst out a b).memory 1888) =
+      pairWords (fp2MulVSum yst out a b) := by
+  rw [fp2MulAfterVSumStores, fp2MulAfterVSumHigh]
+  change fpWords
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterCrossStores yst out a b).memory 1856
+          (fp2MulVSum yst out a b).1)
+        1888 (fp2MulVSum yst out a b).2) 1856)
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterCrossStores yst out a b).memory 1856
+          (fp2MulVSum yst out a b).1)
+        1888 (fp2MulVSum yst out a b).2) 1888) = _
+  rw [loadWord_storeWord_disjoint _ 1888 1856 _ (by omega),
+    loadWord_storeWord_same, loadWord_storeWord_same]
+  rfl
+
+theorem fp2MulImag_eq_cross_vsum (yst : EvmState) (out a b : U256) :
+    pairWords (fp2MulImag yst out a b) =
+      Challenge.Bls12381.ProofSupport.Fp.subSource
+        (pairWords (fp2MulCross yst out a b))
+        (pairWords (fp2MulVSum yst out a b)) := by
+  rw [fp2MulImag_eq_subSource, fp2MulAfterVSumStores_cross,
+    fp2MulAfterVSumStores_vsum]
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
