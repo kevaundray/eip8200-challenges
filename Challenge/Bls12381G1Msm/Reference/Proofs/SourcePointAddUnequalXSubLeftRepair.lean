@@ -30,6 +30,17 @@ def pointAddUnequalXSubLeftRepaired (yst : EvmState)
   (pointAddUnequalXSubLeftRepairedHi yst out left right,
     pointAddUnequalXSubLeftTemp yst out left right)
 
+theorem pointAddUnequalXSubLeftRepaired_eq_fpSubRepairValue
+    (yst : EvmState) (out left right : U256) :
+    pointAddUnequalXSubLeftRepaired yst out left right =
+      Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpSubRepairValue
+        (pointAddUnequalXSubLeftRaw yst out left right) := by
+  simp only [pointAddUnequalXSubLeftRepaired,
+    pointAddUnequalXSubLeftRepairedHi, pointAddUnequalXSubLeftTemp,
+    modulusHi, modulusLo,
+    Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpSubRepairValue,
+    add_assoc]
+
 private def pointAddUnequalXSubLeftTempEnv (yst : EvmState)
     (out left right : U256) : VEnv Challenge.EvmProof.modexpExec.toDialect :=
   [("\x0051", pointAddUnequalXSubLeftTemp yst out left right)] ++

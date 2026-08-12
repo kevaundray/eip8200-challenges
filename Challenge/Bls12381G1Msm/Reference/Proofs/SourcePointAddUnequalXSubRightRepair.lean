@@ -8,6 +8,7 @@ set_option warningAsError true
 namespace Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
 
 open YulSemantics YulSemantics.EVM
+open Challenge.Bls12381.ProofSupport
 
 private abbrev fpSubNeedsRepairValue :=
   Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpSubNeedsRepairValue
@@ -30,6 +31,53 @@ def pointAddUnequalXSubRightResult (ctx : PointAddUnequalXSubRightContext) :
   if pointAddUnequalXSubRightRepairValue ctx = 0 then
     pointAddUnequalXSubRightRaw ctx
   else pointAddUnequalXSubRightRepaired ctx
+
+theorem pointAddUnequalXSubRightResult_eq_fpSubValue
+    (ctx : PointAddUnequalXSubRightContext) :
+    pointAddUnequalXSubRightResult ctx =
+      Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpSubValue
+        ctx.x3Hi ctx.x3Lo (pointAddUnequalXSubRightHi ctx)
+        (pointAddUnequalXSubRightLo ctx) := by
+  simp only [pointAddUnequalXSubRightResult,
+    pointAddUnequalXSubRightRepairValue,
+    pointAddUnequalXSubRightRepaired,
+    pointAddUnequalXSubRightRaw,
+    pointAddUnequalXSubRightRawHi,
+    pointAddUnequalXSubRightRawLo,
+    Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpSubValue,
+    Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpSubRawValue,
+    Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpSubRepairValue,
+    Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpSubNeedsRepairValue,
+    add_assoc]
+
+def pointAddUnequalXSubRightResultLimbs
+    (ctx : PointAddUnequalXSubRightContext) : Fp.Limbs :=
+  { hi := YulEvmCompiler.conv (pointAddUnequalXSubRightResult ctx).1
+    lo := YulEvmCompiler.conv (pointAddUnequalXSubRightResult ctx).2 }
+
+def pointAddUnequalXSubRightLeftLimbs
+    (ctx : PointAddUnequalXSubRightContext) : Fp.Limbs :=
+  { hi := YulEvmCompiler.conv ctx.x3Hi
+    lo := YulEvmCompiler.conv ctx.x3Lo }
+
+def pointAddUnequalXSubRightOperandLimbs
+    (ctx : PointAddUnequalXSubRightContext) : Fp.Limbs :=
+  { hi := YulEvmCompiler.conv (pointAddUnequalXSubRightHi ctx)
+    lo := YulEvmCompiler.conv (pointAddUnequalXSubRightLo ctx) }
+
+theorem pointAddUnequalXSubRightResultLimbs_eq (ctx :
+    PointAddUnequalXSubRightContext) :
+    pointAddUnequalXSubRightResultLimbs ctx =
+      Fp.subSource (pointAddUnequalXSubRightLeftLimbs ctx)
+        (pointAddUnequalXSubRightOperandLimbs ctx) := by
+  rw [pointAddUnequalXSubRightResultLimbs,
+    pointAddUnequalXSubRightResult_eq_fpSubValue]
+  simpa only [pointAddUnequalXSubRightLeftLimbs,
+    pointAddUnequalXSubRightOperandLimbs,
+    Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.convPair]
+    using Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.conv_fpSubValue
+      ctx.x3Hi ctx.x3Lo (pointAddUnequalXSubRightHi ctx)
+      (pointAddUnequalXSubRightLo ctx)
 
 def pointAddUnequalXSubRightSelectedEnv (ctx : PointAddUnequalXSubRightContext) :
     VEnv Challenge.EvmProof.modexpExec.toDialect :=

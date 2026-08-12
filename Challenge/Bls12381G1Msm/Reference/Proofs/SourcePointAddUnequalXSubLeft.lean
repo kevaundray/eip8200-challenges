@@ -34,6 +34,16 @@ def pointAddUnequalXSubLeftRaw (yst : EvmState)
     (pointAddUnequalXSubLeftHi yst out left right)
     (pointAddUnequalXSubLeftLo yst out left right)
 
+theorem pointAddUnequalXSubLeftRaw_eq_fpSubRawValue (yst : EvmState)
+    (out left right : U256) :
+    pointAddUnequalXSubLeftRaw yst out left right =
+      Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpSubRawValue
+        (pointAddUnequalX3Result yst out left right).1
+        (pointAddUnequalX3Result yst out left right).2
+        (pointAddUnequalXSubLeftHi yst out left right)
+        (pointAddUnequalXSubLeftLo yst out left right) := by
+  rfl
+
 def pointAddUnequalXSubLeftState1 (yst : EvmState)
     (out left right : U256) :=
   touchMemory (pointAddUnequalX3State yst out left right) 1568 32
