@@ -85,6 +85,16 @@ def fpMulBodyResultEnv (yst : EvmState) (ahi alo bhi blo : U256) :
   restore (fpMulInitialEnv ahi alo bhi blo)
     (fpMulReturnEnv yst ahi alo bhi blo)
 
+theorem fpMulBodyResultEnv_hi (yst : EvmState) (ahi alo bhi blo : U256) :
+    (VEnv.get (fpMulBodyResultEnv yst ahi alo bhi blo) "\x0077").getD 0 =
+      (fpMulResult yst ahi alo bhi blo).1 := by
+  rfl
+
+theorem fpMulBodyResultEnv_lo (yst : EvmState) (ahi alo bhi blo : U256) :
+    (VEnv.get (fpMulBodyResultEnv yst ahi alo bhi blo) "\x0078").getD 0 =
+      (fpMulResult yst ahi alo bhi blo).2 := by
+  rfl
+
 theorem step_fpMulBody (ahi alo bhi blo : U256) (yst : EvmState) :
     ExecStmt Challenge.EvmProof.modexpExec.toDialect sourceFuns
       (fpMulInitialEnv ahi alo bhi blo) yst (.block fpMulBody)
