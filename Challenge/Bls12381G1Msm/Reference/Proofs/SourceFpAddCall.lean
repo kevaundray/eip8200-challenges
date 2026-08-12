@@ -14,22 +14,22 @@ def fpAddResult (ahi alo bhi blo : U256) : U256 × U256 :=
   ((VEnv.get final "\x0038").getD (0#256),
    (VEnv.get final "\x0039").getD (0#256))
 
-theorem step_fpAdd_of_args {funs V yst args} (ahi alo bhi blo : U256)
-    (hargs : EvalArgs modexpExec.toDialect funs V yst args
-      (.vals [ahi, alo, bhi, blo] yst))
+theorem step_fpAdd_of_args {funs V st argState args} (ahi alo bhi blo : U256)
+    (hargs : EvalArgs modexpExec.toDialect funs V st args
+      (.vals [ahi, alo, bhi, blo] argState))
     (hlookup : lookupFun funs "\x004" = some (fpAddDecl, sourceFuns)) :
-    EvalExpr modexpExec.toDialect funs V yst (.call "\x004" args)
+    EvalExpr modexpExec.toDialect funs V st (.call "\x004" args)
       (.vals [(fpAddResult ahi alo bhi blo).1,
-        (fpAddResult ahi alo bhi blo).2] yst) := by
+        (fpAddResult ahi alo bhi blo).2] argState) := by
   have hbody : ExecStmt modexpExec.toDialect sourceFuns
-      (fpAddInitialEnv ahi alo bhi blo) yst (.block fpAddBody)
-      (fpAddFinalEnv ahi alo bhi blo) yst .normal := by
+      (fpAddInitialEnv ahi alo bhi blo) argState (.block fpAddBody)
+      (fpAddFinalEnv ahi alo bhi blo) argState .normal := by
     have hseq : ExecStmts modexpExec.toDialect
         (hoist modexpExec.toDialect fpAddBody :: sourceFuns)
-        (fpAddInitialEnv ahi alo bhi blo) yst fpAddBody
-        (fpAddFinalEnv ahi alo bhi blo) yst .normal := by
+        (fpAddInitialEnv ahi alo bhi blo) argState fpAddBody
+        (fpAddFinalEnv ahi alo bhi blo) argState .normal := by
       rw [hoist_fpAddBody]
-      exact step_fpAddBody ahi alo bhi blo yst
+      exact step_fpAddBody ahi alo bhi blo argState
     have h := Step.block (D := modexpExec.toDialect) hseq
     by_cases hc : fpGeModulusValue (fpAddHighValue ahi alo bhi blo)
         (fpAddLowValue alo blo) = (0#256)
