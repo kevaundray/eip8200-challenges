@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
-"""Reject forbidden proof mechanisms in Lean source files."""
+"""Reject forbidden proof mechanisms in Lean source files.
+
+This is a deliberately small, conservative Lean lexer rather than a regex
+over lines.  It preserves source positions while masking nested comments,
+string text, and raw strings.  Because `interpolatedStr(...)` is selected by
+parser context rather than a lexical prefix, brace expressions inside every
+non-raw string are recursively retained and scanned; this covers `s!`, `m!`,
+`f!`, and parser-direct interpolated strings.  Identifiers use Unicode
+letter/mark, number, and letter-like symbol categories together with Lean's
+`_`, `'`, `!`, and `?` continuations.
+"""
 
 from __future__ import annotations
 
 import sys
-import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -42,19 +51,19 @@ def mask_comments_and_string_text(source: str) -> str:
                 index += 1
         return index
 
-    def skip_plain_string(index: int) -> int:
-        index += 1
-        escaped = False
-        while index < len(source):
-            character = source[index]
-            if escaped:
-                escaped = False
-            elif character == "\\":
-                escaped = True
-            elif character == '"':
-                return index + 1
-            index += 1
-        return index
+    def raw_string_end(index: int) -> int | None:
+        """Return the end of `r###"..."###`, or `None` when not at one."""
+        if source[index] != "r":
+            return None
+        delimiter = index + 1
+        while delimiter < len(source) and source[delimiter] == "#":
+            delimiter += 1
+        if delimiter >= len(source) or source[delimiter] != '"':
+            return None
+        hashes = source[index + 1 : delimiter]
+        closing = '"' + hashes
+        end = source.find(closing, delimiter + 1)
+        return len(source) if end < 0 else end + len(closing)
 
     def scan_interpolated_string(index: int) -> int:
         index += 1
@@ -79,16 +88,15 @@ def mask_comments_and_string_text(source: str) -> str:
         while index < len(source):
             pair = source[index : index + 2]
             character = source[index]
-            if pair == "--":
+            raw_end = raw_string_end(index)
+            if raw_end is not None:
+                index = raw_end
+            elif pair == "--":
                 index = skip_line_comment(index)
             elif pair == "/-":
                 index = skip_block_comment(index)
             elif character == '"':
-                interpolated = index >= 2 and source[index - 2 : index] == "s!"
-                if interpolated:
-                    index = scan_interpolated_string(index)
-                else:
-                    index = skip_plain_string(index)
+                index = scan_interpolated_string(index)
             elif stop_at_closing_brace and character == "}":
                 return index + 1
             elif stop_at_closing_brace and character == "{":
@@ -103,16 +111,43 @@ def mask_comments_and_string_text(source: str) -> str:
     return "".join(result)
 
 
+def is_letter_like(character: str) -> bool:
+    """Port Lean's `Init.Meta.isLetterLike` character ranges."""
+    value = ord(character)
+    return (
+        0x3B1 <= value <= 0x3C9 and value != 0x3BB
+        or 0x391 <= value <= 0x3A9 and value not in (0x3A0, 0x3A3)
+        or 0x3CA <= value <= 0x3FB
+        or 0x1F00 <= value <= 0x1FFE
+        or 0x2100 <= value <= 0x214F
+        or 0x1D49C <= value <= 0x1D59F
+        or 0x00C0 <= value <= 0x00FF and value not in (0x00D7, 0x00F7)
+        or 0x0100 <= value <= 0x017F
+    )
+
+
+def is_subscript_alphanumeric(character: str) -> bool:
+    """Port Lean's `Init.Meta.isSubScriptAlnum` character ranges."""
+    value = ord(character)
+    return (
+        0x2080 <= value <= 0x2089
+        or 0x2090 <= value <= 0x209C
+        or 0x1D62 <= value <= 0x1D6A
+        or value == 0x2C7C
+    )
+
+
 def is_identifier_start(character: str) -> bool:
-    if character == "_" or character.isalpha():
-        return True
-    return unicodedata.category(character).startswith(("L", "M"))
+    return character == "_" or character.isalpha() or is_letter_like(character)
 
 
 def is_identifier_continue(character: str) -> bool:
-    if character in "_'" or character.isalnum():
-        return True
-    return unicodedata.category(character).startswith(("L", "M", "N"))
+    return (
+        character in "_'!?"
+        or character.isalnum()
+        or is_letter_like(character)
+        or is_subscript_alphanumeric(character)
+    )
 
 
 @dataclass(frozen=True)

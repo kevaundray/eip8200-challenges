@@ -41,10 +41,45 @@ def escapedProof : String := s!"{(by sorry : Nat)}"
 EOF
 expect_rejected "$fixture_dir/interpolated-sorry.lean" 'forbidden proof mechanism: sorry'
 
+cat > "$fixture_dir/message-interpolated-sorry.lean" <<'EOF'
+#check m!"{(by sorry : Nat)}"
+EOF
+expect_rejected "$fixture_dir/message-interpolated-sorry.lean" 'forbidden proof mechanism: sorry'
+
+cat > "$fixture_dir/format-interpolated-sorry.lean" <<'EOF'
+#check f!"{(by sorry : Nat)}"
+EOF
+expect_rejected "$fixture_dir/format-interpolated-sorry.lean" 'forbidden proof mechanism: sorry'
+
+cat > "$fixture_dir/parser-interpolated-sorry.lean" <<'EOF'
+macro "policyProbe " message:interpolatedStr(term) : command =>
+  `(command| #check $message)
+policyProbe "{(by sorry : Nat)}"
+EOF
+expect_rejected "$fixture_dir/parser-interpolated-sorry.lean" 'forbidden proof mechanism: sorry'
+
+for hashes in '#' '###' '######'; do
+  fixture="$fixture_dir/raw-${#hashes}-then-sorry.lean"
+  printf 'def raw : String := r%s"quotes " and policy words sorry axiom"%s\n' \
+    "$hashes" "$hashes" > "$fixture"
+  printf 'example : True := by sorry\n' >> "$fixture"
+  expect_rejected "$fixture" 'forbidden proof mechanism: sorry'
+done
+
 cat > "$fixture_dir/sorry-ax.lean" <<'EOF'
 example : True := by sorryAx (synthetic := true)
 EOF
 expect_rejected "$fixture_dir/sorry-ax.lean" 'forbidden proof mechanism: sorryAx'
+
+cat > "$fixture_dir/operator-adjacent-sorry.lean" <<'EOF'
+#check 1+sorry
+EOF
+expect_rejected "$fixture_dir/operator-adjacent-sorry.lean" 'forbidden proof mechanism: sorry'
+
+cat > "$fixture_dir/string-adjacent-sorry.lean" <<'EOF'
+#check sorry"not a raw string"
+EOF
+expect_rejected "$fixture_dir/string-adjacent-sorry.lean" 'forbidden proof mechanism: sorry'
 
 for literal in 0 00 0_0 0x0 0X00 0x0_0 0b0 0B00 0b0_0 0o0 0O00 0o0_0; do
   fixture="$fixture_dir/zero-${literal}.lean"
@@ -61,6 +96,17 @@ def policyWords : String := "admit native_decide CertifiedArtifact"
 def unicodeIdentifiers (βsorry sorryβ βsorryAx sorryAxβ : Nat) : Nat :=
   βsorry + sorryβ + βsorryAx + sorryAxβ
 def interpolationText : String := s!"literal sorry; expression {"sorry"}"
+#check m!"literal sorry; expression {"sorry"}"
+#check f!"literal sorry; expression {"sorry"}"
+macro "safePolicyProbe " message:interpolatedStr(term) : command =>
+  `(command| #check $message)
+safePolicyProbe "literal sorry; expression {"sorry"}"
+def rawPolicyText : String := r###"sorry admit axiom " quoted"###
+def suffixIdentifiers (sorry? sorry! sorryAx? sorryAx! : Nat) : Nat :=
+  sorry? + sorry! + sorryAx? + sorryAx!
+def subscriptIdentifiers (sorry₀ sorryAx₉ : Nat) : Nat := sorry₀ + sorryAx₉
+def symbolIdentifiers (℘sorry sorry℘ ℘sorryAx sorryAx℘ : Nat) : Nat :=
+  ℘sorry + sorry℘ + ℘sorryAx + sorryAx℘
 set_option maxHeartbeats 1000 in
 example : True := by trivial
 EOF
