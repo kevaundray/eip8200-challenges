@@ -1,4 +1,4 @@
-import Challenge.Bls12381G1Add.Reference.Proofs.SourceMainFinitePostExec
+import Challenge.Bls12381G1Add.Reference.Proofs.SourceMainFinitePostLawful
 
 set_option warningAsError true
 
@@ -25,5 +25,35 @@ example : mainFinitePostStmt7 =
  Quot.sound] -/
 #guard_msgs in
 #print axioms step_mainFinitePostBody
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.canonical_mainFinitePostCoordinates' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms canonical_mainFinitePostCoordinates
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainFinitePostCoordinates_toLawful' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms mainFinitePostCoordinates_toLawful
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainFinitePostPoint_eq_add_of_x_ne' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms mainFinitePostPoint_eq_add_of_x_ne
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainFinitePostPoint_eq_double' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms mainFinitePostPoint_eq_double
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.mainFinitePost_returned_codec' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms mainFinitePost_returned_codec
 
 end Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
