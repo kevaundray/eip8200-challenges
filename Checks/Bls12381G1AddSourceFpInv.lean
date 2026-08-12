@@ -1,4 +1,4 @@
-import Challenge.Bls12381G1Add.Reference.Proofs.SourceFpInvRefinement
+import Challenge.Bls12381G1Add.Reference.Proofs.SourceFpInvMemory
 
 set_option warningAsError true
 
@@ -101,5 +101,10 @@ example (hi lo : U256) (yst : EvmState)
  Quot.sound] -/
 #guard_msgs in
 #print axioms fpInvOutput_eq_invCanonical
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpInvFinalState_loadWord_before_scratch' depends on axioms: [propext,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms fpInvFinalState_loadWord_before_scratch
 
 end Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
