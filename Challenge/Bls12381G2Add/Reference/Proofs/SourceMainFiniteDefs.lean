@@ -1,4 +1,6 @@
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainPointScope
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2InvImag
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2MulImag
 
 set_option warningAsError true
 
@@ -36,5 +38,28 @@ def mainFiniteXEq2 (yst : EvmState) : U256 :=
 
 def mainAfterFiniteXEq2 (yst : EvmState) : EvmState :=
   fp2EqReadState (mainAfterFiniteXEq1 yst) 0 256
+
+def mainDoubleState0 (yst : EvmState) : EvmState :=
+  fp2MulFinalState (mainAfterFiniteXEq1 yst) 2176 0 0
+
+def mainDoubleState1 (yst : EvmState) : EvmState :=
+  fp2AddFinalState (mainDoubleState0 yst) 2304 2176 2176
+
+def mainDoubleState2 (yst : EvmState) : EvmState :=
+  fp2AddFinalState (mainDoubleState1 yst) 2304 2304 2176
+
+def mainDoubleState3 (yst : EvmState) : EvmState :=
+  fp2AddFinalState (mainDoubleState2 yst) 2432 128 128
+
+def mainDoubleState4 (yst : EvmState) : EvmState :=
+  fp2InvFinalState (mainDoubleState3 yst) 2560 2432
+
+def mainDoubleFinalState (yst : EvmState) : EvmState :=
+  fp2MulFinalState (mainDoubleState4 yst) 2048 2304 2560
+
+def mainDoubleBody : Block Op :=
+  match mainFiniteStmt0 with
+  | .cond _ body => body.drop 2
+  | _ => []
 
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
