@@ -7,3 +7,4 @@ open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 #check fp2MulAfterV1Stores_loadWord_before_scratch
 #check fp2MulAfterRealStores_loadWord_before_scratch
 #check fp2MulAfterSumAStores_loadWord_before_scratch
+#check fp2MulFinalState_loadWord_before_scratch
