@@ -75,6 +75,32 @@ def makePointAddUnequalPostContext
       env_xHi env_xLo env_yHi env_yLo env_tempHi env_tempLo).xLo = xLo := by
   rfl
 
+@[simp] theorem makePointAddUnequalPostContext_yHi
+    (xHi xLo yHi yLo tempHi tempLo : U256)
+    (env : VEnv Challenge.EvmProof.modexpExec.toDialect) (state : EvmState)
+    (env_xHi : VEnv.get env "\x00136" = some xHi)
+    (env_xLo : VEnv.get env "\x00137" = some xLo)
+    (env_yHi : VEnv.get env "\x00140" = some yHi)
+    (env_yLo : VEnv.get env "\x00141" = some yLo)
+    (env_tempHi : VEnv.get env "\x00138" = some tempHi)
+    (env_tempLo : VEnv.get env "\x00139" = some tempLo) :
+    (makePointAddUnequalPostContext xHi xLo yHi yLo tempHi tempLo env state
+      env_xHi env_xLo env_yHi env_yLo env_tempHi env_tempLo).yHi = yHi := by
+  rfl
+
+@[simp] theorem makePointAddUnequalPostContext_yLo
+    (xHi xLo yHi yLo tempHi tempLo : U256)
+    (env : VEnv Challenge.EvmProof.modexpExec.toDialect) (state : EvmState)
+    (env_xHi : VEnv.get env "\x00136" = some xHi)
+    (env_xLo : VEnv.get env "\x00137" = some xLo)
+    (env_yHi : VEnv.get env "\x00140" = some yHi)
+    (env_yLo : VEnv.get env "\x00141" = some yLo)
+    (env_tempHi : VEnv.get env "\x00138" = some tempHi)
+    (env_tempLo : VEnv.get env "\x00139" = some tempLo) :
+    (makePointAddUnequalPostContext xHi xLo yHi yLo tempHi tempLo env state
+      env_xHi env_xLo env_yHi env_yLo env_tempHi env_tempLo).yLo = yLo := by
+  rfl
+
 @[simp] theorem makePointAddUnequalPostContext_env
     (xHi xLo yHi yLo tempHi tempLo : U256)
     (env : VEnv Challenge.EvmProof.modexpExec.toDialect) (state : EvmState)

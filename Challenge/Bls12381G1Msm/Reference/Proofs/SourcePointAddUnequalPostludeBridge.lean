@@ -75,6 +75,20 @@ theorem pointAddUnequalPostContext_xLo (yst : EvmState)
   rw [pointAddUnequalPostContext,
     makePointAddUnequalPostContext_xLo]
 
+theorem pointAddUnequalPostContext_yHi (yst : EvmState)
+    (out left right : U256) :
+    (pointAddUnequalPostContext yst out left right).yHi =
+      (pointAddUnequalPostY yst out left right).1 := by
+  rw [pointAddUnequalPostContext,
+    makePointAddUnequalPostContext_yHi]
+
+theorem pointAddUnequalPostContext_yLo (yst : EvmState)
+    (out left right : U256) :
+    (pointAddUnequalPostContext yst out left right).yLo =
+      (pointAddUnequalPostY yst out left right).2 := by
+  rw [pointAddUnequalPostContext,
+    makePointAddUnequalPostContext_yLo]
+
 theorem pointAddUnequalPostContext_env (yst : EvmState)
     (out left right : U256) :
     (pointAddUnequalPostContext yst out left right).env =
