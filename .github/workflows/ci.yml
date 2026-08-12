@@ -135,13 +135,27 @@ jobs:
           key: ${{ needs.shared-lean.outputs.shared-key }}
           fail-on-cache-miss: true
 
+      # `reference.yul` and `reference.hex` are consumed through parser and
+      # `include_str` boundaries that Lake does not reliably trace.  Put their
+      # hash before the Lean-source hash, including in the restore namespace,
+      # so an artifact change cannot restore stale challenge oleans.
+      - name: Compute G1ADD cache keys
+        id: g1add-cache-keys
+        env:
+          ARTIFACT_HASH: ${{ hashFiles('Challenge/Bls12381G1Add/Reference/reference.yul', 'Challenge/Bls12381G1Add/Reference/reference.hex') }}
+          LEAN_HASH: ${{ hashFiles('Challenge/Bls12381G1Add.lean', 'Challenge/Bls12381G1Add/**/*.lean', 'Checks/Bls12381G1Add*.lean') }}
+        run: |
+          prefix="project-bls12381-g1add-v2-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-${ARTIFACT_HASH}"
+          echo "key=${prefix}-${LEAN_HASH}" >> "$GITHUB_OUTPUT"
+          echo "restore-prefix=${prefix}-" >> "$GITHUB_OUTPUT"
+
       - name: Cache G1ADD project build
         uses: actions/cache@v5
         with:
           path: .lake/build
-          key: project-bls12381-g1add-v1-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-${{ hashFiles('Challenge/Bls12381G1Add.lean', 'Challenge/Bls12381G1Add/**/*.lean', 'Checks/Bls12381G1Add*.lean') }}
+          key: ${{ steps.g1add-cache-keys.outputs.key }}
           restore-keys: |
-            project-bls12381-g1add-v1-${{ runner.os }}-${{ runner.arch }}-${{ needs.shared-lean.outputs.shared-key }}-
+            ${{ steps.g1add-cache-keys.outputs.restore-prefix }}
 
       - name: Set up Lean
         uses: leanprover/lean-action@v1
