@@ -1,0 +1,9 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainFiniteInputs
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check mainAfterFiniteXEq1_fp2At
+#check mainAfterFiniteXEq2_fp2At
+#check mainAfterDoubleYEq_fp2At
+#check mainAfterDoubleYZero_fp2At
+#check mainAfterDoubleXEq2_fp2At
