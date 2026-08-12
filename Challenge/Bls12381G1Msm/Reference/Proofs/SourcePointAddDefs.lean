@@ -18,6 +18,7 @@ def pointAddStmt0 : Stmt Op := pointAddBody[0]!
 def pointAddStmt1 : Stmt Op := pointAddBody[1]!
 def pointAddStmt2 : Stmt Op := pointAddBody[2]!
 def pointAddStmt3 : Stmt Op := pointAddBody[3]!
+def pointAddStmt4 : Stmt Op := pointAddBody[4]!
 def pointAddAfterPrefix : Block Op := pointAddBody.drop 3
 
 def pointAddLeftInfinityCondition : Expr Op :=
@@ -51,6 +52,24 @@ theorem pointAddLeftInfinityCondition_eq : pointAddLeftInfinityCondition =
 
 theorem pointAddStmt3_eq : pointAddStmt3 =
     .cond pointAddLeftInfinityCondition pointAddLeftInfinityBody := by
+  rfl
+
+def pointAddRightInfinityCondition : Expr Op :=
+  match pointAddStmt4 with
+  | .cond condition _ => condition
+  | _ => .lit (.number 0)
+
+def pointAddRightInfinityBody : Block Op :=
+  match pointAddStmt4 with
+  | .cond _ body => body
+  | _ => []
+
+theorem pointAddRightInfinityCondition_eq : pointAddRightInfinityCondition =
+    .call "\x0015" [.builtin .mload [.lit (.number 1600)]] := by
+  rfl
+
+theorem pointAddStmt4_eq : pointAddStmt4 =
+    .cond pointAddRightInfinityCondition pointAddRightInfinityBody := by
   rfl
 
 theorem pointAddLeftInfinityBody_eq : pointAddLeftInfinityBody =
