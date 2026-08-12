@@ -38,6 +38,28 @@ def msmStoreInfinityState (yst : EvmState) (ptr : U256) : EvmState :=
   let s6 := storeWordState s5 (ptr + 192) 0
   storeWordState s6 (ptr + 224) 0
 
+/-- Memory projection of the infinity helper.  This small boundary lets
+lawful readback proofs reason about eight stores without reopening the source
+evaluator or the active-memory bookkeeping. -/
+theorem msmStoreInfinityState_memory (yst : EvmState) (ptr : U256) :
+    (msmStoreInfinityState yst ptr).memory =
+      storeWord
+        (storeWord
+          (storeWord
+            (storeWord
+              (storeWord
+                (storeWord
+                  (storeWord
+                    (storeWord yst.memory ptr.toNat 0)
+                      (ptr + 32).toNat 0)
+                    (ptr + 64).toNat 0)
+                  (ptr + 96).toNat 0)
+                (ptr + 128).toNat 0)
+              (ptr + 160).toNat 0)
+            (ptr + 192).toNat 0)
+          (ptr + 224).toNat 0 := by
+  rfl
+
 def msmCopyPointState (yst : EvmState) (dst src : U256) : EvmState :=
   let s0 := copyWordState yst dst src
   let s1 := copyWordState s0 (dst + 32) (src + 32)
