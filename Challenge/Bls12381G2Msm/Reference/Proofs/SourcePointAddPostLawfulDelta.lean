@@ -82,4 +82,15 @@ theorem pointAddPostState4_toLawful (st : EvmState) (left right : U256)
     pointAddPostState3_toLawful st left right hlam hx1 hx2
       hleftEnd hleftAfter hrightEnd hrightAfter hleftPtr hrightPtr]
 
+theorem pointAddPostState4_fp2At_after (st : EvmState)
+    (ptr : U256) (hptrEnd : ptr.toNat + 96 < 2 ^ 256)
+    (hptrHigh : 1920 ≤ ptr.toNat)
+    (hafter : 2944 ≤ ptr.toNat) :
+    fp2At (pointAddPostState4 st) ptr = fp2At st ptr := by
+  unfold pointAddPostState4 pointAddPostDeltaXState
+  exact (fp2SubFinalState_fp2At_after_out _ 2816 _ 2688 ptr
+    hptrEnd (by rw [nat_2816]; omega) (by decide)).trans (by
+      rw [pointAddPostDeltaXReadState_fp2At]
+      exact pointAddPostState3_fp2At_after st ptr hptrEnd hptrHigh (by omega))
+
 end Challenge.Bls12381G2Msm.Reference.Proofs.SourceSemantics
