@@ -12,13 +12,14 @@ namespace Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
 open YulSemantics YulSemantics.EVM
 
 def pointAddUnequalXSubRightContext (yst : EvmState)
-    (out left right : U256) : PointAddUnequalXSubRightContext where
-  env := pointAddUnequalXSubLeftEnv yst out left right
-  state := pointAddUnequalXSubLeftRawState yst out left right
-  x3Hi := (pointAddUnequalXSubLeftResult yst out left right).1
-  x3Lo := (pointAddUnequalXSubLeftResult yst out left right).2
-  env_hi := pointAddUnequalXSubLeftEnv_hi yst out left right
-  env_lo := pointAddUnequalXSubLeftEnv_lo yst out left right
+    (out left right : U256) : PointAddUnequalXSubRightContext :=
+  makePointAddUnequalXSubRightContext
+    (pointAddUnequalXSubLeftEnv yst out left right)
+    (pointAddUnequalXSubLeftRawState yst out left right)
+    (pointAddUnequalXSubLeftResult yst out left right).1
+    (pointAddUnequalXSubLeftResult yst out left right).2
+    (pointAddUnequalXSubLeftEnv_hi yst out left right)
+    (pointAddUnequalXSubLeftEnv_lo yst out left right)
 
 def pointAddUnequalXSubEnv (yst : EvmState)
     (out left right : U256) : VEnv Challenge.EvmProof.modexpExec.toDialect :=

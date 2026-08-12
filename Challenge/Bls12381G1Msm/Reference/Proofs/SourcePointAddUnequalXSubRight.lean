@@ -21,6 +21,34 @@ structure PointAddUnequalXSubRightContext where
   env_hi : VEnv.get env "\x00136" = some x3Hi
   env_lo : VEnv.get env "\x00137" = some x3Lo
 
+def makePointAddUnequalXSubRightContext
+    (env : VEnv Challenge.EvmProof.modexpExec.toDialect) (state : EvmState)
+    (x3Hi x3Lo : U256) (env_hi : VEnv.get env "\x00136" = some x3Hi)
+    (env_lo : VEnv.get env "\x00137" = some x3Lo) :
+    PointAddUnequalXSubRightContext where
+  env := env
+  state := state
+  x3Hi := x3Hi
+  x3Lo := x3Lo
+  env_hi := env_hi
+  env_lo := env_lo
+
+@[simp] theorem makePointAddUnequalXSubRightContext_x3Hi
+    (env : VEnv Challenge.EvmProof.modexpExec.toDialect) (state : EvmState)
+    (x3Hi x3Lo : U256) (env_hi : VEnv.get env "\x00136" = some x3Hi)
+    (env_lo : VEnv.get env "\x00137" = some x3Lo) :
+    (makePointAddUnequalXSubRightContext env state x3Hi x3Lo env_hi env_lo).x3Hi =
+      x3Hi := by
+  rfl
+
+@[simp] theorem makePointAddUnequalXSubRightContext_x3Lo
+    (env : VEnv Challenge.EvmProof.modexpExec.toDialect) (state : EvmState)
+    (x3Hi x3Lo : U256) (env_hi : VEnv.get env "\x00136" = some x3Hi)
+    (env_lo : VEnv.get env "\x00137" = some x3Lo) :
+    (makePointAddUnequalXSubRightContext env state x3Hi x3Lo env_hi env_lo).x3Lo =
+      x3Lo := by
+  rfl
+
 def pointAddUnequalXSubRightRawDeclStmt : Stmt Op :=
   pointAddUnequalXSubRightTail[0]!
 
