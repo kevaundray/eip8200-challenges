@@ -133,4 +133,72 @@ theorem fp2MulAfterRealStores_result (yst : EvmState) (out a b : U256)
     (by omega), loadWord_storeWord_same]
   rfl
 
+theorem fp2MulAfterSumAStores_sumA (yst : EvmState) (out a b : U256) :
+    fpWords (loadWord (fp2MulAfterSumAStores yst out a b).memory 1664)
+        (loadWord (fp2MulAfterSumAStores yst out a b).memory 1696) =
+      pairWords (fp2MulSumA yst out a b) := by
+  rw [fp2MulAfterSumAStores, fp2MulAfterSumAHigh]
+  change fpWords
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterSumAReads yst out a b).memory 1664
+          (fp2MulSumA yst out a b).1)
+        1696 (fp2MulSumA yst out a b).2) 1664)
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterSumAReads yst out a b).memory 1664
+          (fp2MulSumA yst out a b).1)
+        1696 (fp2MulSumA yst out a b).2) 1696) = _
+  rw [loadWord_storeWord_disjoint _ 1696 1664 _ (by omega),
+    loadWord_storeWord_same, loadWord_storeWord_same]
+  rfl
+
+theorem fp2MulAfterSumBStores_sumA (yst : EvmState) (out a b : U256) :
+    fpWords (loadWord (fp2MulAfterSumBStores yst out a b).memory 1664)
+        (loadWord (fp2MulAfterSumBStores yst out a b).memory 1696) =
+      pairWords (fp2MulSumA yst out a b) := by
+  rw [fp2MulAfterSumBStores, fp2MulAfterSumBHigh]
+  change fpWords
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterSumAStores yst out a b).memory 1728
+          (fp2MulSumB yst out a b).1)
+        1760 (fp2MulSumB yst out a b).2) 1664)
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterSumAStores yst out a b).memory 1728
+          (fp2MulSumB yst out a b).1)
+        1760 (fp2MulSumB yst out a b).2) 1696) = _
+  rw [loadWord_storeWord_disjoint _ 1760 1664 _ (by omega),
+    loadWord_storeWord_disjoint _ 1728 1664 _ (by omega),
+    loadWord_storeWord_disjoint _ 1760 1696 _ (by omega),
+    loadWord_storeWord_disjoint _ 1728 1696 _ (by omega),
+    fp2MulAfterSumAStores_sumA]
+
+theorem fp2MulAfterSumBStores_sumB (yst : EvmState) (out a b : U256) :
+    fpWords (loadWord (fp2MulAfterSumBStores yst out a b).memory 1728)
+        (loadWord (fp2MulAfterSumBStores yst out a b).memory 1760) =
+      pairWords (fp2MulSumB yst out a b) := by
+  rw [fp2MulAfterSumBStores, fp2MulAfterSumBHigh]
+  change fpWords
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterSumAStores yst out a b).memory 1728
+          (fp2MulSumB yst out a b).1)
+        1760 (fp2MulSumB yst out a b).2) 1728)
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterSumAStores yst out a b).memory 1728
+          (fp2MulSumB yst out a b).1)
+        1760 (fp2MulSumB yst out a b).2) 1760) = _
+  rw [loadWord_storeWord_disjoint _ 1760 1728 _ (by omega),
+    loadWord_storeWord_same, loadWord_storeWord_same]
+  rfl
+
+theorem fp2MulCross_inputs (yst : EvmState) (out a b : U256) :
+    fp2MulCrossLeft yst out a b = pairWords (fp2MulSumA yst out a b) ∧
+      fp2MulCrossRight yst out a b = pairWords (fp2MulSumB yst out a b) := by
+  exact ⟨fp2MulAfterSumBStores_sumA yst out a b,
+    fp2MulAfterSumBStores_sumB yst out a b⟩
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics

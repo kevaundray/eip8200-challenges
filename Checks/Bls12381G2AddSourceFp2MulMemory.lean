@@ -11,3 +11,7 @@ open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 #check fp2MulAfterV1Stores_v1
 #check fp2MulReal_eq_products
 #check fp2MulAfterRealStores_result
+#check fp2MulAfterSumAStores_sumA
+#check fp2MulAfterSumBStores_sumA
+#check fp2MulAfterSumBStores_sumB
+#check fp2MulCross_inputs
