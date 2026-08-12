@@ -8,6 +8,10 @@ namespace Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
 
 open YulSemantics YulSemantics.EVM
 
+@[simp] theorem pointAddUnequal_touchMemory_memory (yst : EvmState)
+    (offset size : Nat) : (touchMemory yst offset size).memory = yst.memory := by
+  rfl
+
 def pointAddUnequalNumeratorRawInitialEnv (out left right : U256) :
     VEnv Challenge.EvmProof.modexpExec.toDialect :=
   bindZeros Challenge.EvmProof.modexpExec.toDialect ["fc0_67", "fc0_68"] ++
