@@ -1,0 +1,7 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainDoubleInverse
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check mainDoubleState4_canonical
+#check mainDoubleState4_toLawful
+#check mainDoubleInvNorm_hi_lt
