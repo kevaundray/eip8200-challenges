@@ -1,5 +1,7 @@
 import EvmSemantics.EVM.BigStep
-import Challenge.Bls12381.ProofSupport.Subgroup
+import Challenge.Bls12381.ProofSupport.CodecSubgroup
+import Challenge.Bls12381.ProofSupport.CodecScalar
+import Challenge.Bls12381.ProofSupport.Msm
 
 set_option warningAsError true
 
@@ -9,24 +11,40 @@ open EvmSemantics EvmSemantics.EVM
 
 def pairBytes : Nat := 288
 
-abbrev inSubgroup := Challenge.Bls12381.ProofSupport.Subgroup.g2
+open Challenge.Bls12381.ProofSupport
 
-/-- EIP-2537-conformant core. This adds the subgroup rejection omitted by the
-pinned `Bls12381G2Msm.run?` wrapper. -/
-def spec (input : ByteArray) : Option ByteArray := Id.run do
-  if input.size = 0 ∨ input.size % pairBytes ≠ 0 then return none
-  let k := input.size / pairBytes
-  let mut acc : Crypto.Bls12381.G2Point := .infinity
-  for i in [0:k] do
-    let off := i * pairBytes
-    match Crypto.Bls12381G2Add.decodePoint input off with
-    | none => return none
-    | some point =>
-      if !inSubgroup point then return none
-      let scalar := Data.Bytes.bytesToBigEndianNat
-        (input.extract (off + 256) (off + pairBytes))
-      acc := Crypto.G2.addPoint acc (Crypto.G2.scalarMul scalar point)
-  return some (Crypto.Bls12381G2Add.encodePoint acc)
+/-- Package the exact unsigned scalar window independently of the success
+proof used to establish that the complete window is present. -/
+def scalarAt (input : ByteArray) (offset : Nat) : ScalarMul.Scalar256 :=
+  ⟨Codec.scalarWindowValue input offset,
+    Codec.scalarWindowValue_lt input offset⟩
+
+/-- Decode one exact EIP-2537 `(G2, scalar)` term.  The point decoder includes
+the mandatory subgroup check, while the scalar is retained as the full
+unreduced unsigned 256-bit wire value. -/
+def decodeTerm (input : ByteArray) (offset : Nat) : Option Msm.G2WireTerm := do
+  (Codec.decodeG2Subgroup input offset).bind fun point =>
+    match Codec.decodeScalar input (offset + Codec.g2Bytes) with
+    | none => none
+    | some _ =>
+        some (point, scalarAt input (offset + Codec.g2Bytes))
+
+/-- Decode `count` consecutive terms, preserving their wire order. -/
+def decodeTerms (input : ByteArray) (offset : Nat) :
+    Nat → Option (List Msm.G2WireTerm)
+  | 0 => some []
+  | count + 1 => do
+      let term ← decodeTerm input offset
+      let rest ← decodeTerms input (offset + pairBytes) count
+      some (term :: rest)
+
+/-- EIP-2537-conformant G2MSM core using the local proof-visible codecs and
+the shared naive left-fold MSM. -/
+def spec (input : ByteArray) : Option ByteArray := do
+  if input.size = 0 ∨ input.size % pairBytes ≠ 0 then none
+  else
+  let terms ← decodeTerms input 0 (input.size / pairBytes)
+  return Codec.encodeG2 (Msm.g2Wire terms)
 
 def deployAddress : AccountAddress := AccountAddress.ofNat 0x820e
 
