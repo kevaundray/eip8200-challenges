@@ -101,6 +101,33 @@ theorem pointAddDoubleXSubRightRawStmt5_eq :
           [.builtin .sub [.var "fc0_40", .var "fc0_38"],
            .builtin .gt [.var "fc0_37", .var "fc0_39"]]) := by rfl
 
+theorem pointAddDoubleXSubRightRepairStmt_eq :
+    pointAddDoubleXSubRightRepairStmt =
+      .cond
+        (.builtin .gt
+          [.var "fc0_35",
+           .lit (.number 34565483545414906068789196026815425751)])
+        [.letDecl ["\x0051"]
+          (some (.builtin .add
+            [.var "fc0_36",
+             .lit (.number
+              45442060874369865957053122457065728162598490762543039060009208264153100167851)])),
+         .assign ["fc0_35"]
+          (.builtin .add
+            [.var "fc0_35",
+             .builtin .add
+              [.lit (.number 34565483545414906068789196026815425751),
+               .builtin .lt [.var "\x0051", .var "fc0_36"]]]),
+         .assign ["fc0_36"] (.var "\x0051")] := by rfl
+
+theorem pointAddDoubleXSubRightOutHiStmt_eq :
+    pointAddDoubleXSubRightOutHiStmt =
+      .assign ["\x00122"] (.var "fc0_35") := by rfl
+
+theorem pointAddDoubleXSubRightOutLoStmt_eq :
+    pointAddDoubleXSubRightOutLoStmt =
+      .assign ["\x00123"] (.var "fc0_36") := by rfl
+
 theorem hoist_pointAddDoubleXSubRightRawBody :
     hoist Challenge.EvmProof.modexpExec.toDialect
       pointAddDoubleXSubRightRawBody = [] := by rfl
