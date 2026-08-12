@@ -33,4 +33,55 @@ theorem fp2MulAfterV0Stores_loadWord_before_scratch
   rw [fpMulFinalState_loadWord_before_scratch _ _ _ _ _ offset hend]
   rfl
 
+theorem fp2MulAfterV1Stores_loadWord_before_scratch
+    (yst : EvmState) (a b : U256) (offset : Nat)
+    (hend : offset + 32 ≤ 1024) :
+    loadWord (fp2MulAfterV1Stores yst a b).memory offset =
+      loadWord yst.memory offset := by
+  rw [fp2MulAfterV1Stores, fp2MulAfterV1High]
+  change loadWord
+    (storeWord
+      (storeWord (fp2MulAfterV1Call yst a b).memory 1600
+        (fp2MulV1 yst a b).1)
+      1632 (fp2MulV1 yst a b).2) offset = _
+  rw [loadWord_storeWord_disjoint _ 1632 offset _ (by omega),
+    loadWord_storeWord_disjoint _ 1600 offset _ (by omega)]
+  unfold fp2MulAfterV1Call
+  rw [fpMulFinalState_loadWord_before_scratch _ _ _ _ _ offset hend]
+  exact fp2MulAfterV0Stores_loadWord_before_scratch yst a b offset hend
+
+theorem fp2MulAfterRealStores_loadWord_before_scratch
+    (yst : EvmState) (out a b : U256) (offset : Nat)
+    (hend : offset + 32 ≤ 1024) (hout : 1920 ≤ out.toNat)
+    (houtEnd : out.toNat + 32 < 2 ^ 256) :
+    loadWord (fp2MulAfterRealStores yst out a b).memory offset =
+      loadWord yst.memory offset := by
+  rw [fp2MulAfterRealStores, fp2MulAfterRealHigh]
+  change loadWord
+    (storeWord
+      (storeWord (fp2MulAfterRealReads yst a b).memory out.toNat
+        (fp2MulReal yst a b).1)
+      (out + BitVec.ofNat 256 32).toNat (fp2MulReal yst a b).2) offset = _
+  rw [loadWord_storeWord_disjoint _
+      (out + BitVec.ofNat 256 32).toNat offset _ (by right; bv_omega),
+    loadWord_storeWord_disjoint _ out.toNat offset _ (by right; omega)]
+  exact fp2MulAfterV1Stores_loadWord_before_scratch yst a b offset hend
+
+theorem fp2MulAfterSumAStores_loadWord_before_scratch
+    (yst : EvmState) (out a b : U256) (offset : Nat)
+    (hend : offset + 32 ≤ 1024) (hout : 1920 ≤ out.toNat)
+    (houtEnd : out.toNat + 32 < 2 ^ 256) :
+    loadWord (fp2MulAfterSumAStores yst out a b).memory offset =
+      loadWord yst.memory offset := by
+  rw [fp2MulAfterSumAStores, fp2MulAfterSumAHigh]
+  change loadWord
+    (storeWord
+      (storeWord (fp2MulAfterRealStores yst out a b).memory 1664
+        (fp2MulSumA yst out a b).1)
+      1696 (fp2MulSumA yst out a b).2) offset = _
+  rw [loadWord_storeWord_disjoint _ 1696 offset _ (by omega),
+    loadWord_storeWord_disjoint _ 1664 offset _ (by omega),
+    fp2MulAfterRealStores_loadWord_before_scratch yst out a b offset hend hout
+      houtEnd]
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
