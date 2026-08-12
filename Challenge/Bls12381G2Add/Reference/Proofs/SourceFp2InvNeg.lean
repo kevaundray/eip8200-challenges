@@ -10,6 +10,10 @@ def fp2InvAfterNegReads (yst : EvmState) (out a : U256) : EvmState :=
     (a + BitVec.ofNat 256 96).toNat 32
   touchMemory s0 (a + BitVec.ofNat 256 64).toNat 32
 
+theorem fp2InvAfterNegReads_memory (yst : EvmState) (out a : U256) :
+    (fp2InvAfterNegReads yst out a).memory =
+      (fp2InvAfterRealStores yst out a).memory := rfl
+
 def fp2InvNeg (yst : EvmState) (out a : U256) : U256 × U256 :=
   let s := fp2InvAfterRealStores yst out a
   fpSubValue 0 0
