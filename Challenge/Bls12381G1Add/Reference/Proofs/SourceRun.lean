@@ -34,6 +34,20 @@ private theorem step_append_normal
         simpa using Step.seqCons hhead (ih htail hsuffix)
       | seqStop _ hnot => exact (hnot rfl).elim
 
+private theorem step_append_halt
+    {funs V st pre Vend stend suffix}
+    (hprefix : ExecStmts Challenge.EvmProof.modexpExec.toDialect funs V st
+      pre Vend stend .halt) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect funs V st
+      (pre ++ suffix) Vend stend .halt := by
+  induction pre generalizing V st Vend stend with
+  | nil => cases hprefix
+  | cons head rest ih =>
+      cases hprefix with
+      | seqCons hhead htail =>
+        simpa using Step.seqCons hhead (ih htail)
+      | seqStop hhead hnot => exact Step.seqStop hhead hnot
+
 private theorem step_mainValid_double (yst : EvmState)
     (hsize : yst.env.calldata.length = 256)
     (hpadding : mainPaddingValue yst = 0)
@@ -176,6 +190,52 @@ private theorem step_mainValid_secondInfinity (yst : EvmState)
       mainValidBody [] (mainSecondInfinityReturnState yst) .halt :=
   step_mainValid_of_pointHalt yst _ hsize hpadding hcanonical
     (step_mainPointScope_secondInfinity yst hcurve1 hcurve2 hfirst hsecond)
+
+private theorem step_mainValid_padding_reject (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst ≠ 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody [] (mainInvalidState (mainAfterPaddingReads yst)) .halt := by
+  rw [mainValidBody_eq]
+  exact step_append_halt
+    (step_mainDecodePrefix_padding_reject yst hsize hpadding)
+
+private theorem step_mainValid_canonical_reject (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst = 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody []
+      (mainInvalidState (mainAfterCanonicalReads yst)) .halt := by
+  rw [mainValidBody_eq]
+  exact step_append_halt
+    (step_mainDecodePrefix_canonical_reject yst hsize hpadding hcanonical)
+
+private theorem step_mainValid_curve1_reject (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst ≠ 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody [] (mainInvalidState (mainAfterCurve1 yst)) .halt := by
+  rw [mainValidBody_eq]
+  exact step_append_normal
+    (step_mainDecodePrefix_success yst hsize hpadding hcanonical)
+    (Step.seqStop (step_mainPointScope_curve1_reject yst hcurve1) (by decide))
+
+private theorem step_mainValid_curve2_reject (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst ≠ 0) :
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns [] yst
+      mainValidBody [] (mainInvalidState (mainValidatedState yst)) .halt := by
+  rw [mainValidBody_eq]
+  exact step_append_normal
+    (step_mainDecodePrefix_success yst hsize hpadding hcanonical)
+    (Step.seqStop
+      (step_mainPointScope_curve2_reject yst hcurve1 hcurve2) (by decide))
 
 private def isFunctionDefinition : Stmt Op → Bool
   | .funDef .. => true
@@ -335,5 +395,46 @@ theorem run_main_secondInfinity (yst : EvmState)
       (mainSecondInfinityReturnState yst) .halt :=
   run_of_mainValid yst _ (step_mainValid_secondInfinity yst hsize hpadding
     hcanonical hcurve1 hcurve2 hfirst hsecond)
+
+theorem run_main_padding_reject (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst ≠ 0) :
+    Run Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainInvalidState (mainAfterPaddingReads yst)) .halt :=
+  run_of_mainValid yst _ (step_mainValid_padding_reject yst hsize hpadding)
+
+theorem run_main_canonical_reject (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst = 0) :
+    Run Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainInvalidState (mainAfterCanonicalReads yst)) .halt :=
+  run_of_mainValid yst _
+    (step_mainValid_canonical_reject yst hsize hpadding hcanonical)
+
+theorem run_main_curve1_reject (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst ≠ 0) :
+    Run Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainInvalidState (mainAfterCurve1 yst)) .halt :=
+  run_of_mainValid yst _
+    (step_mainValid_curve1_reject yst hsize hpadding hcanonical hcurve1)
+
+theorem run_main_curve2_reject (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst ≠ 0) :
+    Run Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+      Compilation.referenceCompiledBlock yst []
+      (mainInvalidState (mainValidatedState yst)) .halt :=
+  run_of_mainValid yst _ (step_mainValid_curve2_reject yst hsize hpadding
+    hcanonical hcurve1 hcurve2)
 
 end Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics

@@ -48,4 +48,27 @@ namespace Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
 #guard_msgs in
 #print axioms run_main_secondInfinity
 
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.run_main_padding_reject' depends on axioms: [propext,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms run_main_padding_reject
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.run_main_canonical_reject' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms run_main_canonical_reject
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.run_main_curve1_reject' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms run_main_curve1_reject
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.run_main_curve2_reject' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms run_main_curve2_reject
+
 end Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
