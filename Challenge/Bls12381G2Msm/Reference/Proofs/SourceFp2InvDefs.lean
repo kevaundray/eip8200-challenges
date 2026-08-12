@@ -1,4 +1,5 @@
 import Challenge.Bls12381G2Msm.Reference.Proofs.SourceFp2MulExec
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2InvExec
 
 set_option warningAsError true
 
