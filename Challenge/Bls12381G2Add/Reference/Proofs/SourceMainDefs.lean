@@ -76,4 +76,22 @@ def mainDecodedState (yst : EvmState) : EvmState :=
 def mainDecodedWord (yst : EvmState) (offset : Nat) : U256 :=
   loadWord (mainDecodedState yst).memory offset
 
+def mainPoint2Valid (yst : EvmState) : U256 :=
+  pointValidValue (mainDecodedState yst) 256
+
+def mainAfterPoint2Valid (yst : EvmState) : EvmState :=
+  pointValidReadState (mainDecodedState yst) 256
+
+def mainPoint1Valid (yst : EvmState) : U256 :=
+  pointValidValue (mainAfterPoint2Valid yst) 0
+
+def mainAfterValidationReads (yst : EvmState) : EvmState :=
+  pointValidReadState (mainAfterPoint2Valid yst) 0
+
+def mainValidationValue (yst : EvmState) : U256 :=
+  mainPoint1Valid yst &&& mainPoint2Valid yst
+
+def mainInvalidState (yst : EvmState) : EvmState :=
+  { yst with halted := some (.invalid, []) }
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics

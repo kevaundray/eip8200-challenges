@@ -1,0 +1,7 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainValidationExec
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check exec_mainValidation
+#check exec_mainValidation_success
+#check exec_mainValidation_reject
