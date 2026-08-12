@@ -32,7 +32,7 @@ left-fold MSM. Pippenger and other optimizations are not on the critical path.
 | G2ADD | Complete, independently reviewed, CI-gated | Final challenge gate `8beb159`; correctness `5dc8f27`; CI/direct-artifact gate `a8491b5`; cache/policy hardening through `61ec724`. Exact runtime: 2,788 bytes. |
 | G1MSM | Active; roughly two-thirds of the end-to-end deliverable | Runtime/compiler artifacts and branchwise point addition are proved. Active work is total point-add value/preservation, then scalar semantics, subgroup/outer MSM, main correctness, gas/scorer/CI. |
 | G2MSM | Active; roughly three-quarters of the end-to-end deliverable | Runtime/compiler/byte/stack proofs, helpers, point-add execution, and scalar-loop structure are proved. Active work is total point-add value/preservation, scalar semantics, subgroup/outer MSM, and final correctness/gas/CI. |
-| MAP_FP_TO_G1 | Active | Shared SSWU/isogeny/cofactor implementation and vectors are complete. Challenge spec/runtime/proof worker is auditing and migrating the challenge adapter. |
+| MAP_FP_TO_G1 | Active | Strict shared-adapter spec and all ten vector/axiom checks are complete at `3e2cfec`. Concrete runtime construction is the next boundary. |
 | MAP_FP2_TO_G2 | Not started at challenge-runtime level | Shared implementation/proofs/vectors are complete. Start after a worker slot becomes available. |
 | Pairing | Deferred | Do not pull it into this milestone. |
 | Post-proof architecture refactor | Waiting | Start only after the six precompile implementations pass their final gates and reviews. See `docs/bls-proof-architecture-research.md`. |
@@ -108,6 +108,11 @@ partial Lean lexer.
 
 ## Active G1MSM work
 
+Recoverable checkpoint: `2e18e53` commits the currently GREEN unequal-X
+arithmetic stages and their exact guards. Later concrete right-subtraction
+specialization files are intentionally uncommitted while their value-only
+projection boundary is being redesigned.
+
 Completed:
 
 - strict local 160-byte-term spec using subgroup decoding and unreduced scalars;
@@ -135,6 +140,11 @@ Still required:
 Current ownership: `bls_g1msm`. Do not edit its dirty files while it is active.
 
 ## Active G2MSM work
+
+Recoverable checkpoints: `19078bd` proves the lawful doubling numerator and
+`07f1f25` proves the denominator, inverse, and final slope stages. The next
+composition file is intentionally outside those commits until its focused gate
+is GREEN.
 
 Completed:
 
@@ -166,16 +176,17 @@ leaf outputs are stale; rebuild heavy leaves serially first.
 
 ## Active MAP_FP_TO_G1 work
 
-The shared `MapToG1.run` already supplies the strict 64-byte canonical adapter,
-SSWU, 11-isogeny, naive effective-cofactor multiplication, on-curve/wire
-validity, rejection theorems, and five official positive plus five official
-failure vectors. The challenge-level worker must still:
+Checkpoint `3e2cfec` migrates the challenge spec to the shared `MapToG1.run`
+adapter and proves the strict 64-byte rejection characterization, five official
+positive vectors, five official failure vectors, and exact axiom guards. The
+shared adapter supplies SSWU, the 11-isogeny, naive effective-cofactor
+multiplication, on-curve/wire validity, and rejection theorems. The
+challenge-level worker must still:
 
-1. migrate the challenge spec from the pinned alias to the shared adapter;
-2. build and freeze a proof-friendly concrete runtime;
-3. prove staged source execution/refinement to the shared map;
-4. certify compiler, bytes, stack, and MODEXP calls;
-5. prove final correctness/gas and add scorer/CI/review gates.
+1. build and freeze a proof-friendly concrete runtime;
+2. prove staged source execution/refinement to the shared map;
+3. certify compiler, bytes, stack, and MODEXP calls;
+4. prove final correctness/gas and add scorer/CI/review gates.
 
 Current ownership: `bls_map_g1`.
 
