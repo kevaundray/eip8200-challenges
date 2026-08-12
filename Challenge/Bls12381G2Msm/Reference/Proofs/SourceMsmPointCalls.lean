@@ -61,6 +61,48 @@ theorem step_msmStorePoint_of_args {funs V st argState args}
   have hcall := Step.callOk hargs hlookup rfl hbody (Or.inl rfl)
   simpa [msmStorePointDecl] using hcall
 
+private theorem exec_msmStoreInfinityBodyCall (ptr : U256) (yst : EvmState) :
+    Interp.execStmt Challenge.EvmProof.modexpExec 67 fp2Funs
+      [("\x00140", ptr)] yst (.block msmStoreInfinityBody) =
+    .ok ([("\x00140", ptr)], msmStoreInfinityState yst ptr, .normal) := by
+  let V := [("\x00140", ptr)]
+  have hpre : Interp.execStmts Challenge.EvmProof.modexpExec 66
+      ([] :: fp2Funs) V yst msmStoreInfinityPrefix =
+      .ok (V, msmStoreInfinityMidState yst ptr, .normal) := by rfl
+  have htail : Interp.execStmts Challenge.EvmProof.modexpExec 62
+      ([] :: fp2Funs) V (msmStoreInfinityMidState yst ptr)
+      msmStoreInfinityTail =
+      .ok (V, msmStoreInfinityState yst ptr, .normal) := by rfl
+  have hbody := Interp.execStmts_append_normal
+    (E := Challenge.EvmProof.modexpExec) (n := 62)
+    (pre := msmStoreInfinityPrefix) (tail := msmStoreInfinityTail)
+    (by omega) hpre htail
+  have hlen : msmStoreInfinityPrefix.length = 4 := by rfl
+  rw [hlen] at hbody
+  rw [Interp.execStmt, msmStoreInfinityBody_eq]
+  rw [show hoist Challenge.EvmProof.modexpExec.toDialect
+    (msmStoreInfinityPrefix ++ msmStoreInfinityTail) = [] by rfl]
+  change (do
+    let result ← Interp.execStmts Challenge.EvmProof.modexpExec 66
+      ([] :: fp2Funs) V yst
+      (msmStoreInfinityPrefix ++ msmStoreInfinityTail)
+    .ok (restore V result.1, result.2.1, result.2.2)) = _
+  rw [hbody]
+  rfl
+
+theorem step_msmStoreInfinity_of_args {funs V st argState args}
+    (ptr : U256)
+    (hargs : EvalArgs Challenge.EvmProof.modexpExec.toDialect funs V st args
+      (.vals [ptr] argState))
+    (hlookup : lookupFun funs "\x0026" =
+      some (msmStoreInfinityDecl, fp2Funs)) :
+    EvalExpr Challenge.EvmProof.modexpExec.toDialect funs V st
+      (.call "\x0026" args)
+      (.vals [] (msmStoreInfinityState argState ptr)) := by
+  have hbody := soundStmt (exec_msmStoreInfinityBodyCall ptr argState)
+  have hcall := Step.callOk hargs hlookup rfl hbody (Or.inl rfl)
+  simpa [msmStoreInfinityDecl] using hcall
+
 private theorem exec_msmCopyPointBody (dst src : U256) (yst : EvmState) :
     Interp.execStmt Challenge.EvmProof.modexpExec 67 fp2Funs
       [("\x00141", dst), ("\x00142", src)] yst
