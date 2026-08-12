@@ -17,6 +17,24 @@ theorem exec_mainLength_success (yst : EvmState)
     Challenge.EvmProof.modexpBuiltinFn, stepOp, bin, un, rd0,
     EVM.litValue, b2w, Dialect.zero, hsize]
 
+theorem exec_mainLength_reject (yst : EvmState)
+    (hfit : yst.env.calldata.length < 2 ^ 256)
+    (hsize : yst.env.calldata.length ≠ 512) :
+    Interp.execStmt Challenge.EvmProof.modexpExec 16 mainFuns [] yst
+      mainLengthStmt = .ok ([], mainInvalidState yst, .halt) := by
+  simp [mainLengthStmt, Compilation.referenceCompiledBlock,
+    Compilation.frozenReferenceBlock, Interp.execStmt, Interp.execStmts,
+    Interp.evalExpr, Interp.evalArgs, Challenge.EvmProof.modexpExec,
+    Challenge.EvmProof.modexpBuiltinFn, stepOp, bin, un, rd0,
+    EVM.litValue, b2w, Dialect.zero, mainInvalidState, restore]
+  intro h
+  apply hsize
+  have hn := congrArg BitVec.toNat h
+  simp only [BitVec.toNat_ofNat] at hn
+  rw [Nat.mod_eq_of_lt hfit] at hn
+  norm_num at hn
+  exact hn
+
 theorem exec_mainStores0 (yst : EvmState) :
     Interp.execStmts Challenge.EvmProof.modexpExec 24 mainFuns [] yst
       [mainStore0, mainStore1, mainStore2, mainStore3] =

@@ -3,6 +3,7 @@ import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainDecodeExec
 open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 
 #check exec_mainLength_success
+#check exec_mainLength_reject
 #check exec_mainStores0
 #check exec_mainStores1
 #check exec_mainStores2
