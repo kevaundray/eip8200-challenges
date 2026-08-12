@@ -783,8 +783,7 @@ large elaboration from the measured file or shrinking its transitive import
 floor.
 
 No `fp2Add` execution-stage file became dead. The exact evaluator chain still
-implements the contract once, and finite/double main branches continue to use
-the exact state API. A stronger in-place/output-order corollary did make the
+implements the contract once. A stronger in-place/output-order corollary did make the
 two shallow `SourceOnCurveAddInputA/B` adapters unreachable: their 102 lines
 were deleted and `SourceOnCurveRhs` now uses the general contract plus existing
 constant-memory facts. The public G2 roots and retained release checks passed
@@ -794,6 +793,38 @@ after migration; the complete CI-shaped root-plus-all-checks build passed
 architecture/ownership change with a two-file reduction and a neutral memory
 experiment, not a reason to claim an RSS win or delete the eight `fp2Add`
 stages.
+
+The follow-up migrated all three finite-doubling additions as well. The state
+graph now uses `fp2AddContractState` at each sequential call, and
+`step_fp2AddLiteral` establishes concrete Yul execution to that opaque,
+computable state. Two placement corollaries cover the actual alias shapes:
+both inputs below the output and an in-place left input with the right input
+below the output. Numerator, denominator, lambda, and low-memory proofs consume
+only those output and frame facts. Consequently no `SourceMain*.lean` G2ADD
+module mentions `fp2AddFinalState`.
+
+This broader migration was also memory-neutral:
+
+| Leaf | Before peak RSS (KiB) | After peak RSS (KiB) |
+|---|---:|---:|
+| `SourceMainDoubleNumerator.lean` | 2,697,840 | 2,702,060 |
+| `SourceMainDoubleDenominator.lean` | 2,701,336 | 2,702,108 |
+| `SourceMainFiniteDoubleExec.lean` | 2,679,196 | 2,683,068 |
+| `SourceMainFiniteLowMemory.lean` | 2,698,680 | 2,698,944 |
+
+The 0.01--0.16% differences are measurement noise around the imported
+environment floor. The value is architectural: exact execution remains
+available once, while arithmetic callers cannot accidentally unfold it.
+
+After that boundary was in place, the strict private chain
+`SourceMainDoubleSquare` → `SourceMainDoubleNumerator` →
+`SourceMainDoubleDenominator` was consolidated into the 141-line
+`SourceMainDoubleArithmetic` module. The combined leaf measured 2,710,324 KiB
+RSS, only 0.3% above the largest separate leaf and still at the ordinary floor.
+This removed two production files without merging the deeper generic
+`fp2Add` execution stages or the doubling execution/inversion/lambda
+firebreaks. G2ADD therefore moved from 225 to 223 production Lean files in this
+change.
 
 ## Import-boundary lessons
 

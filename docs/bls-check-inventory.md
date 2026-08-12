@@ -126,6 +126,11 @@ All production modules imported by these 129 wrappers are already in the
 transitive local-source import closure of G2ADD final correctness. Removing a
 wrapper does not remove or merge its production `.lean`/`.olean` firebreak.
 
+Later architecture work consolidated the private
+`SourceMainDoubleSquare`/`Numerator`/`Denominator` chain into
+`SourceMainDoubleArithmetic`. The table above is retained as the historical
+inventory snapshot; the current production tree has two fewer modules.
+
 ## Import-closure evidence
 
 A recursive scan of local source imports found:

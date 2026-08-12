@@ -22,7 +22,7 @@ private theorem sound_evalExpr {n funs V st expr result}
 theorem step_fp2AddLiteral (V) (yst : EvmState) (out a b : Nat) :
     EvalExpr Challenge.EvmProof.modexpExec.toDialect mainFuns V yst
       (.call "\x0014" [.lit (.number out), .lit (.number a), .lit (.number b)])
-      (.vals [] (fp2AddFinalState yst out a b)) := by
+      (.vals [] (fp2AddContractState yst out a b)) := by
   have hargs : Interp.evalArgs Challenge.EvmProof.modexpExec 71 mainFuns V yst
       [.lit (.number out), .lit (.number a), .lit (.number b)] =
       Interp.evalArgs Challenge.EvmProof.modexpExec 71 fp2AddFuns
@@ -31,10 +31,10 @@ theorem step_fp2AddLiteral (V) (yst : EvmState) (out a b : Nat) :
     rfl
   have h : Interp.evalExpr Challenge.EvmProof.modexpExec 72 mainFuns V yst
       (.call "\x0014" [.lit (.number out), .lit (.number a), .lit (.number b)]) =
-      .ok (.vals [] (fp2AddFinalState yst out a b)) := by
+      .ok (.vals [] (fp2AddContractState yst out a b)) := by
     rw [Interp.evalExpr_call_of_evalArgs_lookup_eq
       (fn := "\x0014") hargs (by rfl)]
-    exact eval_fp2Add _ _ _ _
+    exact eval_fp2AddContractState _ _ _ _
   exact sound_evalExpr h
 
 theorem step_fp2SubLiteral (V) (yst : EvmState) (out a b : Nat) :

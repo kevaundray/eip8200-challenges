@@ -29,8 +29,8 @@ theorem mainDoubleState1_fp2At_low (yst : EvmState) (ptr : U256)
     (hptrLow : ptr.toNat + 128 ≤ 1024) :
     fp2At (mainDoubleState1 yst) ptr = fp2At (mainValidatedState yst) ptr := by
   rw [mainDoubleState1]
-  exact (fp2AddFinalState_fp2At_before_out _ _ _ _ _ hptrEnd
-    (by bv_omega) (by decide)).trans
+  exact (fp2AddContractState_fp2At_before_out _ _ _ _ _
+    (by decide) hptrEnd (by bv_omega)).trans
       (mainDoubleState0_fp2At_low yst ptr hptrEnd hptrLow)
 
 theorem mainDoubleState2_fp2At_low (yst : EvmState) (ptr : U256)
@@ -38,8 +38,8 @@ theorem mainDoubleState2_fp2At_low (yst : EvmState) (ptr : U256)
     (hptrLow : ptr.toNat + 128 ≤ 1024) :
     fp2At (mainDoubleState2 yst) ptr = fp2At (mainValidatedState yst) ptr := by
   rw [mainDoubleState2]
-  exact (fp2AddFinalState_fp2At_before_out _ _ _ _ _ hptrEnd
-    (by bv_omega) (by decide)).trans
+  exact (fp2AddContractState_fp2At_before_out _ _ _ _ _
+    (by decide) hptrEnd (by bv_omega)).trans
       (mainDoubleState1_fp2At_low yst ptr hptrEnd hptrLow)
 
 theorem mainDoubleState3_fp2At_low (yst : EvmState) (ptr : U256)
@@ -47,8 +47,8 @@ theorem mainDoubleState3_fp2At_low (yst : EvmState) (ptr : U256)
     (hptrLow : ptr.toNat + 128 ≤ 1024) :
     fp2At (mainDoubleState3 yst) ptr = fp2At (mainValidatedState yst) ptr := by
   rw [mainDoubleState3]
-  exact (fp2AddFinalState_fp2At_before_out _ _ _ _ _ hptrEnd
-    (by bv_omega) (by decide)).trans
+  exact (fp2AddContractState_fp2At_before_out _ _ _ _ _
+    (by decide) hptrEnd (by bv_omega)).trans
       (mainDoubleState2_fp2At_low yst ptr hptrEnd hptrLow)
 
 theorem mainDoubleState4_fp2At_low (yst : EvmState) (ptr : U256)

@@ -14,7 +14,7 @@ open Challenge.Bls12381.ProofSupport
 private theorem mainDoubleState3_numerator (yst : EvmState) :
     fp2At (mainDoubleState3 yst) 2304 = fp2At (mainDoubleState2 yst) 2304 := by
   unfold mainDoubleState3
-  exact fp2AddFinalState_fp2At_before_out _ _ _ _ _
+  exact fp2AddContractState_fp2At_before_out _ _ _ _ _
     (by decide) (by decide) (by decide)
 
 theorem mainDoubleState4_numerator (yst : EvmState) :

@@ -1,6 +1,7 @@
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainPointScope
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2InvImag
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2MulImag
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2AddPreservation
 
 set_option warningAsError true
 
@@ -60,13 +61,13 @@ def mainDoubleState0 (yst : EvmState) : EvmState :=
   fp2MulFinalState (mainAfterDoubleYZero yst) 2176 0 0
 
 def mainDoubleState1 (yst : EvmState) : EvmState :=
-  fp2AddFinalState (mainDoubleState0 yst) 2304 2176 2176
+  fp2AddContractState (mainDoubleState0 yst) 2304 2176 2176
 
 def mainDoubleState2 (yst : EvmState) : EvmState :=
-  fp2AddFinalState (mainDoubleState1 yst) 2304 2304 2176
+  fp2AddContractState (mainDoubleState1 yst) 2304 2304 2176
 
 def mainDoubleState3 (yst : EvmState) : EvmState :=
-  fp2AddFinalState (mainDoubleState2 yst) 2432 128 128
+  fp2AddContractState (mainDoubleState2 yst) 2432 128 128
 
 def mainDoubleState4 (yst : EvmState) : EvmState :=
   fp2InvFinalState (mainDoubleState3 yst) 2560 2432

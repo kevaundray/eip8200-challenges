@@ -82,6 +82,33 @@ theorem fp2AddContractState_output (yst : EvmState) (out a b : U256)
     fp2AddFinalState_output yst out a b houtEnd,
     fp2AddResult_eq_addSource]
 
+/-- Both inputs are wholly below the output region, so neither is changed by
+the scheduled first-component stores. -/
+theorem fp2AddContractState_output_inputs_before
+    (yst : EvmState) (out a b : U256)
+    (houtEnd : out.toNat + 96 < 2 ^ 256)
+    (ha : a.toNat + 128 ≤ out.toNat)
+    (hb : b.toNat + 128 ≤ out.toNat) :
+    fp2At (fp2AddContractState yst out a b) out =
+      Challenge.Bls12381.ProofSupport.Fp2.addSource
+        (fp2At yst a) (fp2At yst b) := by
+  rw [fp2AddContractState_output yst out a b houtEnd,
+    fp2AddScheduledA_eq_before_out yst out a b ha (by omega),
+    fp2AddScheduledB_eq_before_out yst out a b hb (by omega)]
+
+/-- The left input aliases the output and the right input is wholly below it.
+This is the update shape used by the second numerator addition in doubling. -/
+theorem fp2AddContractState_output_inplace_left_before
+    (yst : EvmState) (out b : U256)
+    (houtEnd : out.toNat + 96 < 2 ^ 256)
+    (hb : b.toNat + 128 ≤ out.toNat) :
+    fp2At (fp2AddContractState yst out out b) out =
+      Challenge.Bls12381.ProofSupport.Fp2.addSource
+        (fp2At yst out) (fp2At yst b) := by
+  rw [fp2AddContractState_output yst out out b houtEnd,
+    fp2AddScheduledA_eq_at_out yst out b houtEnd,
+    fp2AddScheduledB_eq_before_out yst out out b hb (by omega)]
+
 /-- Common in-place schedule: the left input aliases the output, while the
 right input begins after the two first-component output words. -/
 theorem fp2AddContractState_output_inplace_right_after

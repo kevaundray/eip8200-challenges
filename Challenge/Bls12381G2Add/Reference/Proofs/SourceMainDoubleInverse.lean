@@ -1,4 +1,4 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainDoubleDenominator
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainDoubleArithmetic
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2InvCorrect
 
 set_option warningAsError true
