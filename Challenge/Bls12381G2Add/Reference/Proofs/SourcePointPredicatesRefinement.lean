@@ -90,4 +90,52 @@ theorem pointZeroValue_eq_one_iff (yst : EvmState) (point : U256) :
     (fp2ZeroValue_zero_or_one yst (point + BitVec.ofNat 256 128)),
     fp2ZeroValue_eq_one_iff_words, fp2ZeroValue_eq_one_iff_words]
 
+theorem pointZeroValue_zero_or_one (yst : EvmState) (point : U256) :
+    pointZeroValue yst point = 0 ∨ pointZeroValue yst point = 1 := by
+  unfold pointZeroValue
+  exact land_zero_or_one
+    (fp2ZeroValue_zero_or_one yst point)
+    (fp2ZeroValue_zero_or_one yst (point + BitVec.ofNat 256 128))
+
+theorem fp2WordsAt_eq_zero_iff_fp2At_eq_zero (yst : EvmState) (ptr : U256) :
+    fp2WordsAt yst ptr = fp2ZeroWords ↔
+      fp2At yst ptr = Challenge.Bls12381.ProofSupport.Fp2.zero := by
+  unfold fp2WordsAt fp2ZeroWords fp2At
+    Challenge.Bls12381.ProofSupport.Fp2.zero
+    Challenge.Bls12381.ProofSupport.Fp.normalize
+  simp only [Fp2Words.mk.injEq]
+  constructor
+  · rintro ⟨h0, h1, h2, h3⟩
+    rw [h0, h1, h2, h3]
+    rfl
+  · intro h
+    have hc0hi := congrArg (fun r : Challenge.Bls12381.ProofSupport.Fp2.Repr =>
+      r.c0.hi) h
+    have hc0lo := congrArg (fun r : Challenge.Bls12381.ProofSupport.Fp2.Repr =>
+      r.c0.lo) h
+    have hc1hi := congrArg (fun r : Challenge.Bls12381.ProofSupport.Fp2.Repr =>
+      r.c1.hi) h
+    have hc1lo := congrArg (fun r : Challenge.Bls12381.ProofSupport.Fp2.Repr =>
+      r.c1.lo) h
+    have hzero : EvmSemantics.UInt256.ofNat 0 =
+        YulEvmCompiler.conv (0 : U256) := by
+      apply YulEvmCompiler.u256ext
+      decide
+    have hc0hi' : YulEvmCompiler.conv
+        (loadWord yst.memory ptr.toNat) = EvmSemantics.UInt256.ofNat 0 := by
+      simpa using hc0hi
+    have hc0lo' : YulEvmCompiler.conv
+        (loadWord yst.memory (ptr + BitVec.ofNat 256 32).toNat) =
+          EvmSemantics.UInt256.ofNat 0 := by simpa using hc0lo
+    have hc1hi' : YulEvmCompiler.conv
+        (loadWord yst.memory (ptr + BitVec.ofNat 256 64).toNat) =
+          EvmSemantics.UInt256.ofNat 0 := by simpa using hc1hi
+    have hc1lo' : YulEvmCompiler.conv
+        (loadWord yst.memory (ptr + BitVec.ofNat 256 96).toNat) =
+          EvmSemantics.UInt256.ofNat 0 := by simpa using hc1lo
+    exact ⟨YulEvmCompiler.conv_injective (hc0hi'.trans hzero),
+      YulEvmCompiler.conv_injective (hc0lo'.trans hzero),
+      YulEvmCompiler.conv_injective (hc1hi'.trans hzero),
+      YulEvmCompiler.conv_injective (hc1lo'.trans hzero)⟩
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
