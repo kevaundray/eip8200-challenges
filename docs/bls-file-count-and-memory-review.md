@@ -329,6 +329,16 @@ successfully: 2,342 G1ADD jobs and 2,534 G2ADD jobs. Together with the completed
 check cleanup, the overall repository change removes 132 files net from the
 reviewed ADD surface.
 
+The final certificate file-count pass widened only the physical compilation
+units, not the theorem granularity. Each original 100-entry theorem still uses
+the shared macro's ten-entry opaque declarations. Five adjacent theorems now
+share one source file: two files for G1ADD and three for G2ADD. The five units
+measured 4,697,568--5,534,628 KiB RSS, below the 6 GiB ceiling, and CI builds
+them in serialized Lake invocations protected by a policy self-test. This
+removed twenty additional production files, leaving 105 G1ADD and 211 G2ADD
+Lean files below their challenge directories. Full retained gates passed 2,335
+and 2,519 jobs respectively, with frozen artifact checks unchanged.
+
 The practical sequence is therefore:
 
 1. narrow the completed challenges' ambient imports;
@@ -336,8 +346,10 @@ The practical sequence is therefore:
 3. publish and consume one deep Fp/Fp2 operation contract;
 4. test a relational stage contract on one G1ADD branch;
 5. consolidate only the proof-stage files made unnecessary by those contracts;
-6. extract the generic compact certificate checker; and
-7. keep G1MSM/G2MSM paused throughout.
+6. extract the generic compact certificate checker;
+7. consolidate only measured certificate units with explicit CI serialization;
+   and
+8. keep G1MSM/G2MSM paused throughout.
 
 ## Decision rule
 

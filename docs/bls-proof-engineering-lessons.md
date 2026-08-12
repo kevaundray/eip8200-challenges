@@ -1038,11 +1038,28 @@ evidence now supports consolidating the ten G1ADD 100-entry files into two
 production files while preserving the smaller opaque declarations inside each
 file.
 
-This consolidation still requires a CI concurrency guard. Several roughly
-4.7-million-KiB processes peaking together can exhaust a 16 GB runner even
-though every individual process is below its budget. The safe sequence is to
-serialize the five merged certificate units, validate a fresh-cache build on
-the actual CI runner, and only then remove the old 100-entry files.
+The consolidation was then implemented with all public 100-entry theorem names
+and their ten-entry opaque subproofs preserved. Direct source elaboration of
+the five final physical units measured:
+
+| Compilation unit | Peak RSS (KiB) | Wall time |
+|---|---:|---:|
+| G1ADD entries 0–499 | 4,847,584 | 19.32 s |
+| G1ADD entries 500–999 | 4,697,568 | 19.96 s |
+| G2ADD entries 0–499 | 4,909,536 | 29.85 s |
+| G2ADD entries 500–999 | 5,172,884 | 34.28 s |
+| G2ADD entries 1000–1499 | 5,534,628 | 39.35 s |
+
+All remain below the 6 GiB per-process ceiling. The ten G1ADD files became two
+and the fifteen G2ADD files became three, removing twenty production files.
+Current directory counts are 105 G1ADD and 211 G2ADD Lean files.
+
+Several roughly 5 GiB processes peaking together can still exhaust a 16 GB
+runner. CI therefore builds the two G1 units and three G2 units in separate
+Lake invocations before each aggregate root. The cache-policy self-test asserts
+that all five commands remain present and precede their root build. With those
+units cached, the full retained gates passed 2,335 G1ADD jobs and 2,519 G2ADD
+jobs, along with proof-policy, cache-policy, and frozen-artifact checks.
 
 The trust census also exposed a composition trap. `List.drop_take` depends on
 `Classical.choice` and `Quot.sound` in this toolchain. Using it to align the ten

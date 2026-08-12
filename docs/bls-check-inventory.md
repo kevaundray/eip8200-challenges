@@ -131,6 +131,11 @@ Later architecture work consolidated the private
 `SourceMainDoubleArithmetic`. The table above is retained as the historical
 inventory snapshot; the current production tree has two fewer modules.
 
+A subsequent measured certificate pass grouped the ten G1ADD and fifteen
+G2ADD 100-entry decision files into two and three physical units while
+preserving every public theorem. This removed another eight G1ADD and twelve
+G2ADD production modules; it did not change the retained check inventory.
+
 ## Import-closure evidence
 
 A recursive scan of local source imports found:

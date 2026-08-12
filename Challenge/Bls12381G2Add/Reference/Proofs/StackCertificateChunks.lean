@@ -1,18 +1,6 @@
 import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk0
-import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk1
-import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk2
-import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk3
-import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk4
 import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk5
-import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk6
-import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk7
-import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk8
-import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk9
 import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk10
-import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk11
-import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk12
-import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk13
-import Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk14
 
 set_option warningAsError true
 

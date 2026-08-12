@@ -176,6 +176,10 @@ jobs:
 
       - name: Build every G1ADD proof and axiom guard
         run: |
+          # These decision units peak near 5 GiB each. Build them in separate
+          # Lake invocations so a 16 GiB runner never overlaps their peaks.
+          lake -Kjobs=1 build Challenge.Bls12381G1Add.Reference.Proofs.StackCertificateChunk0
+          lake -Kjobs=1 build Challenge.Bls12381G1Add.Reference.Proofs.StackCertificateChunk5
           mapfile -t checks < <(
             find Checks -maxdepth 1 -type f -name 'Bls12381G1Add*.lean' \
               -printf '%f\n' | sort | \
@@ -259,6 +263,11 @@ jobs:
 
       - name: Build every G2ADD proof and axiom guard
         run: |
+          # These decision units peak near 5 GiB each. Build them in separate
+          # Lake invocations so a 16 GiB runner never overlaps their peaks.
+          lake -Kjobs=1 build Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk0
+          lake -Kjobs=1 build Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk5
+          lake -Kjobs=1 build Challenge.Bls12381G2Add.Reference.Proofs.StackCertificateChunk10
           mapfile -t checks < <(
             find Checks -maxdepth 1 -type f -name 'Bls12381G2Add*.lean' \
               -printf '%f\n' | sort | \
