@@ -1,0 +1,6 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainDoubleSquare
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check mainDoubleState0_canonical
+#check mainDoubleState0_toLawful
