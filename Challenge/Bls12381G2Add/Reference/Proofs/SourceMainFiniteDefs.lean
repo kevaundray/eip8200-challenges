@@ -79,4 +79,31 @@ def mainUnequalBody : Block Op :=
   | .cond _ body => body
   | _ => []
 
+def mainPostState0 (yst : EvmState) : EvmState :=
+  fp2MulFinalState yst 2688 2048 2048
+
+def mainPostState1 (yst : EvmState) : EvmState :=
+  fp2SubFinalState (mainPostState0 yst) 2688 2688 0
+
+def mainPostState2 (yst : EvmState) : EvmState :=
+  fp2SubFinalState (mainPostState1 yst) 2688 2688 256
+
+def mainPostState3 (yst : EvmState) : EvmState :=
+  fp2SubFinalState (mainPostState2 yst) 2816 0 2688
+
+def mainPostState4 (yst : EvmState) : EvmState :=
+  fp2MulFinalState (mainPostState3 yst) 2944 2048 2816
+
+def mainPostState5 (yst : EvmState) : EvmState :=
+  fp2SubFinalState (mainPostState4 yst) 2944 2944 128
+
+def mainPostStoredState (yst : EvmState) : EvmState :=
+  storePointState (mainPostState5 yst) 2688 2944
+
+def mainPostReturnState (yst : EvmState) : EvmState :=
+  { touchMemory (mainPostStoredState yst) 0 256 with
+    halted := some (.ret, readBytes (mainPostStoredState yst).memory 0 256) }
+
+def mainPostBody : Block Op := (Compilation.referenceCompiledBlock).drop 46
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
