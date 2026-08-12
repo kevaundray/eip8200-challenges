@@ -27,13 +27,13 @@ private theorem eval_fpMulVars (V : VEnv Challenge.EvmProof.modexpExec.toDialect
     (haLo : V.get aLoVar = some alo)
     (hbHi : V.get bHiVar = some bhi)
     (hbLo : V.get bLoVar = some blo) :
-    Interp.evalExpr Challenge.EvmProof.modexpExec 69 ([] :: mainFuns) V yst
+    Interp.evalExpr Challenge.EvmProof.modexpExec 69 mainFuns V yst
       (.call "\x009" [.var aHiVar, .var aLoVar, .var bHiVar, .var bLoVar]) =
       .ok (.vals [(fpMulResult yst ahi alo bhi blo).1,
         (fpMulResult yst ahi alo bhi blo).2]
         (fpMulFinalState yst ahi alo bhi blo)) := by
   have hargs : Interp.evalArgs Challenge.EvmProof.modexpExec 68
-      ([] :: mainFuns) V yst [.var aHiVar, .var aLoVar, .var bHiVar,
+      mainFuns V yst [.var aHiVar, .var aLoVar, .var bHiVar,
         .var bLoVar] =
     Interp.evalArgs Challenge.EvmProof.modexpExec 68 mainFuns
       [("ahi", ahi), ("alo", alo), ("bhi", bhi), ("blo", blo)] yst
@@ -42,7 +42,7 @@ private theorem eval_fpMulVars (V : VEnv Challenge.EvmProof.modexpExec.toDialect
     rw [haHi, haLo, hbHi, hbLo]
     rfl
   rw [Interp.evalExpr_call_of_evalArgs_lookup_eq (fn := "\x009") hargs
-    (show lookupFun ([] :: mainFuns) "\x009" =
+    (show lookupFun mainFuns "\x009" =
       lookupFun mainFuns "\x009" by rfl)]
   rw [show mainFuns = [hoist Challenge.EvmProof.modexpExec.toDialect
     Compilation.referenceCompiledBlock] by rfl]
@@ -55,12 +55,12 @@ private theorem eval_fpSubVars (V : VEnv Challenge.EvmProof.modexpExec.toDialect
     (haLo : V.get aLoVar = some alo)
     (hbHi : V.get bHiVar = some bhi)
     (hbLo : V.get bLoVar = some blo) :
-    Interp.evalExpr Challenge.EvmProof.modexpExec 65 ([] :: mainFuns) V yst
+    Interp.evalExpr Challenge.EvmProof.modexpExec 65 mainFuns V yst
       (.call "\x005" [.var aHiVar, .var aLoVar, .var bHiVar, .var bLoVar]) =
       .ok (.vals [(fpSubValue ahi alo bhi blo).1,
         (fpSubValue ahi alo bhi blo).2] yst) := by
   have hargs : Interp.evalArgs Challenge.EvmProof.modexpExec 64
-      ([] :: mainFuns) V yst [.var aHiVar, .var aLoVar, .var bHiVar,
+      mainFuns V yst [.var aHiVar, .var aLoVar, .var bHiVar,
         .var bLoVar] =
     Interp.evalArgs Challenge.EvmProof.modexpExec 64 mainFuns
       [("ahi", ahi), ("alo", alo), ("bhi", bhi), ("blo", blo)] yst
@@ -69,7 +69,7 @@ private theorem eval_fpSubVars (V : VEnv Challenge.EvmProof.modexpExec.toDialect
     rw [haHi, haLo, hbHi, hbLo]
     rfl
   rw [Interp.evalExpr_call_of_evalArgs_lookup_eq (fn := "\x005") hargs
-    (show lookupFun ([] :: mainFuns) "\x005" =
+    (show lookupFun mainFuns "\x005" =
       lookupFun mainFuns "\x005" by rfl)]
   rw [show mainFuns = [hoist Challenge.EvmProof.modexpExec.toDialect
     Compilation.referenceCompiledBlock] by rfl]
@@ -80,7 +80,7 @@ private theorem eval_fpSubVarsLoads
     (ahi alo : U256) (aHiVar aLoVar : String) (bHi bLo : Nat)
     (haHi : V.get aHiVar = some ahi) (haLo : V.get aLoVar = some alo)
     (hbHi : bHi < 2 ^ 256) (hbLo : bLo < 2 ^ 256) :
-    Interp.evalExpr Challenge.EvmProof.modexpExec 65 ([] :: mainFuns) V yst
+    Interp.evalExpr Challenge.EvmProof.modexpExec 65 mainFuns V yst
       (.call "\x005" [.var aHiVar, .var aLoVar,
         .builtin .mload [.lit (.number bHi)],
         .builtin .mload [.lit (.number bLo)]]) =
@@ -90,7 +90,7 @@ private theorem eval_fpSubVarsLoads
         (loadWord yst.memory bHi) (loadWord yst.memory bLo)).2]
         (afterTwoLoads yst bHi bLo)) := by
   have hargs : Interp.evalArgs Challenge.EvmProof.modexpExec 64
-      ([] :: mainFuns) V yst [.var aHiVar, .var aLoVar,
+      mainFuns V yst [.var aHiVar, .var aLoVar,
         .builtin .mload [.lit (.number bHi)],
         .builtin .mload [.lit (.number bLo)]] =
     Interp.evalArgs Challenge.EvmProof.modexpExec 64 mainFuns
@@ -105,7 +105,7 @@ private theorem eval_fpSubVarsLoads
       Challenge.EvmProof.modexpBuiltinFn, stepOp, EVM.litValue,
       Nat.mod_eq_of_lt hbHi, Nat.mod_eq_of_lt hbLo, VEnv.get]
   rw [Interp.evalExpr_call_of_evalArgs_lookup_eq (fn := "\x005") hargs
-    (show lookupFun ([] :: mainFuns) "\x005" =
+    (show lookupFun mainFuns "\x005" =
       lookupFun mainFuns "\x005" by rfl)]
   rw [show mainFuns = [hoist Challenge.EvmProof.modexpExec.toDialect
     Compilation.referenceCompiledBlock] by rfl]
@@ -116,7 +116,7 @@ private theorem eval_fpSubLoadsVars
     (aHi aLo : Nat) (bhi blo : U256) (bHiVar bLoVar : String)
     (haHi : aHi < 2 ^ 256) (haLo : aLo < 2 ^ 256)
     (hbHi : V.get bHiVar = some bhi) (hbLo : V.get bLoVar = some blo) :
-    Interp.evalExpr Challenge.EvmProof.modexpExec 65 ([] :: mainFuns) V yst
+    Interp.evalExpr Challenge.EvmProof.modexpExec 65 mainFuns V yst
       (.call "\x005" [.builtin .mload [.lit (.number aHi)],
         .builtin .mload [.lit (.number aLo)], .var bHiVar, .var bLoVar]) =
       .ok (.vals [(fpSubValue (loadWord yst.memory aHi)
@@ -125,7 +125,7 @@ private theorem eval_fpSubLoadsVars
         (loadWord yst.memory aLo) bhi blo).2]
         (afterTwoLoads yst aHi aLo)) := by
   have hargs : Interp.evalArgs Challenge.EvmProof.modexpExec 64
-      ([] :: mainFuns) V yst [.builtin .mload [.lit (.number aHi)],
+      mainFuns V yst [.builtin .mload [.lit (.number aHi)],
         .builtin .mload [.lit (.number aLo)], .var bHiVar, .var bLoVar] =
     Interp.evalArgs Challenge.EvmProof.modexpExec 64 mainFuns
       [("ahi", loadWord yst.memory aHi),
@@ -139,7 +139,7 @@ private theorem eval_fpSubLoadsVars
       Challenge.EvmProof.modexpBuiltinFn, stepOp, EVM.litValue,
       Nat.mod_eq_of_lt haHi, Nat.mod_eq_of_lt haLo, VEnv.get]
   rw [Interp.evalExpr_call_of_evalArgs_lookup_eq (fn := "\x005") hargs
-    (show lookupFun ([] :: mainFuns) "\x005" =
+    (show lookupFun mainFuns "\x005" =
       lookupFun mainFuns "\x005" by rfl)]
   rw [show mainFuns = [hoist Challenge.EvmProof.modexpExec.toDialect
     Compilation.referenceCompiledBlock] by rfl]
@@ -172,7 +172,7 @@ private theorem exec_stmt0 (_yst st : EvmState) (lam : U256 × U256)
     (base : VEnv Challenge.EvmProof.modexpExec.toDialect)
     (hlamHi : base.get "\x0098" = some lam.1)
     (hlamLo : base.get "\x0099" = some lam.2) :
-    Interp.execStmt Challenge.EvmProof.modexpExec 70 ([] :: mainFuns) base st
+    Interp.execStmt Challenge.EvmProof.modexpExec 70 mainFuns base st
       mainFinitePostStmt0 =
     .ok (mainFinitePostEnv0 base st lam, mainFinitePostState0 st lam,
       .normal) := by
@@ -190,7 +190,7 @@ private theorem exec_stmt1 (yst st : EvmState) (lam : U256 × U256)
     (base : VEnv Challenge.EvmProof.modexpExec.toDialect)
     (hread : ∀ offset, offset + 32 ≤ 1024 →
       loadWord st.memory offset = mainDecodedWord yst offset) :
-    Interp.execStmt Challenge.EvmProof.modexpExec 66 ([] :: mainFuns)
+    Interp.execStmt Challenge.EvmProof.modexpExec 66 mainFuns
       (mainFinitePostEnv0 base st lam) (mainFinitePostState0 st lam)
       mainFinitePostStmt1 =
     .ok (mainFinitePostEnv1 yst base st lam,
@@ -213,7 +213,7 @@ private theorem exec_stmt2 (yst st : EvmState) (lam : U256 × U256)
     (base : VEnv Challenge.EvmProof.modexpExec.toDialect)
     (hread : ∀ offset, offset + 32 ≤ 1024 →
       loadWord st.memory offset = mainDecodedWord yst offset) :
-    Interp.execStmt Challenge.EvmProof.modexpExec 66 ([] :: mainFuns)
+    Interp.execStmt Challenge.EvmProof.modexpExec 66 mainFuns
       (mainFinitePostEnv1 yst base st lam)
       (mainFinitePostX1ArgsState st lam) mainFinitePostStmt2 =
     .ok (mainFinitePostEnv2 yst base st lam,
@@ -244,7 +244,7 @@ private theorem exec_stmt3 (yst st : EvmState) (lam : U256 × U256)
     (base : VEnv Challenge.EvmProof.modexpExec.toDialect)
     (hread : ∀ offset, offset + 32 ≤ 1024 →
       loadWord st.memory offset = mainDecodedWord yst offset) :
-    Interp.execStmt Challenge.EvmProof.modexpExec 66 ([] :: mainFuns)
+    Interp.execStmt Challenge.EvmProof.modexpExec 66 mainFuns
       (mainFinitePostEnv2 yst base st lam)
       (mainFinitePostX2ArgsState yst st lam) mainFinitePostStmt3 =
     .ok (mainFinitePostEnv3 yst base st lam,
@@ -278,7 +278,7 @@ private theorem exec_stmt4 (yst st : EvmState) (lam : U256 × U256)
     (base : VEnv Challenge.EvmProof.modexpExec.toDialect)
     (hlamHi : base.get "\x0098" = some lam.1)
     (hlamLo : base.get "\x0099" = some lam.2) :
-    Interp.execStmt Challenge.EvmProof.modexpExec 70 ([] :: mainFuns)
+    Interp.execStmt Challenge.EvmProof.modexpExec 70 mainFuns
       (mainFinitePostEnv3 yst base st lam)
       (mainFinitePostDeltaArgsState yst st lam) mainFinitePostStmt4 =
     .ok (mainFinitePostEnv4 yst base st lam,
@@ -309,7 +309,7 @@ private theorem exec_stmt5 (yst st : EvmState) (lam : U256 × U256)
     (base : VEnv Challenge.EvmProof.modexpExec.toDialect)
     (hread : ∀ offset, offset + 32 ≤ 1024 →
       loadWord st.memory offset = mainDecodedWord yst offset) :
-    Interp.execStmt Challenge.EvmProof.modexpExec 66 ([] :: mainFuns)
+    Interp.execStmt Challenge.EvmProof.modexpExec 66 mainFuns
       (mainFinitePostEnv4 yst base st lam)
       (mainFinitePostState1 yst st lam) mainFinitePostStmt5 =
     .ok (mainFinitePostEnv5 yst base st lam,
@@ -331,7 +331,7 @@ private theorem exec_stmt5 (yst st : EvmState) (lam : U256 × U256)
 
 private theorem exec_stmt6 (yst st : EvmState) (lam : U256 × U256)
     (base : VEnv Challenge.EvmProof.modexpExec.toDialect) :
-    Interp.execStmt Challenge.EvmProof.modexpExec 66 ([] :: mainFuns)
+    Interp.execStmt Challenge.EvmProof.modexpExec 66 mainFuns
       (mainFinitePostEnv5 yst base st lam)
       (mainFinitePostY1ArgsState yst st lam) mainFinitePostStmt6 =
     .ok (mainFinitePostEnv5 yst base st lam,
@@ -339,7 +339,7 @@ private theorem exec_stmt6 (yst st : EvmState) (lam : U256 × U256)
   let x3 := mainFinitePostX3Words yst st lam
   let y3 := mainFinitePostY3Words yst st lam
   have hargs : Interp.evalArgs Challenge.EvmProof.modexpExec 64
-      ([] :: mainFuns) (mainFinitePostEnv5 yst base st lam)
+      mainFuns (mainFinitePostEnv5 yst base st lam)
       (mainFinitePostY1ArgsState yst st lam)
       [.var "\x00114", .var "\x00115", .var "\x00118", .var "\x00119"] =
     Interp.evalArgs Challenge.EvmProof.modexpExec 64 mainFuns
@@ -353,7 +353,7 @@ private theorem exec_stmt6 (yst st : EvmState) (lam : U256 × U256)
       .var "\x00118", .var "\x00119"]) by rfl,
     Interp.execStmt,
     Interp.evalExpr_call_of_evalArgs_lookup_eq (fn := "\x0012") hargs
-      (show lookupFun ([] :: mainFuns) "\x0012" =
+      (show lookupFun mainFuns "\x0012" =
         lookupFun mainFuns "\x0012" by rfl)]
   change (do
       let __do_lift ← Interp.evalExpr Challenge.EvmProof.modexpExec 64
@@ -373,7 +373,7 @@ private theorem exec_stmt6 (yst st : EvmState) (lam : U256 × U256)
 
 private theorem exec_stmt7 (yst st : EvmState) (lam : U256 × U256)
     (base : VEnv Challenge.EvmProof.modexpExec.toDialect) :
-    Interp.execStmt Challenge.EvmProof.modexpExec 66 ([] :: mainFuns)
+    Interp.execStmt Challenge.EvmProof.modexpExec 66 mainFuns
       (mainFinitePostEnv5 yst base st lam)
       (mainFinitePostStoredState yst st lam) mainFinitePostStmt7 =
     .ok (mainFinitePostEnv5 yst base st lam,
@@ -392,7 +392,7 @@ theorem step_mainFinitePostBody (yst st : EvmState) (lam : U256 × U256)
     (hlamLo : base.get "\x0099" = some lam.2)
     (hread : ∀ offset, offset + 32 ≤ 1024 →
       loadWord st.memory offset = mainDecodedWord yst offset) :
-    ExecStmts Challenge.EvmProof.modexpExec.toDialect ([] :: mainFuns)
+    ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns
       base st mainFinitePostBody (mainFinitePostEnv5 yst base st lam)
       (mainFinitePostReturnState yst st lam) .halt := by
   rw [mainFinitePostBody_eq]

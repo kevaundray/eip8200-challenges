@@ -436,6 +436,56 @@ theorem step_mainFiniteEqual_zeroY (yst : EvmState)
     simpa [restore] using hblock'
   exact Step.ifTrue (mainFiniteXEq_eval yst) (by rw [hxeq]; decide) hblock
 
+/-- Unequal x-coordinates skip the equal-point dispatcher after evaluating
+its exact four-word comparison. -/
+theorem step_mainFiniteEqual_skip (yst : EvmState)
+    (hxeq : mainFiniteXEqValue yst = 0) :
+    ExecStmt Challenge.EvmProof.modexpExec.toDialect mainFuns
+      (mainFiniteEnv yst) (mainValidatedState yst) mainFiniteEqualStmt
+      (mainFiniteEnv yst) (mainFiniteXEqArgsState yst) .normal := by
+  rw [mainFiniteEqualStmt_shape]
+  exact Step.ifFalse (mainFiniteXEq_eval yst) (by rw [hxeq]; rfl)
+
+private theorem step_mainFiniteZeroY_continue (yst : EvmState)
+    (hyzero : mainFiniteYZeroValue yst = 0) :
+    ExecStmt Challenge.EvmProof.modexpExec.toDialect ([] :: mainFuns)
+      (mainFiniteEnv yst) (mainFiniteYEqArgsState yst)
+      mainFiniteZeroYStmt (mainFiniteEnv yst)
+      (mainFiniteYZeroArgsState yst) .normal := by
+  rw [mainFiniteZeroYStmt_shape]
+  exact Step.ifFalse (mainFiniteYZero_eval yst) hyzero
+
+/-- Compose the equal-x dispatch prefix with a caller-supplied checked
+nonexceptional doubling body.  The statement is generic in the tail result so
+the source classifier remains layered below the arithmetic proof. -/
+theorem step_mainFiniteEqual_nonexceptional (yst : EvmState)
+    (hxeq : mainFiniteXEqValue yst = 1)
+    (hyeq : mainFiniteYEqValue yst ≠ 0)
+    (hyzero : mainFiniteYZeroValue yst = 0)
+    {V' : VEnv Challenge.EvmProof.modexpExec.toDialect} {st' : EvmState}
+    (htail : ExecStmts Challenge.EvmProof.modexpExec.toDialect
+      ([] :: mainFuns) (mainFiniteEnv yst) (mainFiniteYZeroArgsState yst)
+      mainFiniteDoubleBody V' st' .normal) :
+    ExecStmt Challenge.EvmProof.modexpExec.toDialect mainFuns
+      (mainFiniteEnv yst) (mainValidatedState yst) mainFiniteEqualStmt
+      (restore (mainFiniteEnv yst) V') st' .normal := by
+  rw [mainFiniteEqualStmt_shape]
+  have hseq : ExecStmts Challenge.EvmProof.modexpExec.toDialect
+      ([] :: mainFuns) (mainFiniteEnv yst) (mainFiniteXEqArgsState yst)
+      mainFiniteEqualBody V' st' .normal := by
+    rw [mainFiniteEqualBody_eq]
+    exact Step.seqCons (step_mainFiniteOpposite_continue yst hyeq)
+      (Step.seqCons (step_mainFiniteZeroY_continue yst hyzero) htail)
+  have hblock' := Step.block
+    (D := Challenge.EvmProof.modexpExec.toDialect)
+    (show ExecStmts Challenge.EvmProof.modexpExec.toDialect
+      (hoist Challenge.EvmProof.modexpExec.toDialect mainFiniteEqualBody ::
+        mainFuns) (mainFiniteEnv yst) (mainFiniteXEqArgsState yst)
+      mainFiniteEqualBody V' st' .normal from by
+        rw [mainFiniteEqualBody_hoist]
+        exact hseq)
+  exact Step.ifTrue (mainFiniteXEq_eval yst) (by rw [hxeq]; decide) hblock'
+
 private theorem fourZeroWords (yst : EvmState) :
     readBytes (mainStorePointState yst 0 0 0 0).memory 0 128 =
       List.replicate 128 0 := by
