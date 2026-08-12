@@ -6,6 +6,16 @@ namespace Challenge.EvmProof.ModexpMemory
 
 open EvmSemantics
 
+example (memory : Nat → UInt8) (start : Nat) :
+    YulSemantics.EVM.readBytes
+        (YulSemantics.EVM.storeWord memory start (0#256)) start 32 =
+      List.replicate 32 0 :=
+  readBytes_storeWord_zero memory start
+
+/-- info: 'Challenge.EvmProof.ModexpMemory.readBytes_storeWord_zero' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms readBytes_storeWord_zero
+
 example (memory : Nat → UInt8) (start size : Nat) :
     (readWindow memory start size).size = size :=
   readWindow_size memory start size

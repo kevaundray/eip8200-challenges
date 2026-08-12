@@ -148,6 +148,15 @@ private theorem readBytes_storeWord (memory : Nat → UInt8) (start : Nat)
   simpa [storedWordBytes, storedWordBytesPrefix] using
     readBytes_storeWord_prefix memory start 32 value (by omega)
 
+/-- Reading back a stored zero word yields exactly 32 zero bytes. -/
+theorem readBytes_storeWord_zero (memory : Nat → UInt8) (start : Nat) :
+    YulSemantics.EVM.readBytes
+        (YulSemantics.EVM.storeWord memory start (0#256)) start 32 =
+      List.replicate 32 0 := by
+  rw [readBytes_storeWord]
+  unfold storedWordBytes
+  decide
+
 private theorem bytesNat_storedWordBytesPrefix
     (value : YulSemantics.EVM.U256) (width : Nat) (hwidth : width ≤ 32) :
     Challenge.EvmProof.Bytes.bytesNat (storedWordBytesPrefix value width) =
