@@ -36,4 +36,22 @@ def mainPointEnv (yst : EvmState) :
     VEnv Challenge.EvmProof.modexpExec.toDialect :=
   [("\x00132", mainInf2 yst), ("\x00131", mainInf1 yst)]
 
+def mainCurve1Result (yst : EvmState) : U256 :=
+  onCurveResult (mainAfterInf2Reads yst) 0 128
+
+def mainAfterCurve1 (yst : EvmState) : EvmState :=
+  onCurveFinalState (mainAfterInf2Reads yst) 0 128
+
+def mainCurve1ConditionValue (yst : EvmState) : U256 :=
+  b2w (mainInf1 yst = 0) &&& b2w (mainCurve1Result yst = 0)
+
+def mainCurve2Result (yst : EvmState) : U256 :=
+  onCurveResult (mainAfterCurve1 yst) 256 384
+
+def mainValidatedState (yst : EvmState) : EvmState :=
+  onCurveFinalState (mainAfterCurve1 yst) 256 384
+
+def mainCurve2ConditionValue (yst : EvmState) : U256 :=
+  b2w (mainInf2 yst = 0) &&& b2w (mainCurve2Result yst = 0)
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
