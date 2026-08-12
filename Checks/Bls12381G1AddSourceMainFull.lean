@@ -6,6 +6,17 @@ set_option warningAsError true
 
 namespace Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
 
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointDispatcher_finite' depends on axioms: [propext,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_mainPointDispatcher_finite
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointScope_finite' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_mainPointScope_finite
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointDispatcher_double' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
