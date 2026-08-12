@@ -18,6 +18,11 @@ private def copyWordState (yst : EvmState) (dest src : U256) : EvmState :=
   let read := touchMemory yst src.toNat 32
   storeWordState read dest (loadWord yst.memory src.toNat)
 
+private theorem copyWordState_memory (yst : EvmState) (dest src : U256) :
+    (copyWordState yst dest src).memory =
+      storeWord yst.memory dest.toNat (loadWord yst.memory src.toNat) := by
+  rfl
+
 def msmStorePointState (yst : EvmState) (ptr x y : U256) : EvmState :=
   let s0 := copyWordState yst ptr x
   let s1 := copyWordState s0 (ptr + 32) (x + 32)
@@ -27,6 +32,48 @@ def msmStorePointState (yst : EvmState) (ptr x y : U256) : EvmState :=
   let s5 := copyWordState s4 (ptr + 160) (y + 32)
   let s6 := copyWordState s5 (ptr + 192) (y + 64)
   copyWordState s6 (ptr + 224) (y + 96)
+
+/-- At the concrete G2MSM accumulator/scratch addresses, the helper copies
+the original eight coordinate words into the accumulator cell. -/
+theorem msmStorePointState_memory_3840_2688_2944 (yst : EvmState) :
+    (msmStorePointState yst 3840 2688 2944).memory =
+      storeWord
+        (storeWord
+          (storeWord
+            (storeWord
+              (storeWord
+                (storeWord
+                  (storeWord
+                    (storeWord yst.memory 3840 (loadWord yst.memory 2688))
+                      3872 (loadWord yst.memory 2720))
+                    3904 (loadWord yst.memory 2752))
+                  3936 (loadWord yst.memory 2784))
+                3968 (loadWord yst.memory 2944))
+              4000 (loadWord yst.memory 2976))
+            4032 (loadWord yst.memory 3008))
+          4064 (loadWord yst.memory 3040) := by
+  have hd0 : ((3840 : U256).toNat) = 3840 := by decide
+  have hd1 : ((3872 : U256).toNat) = 3872 := by decide
+  have hd2 : ((3904 : U256).toNat) = 3904 := by decide
+  have hd3 : ((3936 : U256).toNat) = 3936 := by decide
+  have hd4 : ((3968 : U256).toNat) = 3968 := by decide
+  have hd5 : ((4000 : U256).toNat) = 4000 := by decide
+  have hd6 : ((4032 : U256).toNat) = 4032 := by decide
+  have hd7 : ((4064 : U256).toNat) = 4064 := by decide
+  have hs0 : ((2688 : U256).toNat) = 2688 := by decide
+  have hs1 : ((2720 : U256).toNat) = 2720 := by decide
+  have hs2 : ((2752 : U256).toNat) = 2752 := by decide
+  have hs3 : ((2784 : U256).toNat) = 2784 := by decide
+  have hs4 : ((2944 : U256).toNat) = 2944 := by decide
+  have hs5 : ((2976 : U256).toNat) = 2976 := by decide
+  have hs6 : ((3008 : U256).toNat) = 3008 := by decide
+  have hs7 : ((3040 : U256).toNat) = 3040 := by decide
+  simp only [msmStorePointState, copyWordState_memory]
+  norm_num
+  rw [hd0, hd1, hd2, hd3, hd4, hd5, hd6, hd7,
+    hs0, hs1, hs2, hs3, hs4, hs5, hs6, hs7]
+  repeat' rw [Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.loadWord_storeWord_disjoint
+    _ _ _ _ (by omega)]
 
 def msmStoreInfinityState (yst : EvmState) (ptr : U256) : EvmState :=
   let s0 := storeWordState yst ptr 0

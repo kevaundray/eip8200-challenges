@@ -64,4 +64,65 @@ theorem pointAt_storeInfinity_3840 (yst : EvmState) :
   simp [loadWord_storeWord_same,
     loadWord_storeWord_disjoint]
 
+theorem msmStorePointState_3840_fp2At_x (yst : EvmState) :
+    fp2At (msmStorePointState yst 3840 2688 2944) 3840 =
+      fp2At yst 2688 := by
+  unfold fp2At Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At
+  norm_num
+  constructor
+  · constructor
+    · change loadWord (msmStorePointState yst 3840 2688 2944).memory
+          3840 = loadWord yst.memory 2688
+      rw [msmStorePointState_memory_3840_2688_2944]
+      simp [loadWord_storeWord_same, loadWord_storeWord_disjoint]
+    · change loadWord (msmStorePointState yst 3840 2688 2944).memory
+          3872 = loadWord yst.memory 2720
+      rw [msmStorePointState_memory_3840_2688_2944]
+      simp [loadWord_storeWord_same, loadWord_storeWord_disjoint]
+  · constructor
+    · change loadWord (msmStorePointState yst 3840 2688 2944).memory
+          3904 = loadWord yst.memory 2752
+      rw [msmStorePointState_memory_3840_2688_2944]
+      simp [loadWord_storeWord_same, loadWord_storeWord_disjoint]
+    · change loadWord (msmStorePointState yst 3840 2688 2944).memory
+          3936 = loadWord yst.memory 2784
+      rw [msmStorePointState_memory_3840_2688_2944]
+      simp [loadWord_storeWord_same, loadWord_storeWord_disjoint]
+
+theorem msmStorePointState_3840_fp2At_y (yst : EvmState) :
+    fp2At (msmStorePointState yst 3840 2688 2944) 3968 =
+      fp2At yst 2944 := by
+  unfold fp2At Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At
+  norm_num
+  constructor
+  · constructor
+    · change loadWord (msmStorePointState yst 3840 2688 2944).memory
+          3968 = loadWord yst.memory 2944
+      rw [msmStorePointState_memory_3840_2688_2944]
+      simp [loadWord_storeWord_same, loadWord_storeWord_disjoint]
+    · change loadWord (msmStorePointState yst 3840 2688 2944).memory
+          4000 = loadWord yst.memory 2976
+      rw [msmStorePointState_memory_3840_2688_2944]
+      simp [loadWord_storeWord_same, loadWord_storeWord_disjoint]
+  · constructor
+    · change loadWord (msmStorePointState yst 3840 2688 2944).memory
+          4032 = loadWord yst.memory 3008
+      rw [msmStorePointState_memory_3840_2688_2944]
+      simp [loadWord_storeWord_same, loadWord_storeWord_disjoint]
+    · change loadWord (msmStorePointState yst 3840 2688 2944).memory
+          4064 = loadWord yst.memory 3040
+      rw [msmStorePointState_memory_3840_2688_2944]
+      rw [loadWord_storeWord_same]
+
+theorem pointAt_storePoint_3840 (yst : EvmState)
+    (hfinite : pointZeroValue
+      (msmStorePointState yst 3840 2688 2944) 3840 = 0) :
+    pointAt (msmStorePointState yst 3840 2688 2944) 3840 =
+      .affine (Fp2.toLawful (fp2At yst 2688))
+        (Fp2.toLawful (fp2At yst 2944)) := by
+  rw [pointAt_of_zero _ _ hfinite,
+    msmStorePointState_3840_fp2At_x]
+  norm_num
+  rw [msmStorePointState_3840_fp2At_y]
+
 end Challenge.Bls12381G2Msm.Reference.Proofs.SourceSemantics
