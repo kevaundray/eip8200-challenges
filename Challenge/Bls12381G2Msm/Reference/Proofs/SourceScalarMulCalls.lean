@@ -37,7 +37,8 @@ theorem step_scalarMulDouble {yst stend : EvmState}
       (pointAddInitialEnv out out out) stend outcome)
     (houtcome : outcome = .normal ∨ outcome = .leave) :
     ExecStmt Challenge.EvmProof.modexpExec.toDialect
-      ([] :: scalarMulBodyFuns) (scalarMulLoopEnv bit scalar point out) yst
+      ([] :: [] :: scalarMulBodyFuns)
+      (scalarMulLoopEnv bit scalar point out) yst
       scalarMulDoubleStmt (scalarMulLoopEnv bit scalar point out)
       stend .normal := by
   rw [scalarMulDoubleStmt_eq]
@@ -64,7 +65,8 @@ theorem step_scalarMulAddSkip (yst : EvmState)
     (bit scalar point out : U256)
     (hzero : scalarMulAddValue scalar bit = 0) :
     ExecStmt Challenge.EvmProof.modexpExec.toDialect
-      ([] :: scalarMulBodyFuns) (scalarMulLoopEnv bit scalar point out) yst
+      ([] :: [] :: scalarMulBodyFuns)
+      (scalarMulLoopEnv bit scalar point out) yst
       scalarMulAddStmt (scalarMulLoopEnv bit scalar point out) yst .normal := by
   rw [scalarMulAddStmt_eq]
   exact Step.ifFalse
@@ -88,16 +90,18 @@ theorem step_scalarMulAddTaken {yst stend : EvmState}
       (pointAddInitialEnv out out point) stend outcome)
     (houtcome : outcome = .normal ∨ outcome = .leave) :
     ExecStmt Challenge.EvmProof.modexpExec.toDialect
-      ([] :: scalarMulBodyFuns) (scalarMulLoopEnv bit scalar point out) yst
+      ([] :: [] :: scalarMulBodyFuns)
+      (scalarMulLoopEnv bit scalar point out) yst
       scalarMulAddStmt (scalarMulLoopEnv bit scalar point out)
       stend .normal := by
   rw [scalarMulAddStmt_eq]
   have hcall := step_pointAdd_of_args out out point
     (step_scalarMulPointArgs
-      (funs := [] :: [] :: scalarMulBodyFuns) yst bit scalar point out)
+      (funs := [] :: [] :: [] :: scalarMulBodyFuns)
+      yst bit scalar point out)
     (by rfl) hbody houtcome
   have hseq : ExecStmts Challenge.EvmProof.modexpExec.toDialect
-      ([] :: [] :: scalarMulBodyFuns)
+      ([] :: [] :: [] :: scalarMulBodyFuns)
       (scalarMulLoopEnv bit scalar point out) yst
       [.exprStmt (.call "\x0029"
         [.var "\x00150", .var "\x00150", .var "\x00149"])]
@@ -116,11 +120,13 @@ theorem step_scalarMulLoopBodySkip {yst stmid : EvmState}
       (pointAddInitialEnv out out out) stmid doubleOutcome)
     (hdoubleOutcome : doubleOutcome = .normal ∨ doubleOutcome = .leave)
     (hzero : scalarMulAddValue scalar bit = 0) :
-    ExecStmt Challenge.EvmProof.modexpExec.toDialect scalarMulBodyFuns
+    ExecStmt Challenge.EvmProof.modexpExec.toDialect
+      ([] :: scalarMulBodyFuns)
       (scalarMulLoopEnv bit scalar point out) yst (.block scalarMulLoopBody)
       (scalarMulLoopEnv bit scalar point out) stmid .normal := by
   have hseq : ExecStmts Challenge.EvmProof.modexpExec.toDialect
-      ([] :: scalarMulBodyFuns) (scalarMulLoopEnv bit scalar point out) yst
+      ([] :: [] :: scalarMulBodyFuns)
+      (scalarMulLoopEnv bit scalar point out) yst
       scalarMulLoopBody (scalarMulLoopEnv bit scalar point out) stmid .normal := by
     rw [scalarMulLoopBody_eq]
     exact Step.seqCons
@@ -143,11 +149,13 @@ theorem step_scalarMulLoopBodyTaken {yst stmid stend : EvmState}
       (pointAddInitialEnv out out point) stmid (.block pointAddBody)
       (pointAddInitialEnv out out point) stend addOutcome)
     (haddOutcome : addOutcome = .normal ∨ addOutcome = .leave) :
-    ExecStmt Challenge.EvmProof.modexpExec.toDialect scalarMulBodyFuns
+    ExecStmt Challenge.EvmProof.modexpExec.toDialect
+      ([] :: scalarMulBodyFuns)
       (scalarMulLoopEnv bit scalar point out) yst (.block scalarMulLoopBody)
       (scalarMulLoopEnv bit scalar point out) stend .normal := by
   have hseq : ExecStmts Challenge.EvmProof.modexpExec.toDialect
-      ([] :: scalarMulBodyFuns) (scalarMulLoopEnv bit scalar point out) yst
+      ([] :: [] :: scalarMulBodyFuns)
+      (scalarMulLoopEnv bit scalar point out) yst
       scalarMulLoopBody (scalarMulLoopEnv bit scalar point out) stend .normal := by
     rw [scalarMulLoopBody_eq]
     exact Step.seqCons
