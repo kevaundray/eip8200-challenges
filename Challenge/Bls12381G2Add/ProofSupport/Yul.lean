@@ -7,7 +7,7 @@ set_option warningAsError true
 /-!
 # Profiled Yul boundary for G2ADD
 
-The source model admits only successful native MODEXP calls. The target
+The source model permits only successful native MODEXP calls. The target
 profile pins Osaka's challenge configuration, in which MODEXP is enabled and
 the incumbent G2ADD precompile is disabled.
 -/
@@ -35,4 +35,3 @@ theorem initialState_profile {code calldata : ByteArray} {gas : Nat} :
   precompileConfig := rfl
 
 end Challenge.Bls12381G2Add.ProofSupport.Yul
-

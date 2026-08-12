@@ -7,116 +7,84 @@ scanner="$repo_root/scripts/check-lean-proof-policy.py"
 fixture_dir="$(mktemp -d)"
 trap 'rm -rf "$fixture_dir"' EXIT
 
-old_pattern='(^|[^[:alnum:]_])(sorry|admit|native_decide|CertifiedArtifact)([^[:alnum:]_]|$)|^[[:space:]]*axiom[[:space:]]|set_option[[:space:]]+maxHeartbeats[[:space:]]+0'
-
-cat > "$fixture_dir/private-axiom.lean" <<'EOF'
-private axiom hiddenEscape : True
-EOF
-
-cat > "$fixture_dir/split-heartbeats.lean" <<'EOF'
-set_option
-  maxHeartbeats 0
-EOF
-
-# Regression controls: both constructs escaped the previous line-oriented grep.
-! grep -nE "$old_pattern" "$fixture_dir/private-axiom.lean"
-! grep -nE "$old_pattern" "$fixture_dir/split-heartbeats.lean"
-
 expect_rejected() {
-  local fixture="$1"
+  local name="$1"
   local expected="$2"
-  local stderr_file="$fixture_dir/stderr"
+  local source="$3"
+  local fixture="$fixture_dir/$name.lean"
+  local stderr_file="$fixture_dir/$name.stderr"
+  printf '%s\n' "$source" > "$fixture"
   if python3 "$scanner" "$fixture" 2> "$stderr_file"; then
-    printf 'expected scanner to reject %s\n' "$fixture" >&2
+    printf 'expected scanner to reject %s\n' "$name" >&2
     exit 1
   fi
   grep -Fq "$expected" "$stderr_file"
 }
 
-expect_rejected "$fixture_dir/private-axiom.lean" 'forbidden axiom declaration'
-expect_rejected "$fixture_dir/split-heartbeats.lean" 'unlimited maxHeartbeats'
+# Raw substring policy: source context and Lean token boundaries are irrelevant.
+expect_rejected escaped_identifier 'forbidden raw spelling: sorry' \
+  'def escaped := «sorry»'
+expect_rejected line_comment 'forbidden raw spelling: sorry' \
+  '-- sorry must be rejected even in prose'
+expect_rejected nested_comment 'forbidden raw spelling: admit' \
+  '/- outer /- admit -/ comment -/'
+expect_rejected ordinary_string 'forbidden raw spelling: native_decide' \
+  'def text := "native_decide"'
+expect_rejected raw_string 'forbidden raw spelling: CertifiedArtifact' \
+  'def text := r###"CertifiedArtifact with embedded \" quote"###'
+expect_rejected char_literal 'forbidden raw spelling: sorry' \
+  "#check ('{' : Char); #check sorry"
+expect_rejected string_interpolation 'forbidden raw spelling: sorry' \
+  'def escapedProof : String := s!"{(by sorry : Nat)}"'
+expect_rejected interpolated_char_brace 'forbidden raw spelling: sorry' \
+  '#check s!"{('\''{'\'' : Char)}{(by sorry : Nat)}"'
+expect_rejected message_interpolation 'forbidden raw spelling: sorry' \
+  '#check m!"{(by sorry : Nat)}"'
+expect_rejected format_interpolation 'forbidden raw spelling: sorry' \
+  '#check f!"{(by sorry : Nat)}"'
+expect_rejected plain_string_braces 'forbidden raw spelling: sorry' \
+  'def text := "{sorry}"'
+expect_rejected unicode_operator_adjacency 'forbidden raw spelling: sorry' \
+  '#check 1 ⊕sorry'
+expect_rejected ascii_operator_adjacency 'forbidden raw spelling: sorry' \
+  '#check 1+sorry'
+expect_rejected identifier_suffix 'forbidden raw spelling: sorry' \
+  '#check sorry?'
+expect_rejected raw_prefix_adjacency 'forbidden raw spelling: sorry' \
+  '#check r#"safe"#sorry'
+expect_rejected sorry_ax_substring 'forbidden raw spelling: sorryAx' \
+  '#check prefixsorryAxSuffix'
 
-cat > "$fixture_dir/interpolated-sorry.lean" <<'EOF'
-def escapedProof : String := s!"{(by sorry : Nat)}"
-EOF
-expect_rejected "$fixture_dir/interpolated-sorry.lean" 'forbidden proof mechanism: sorry'
-
-cat > "$fixture_dir/message-interpolated-sorry.lean" <<'EOF'
-#check m!"{(by sorry : Nat)}"
-EOF
-expect_rejected "$fixture_dir/message-interpolated-sorry.lean" 'forbidden proof mechanism: sorry'
-
-cat > "$fixture_dir/format-interpolated-sorry.lean" <<'EOF'
-#check f!"{(by sorry : Nat)}"
-EOF
-expect_rejected "$fixture_dir/format-interpolated-sorry.lean" 'forbidden proof mechanism: sorry'
-
-cat > "$fixture_dir/parser-interpolated-sorry.lean" <<'EOF'
-macro "policyProbe " message:interpolatedStr(term) : command =>
-  `(command| #check $message)
-policyProbe "{(by sorry : Nat)}"
-EOF
-expect_rejected "$fixture_dir/parser-interpolated-sorry.lean" 'forbidden proof mechanism: sorry'
-
-for hashes in '#' '###' '######'; do
-  fixture="$fixture_dir/raw-${#hashes}-then-sorry.lean"
-  printf 'def raw : String := r%s"quotes " and policy words sorry axiom"%s\n' \
-    "$hashes" "$hashes" > "$fixture"
-  printf 'example : True := by sorry\n' >> "$fixture"
-  expect_rejected "$fixture" 'forbidden proof mechanism: sorry'
-done
-
-cat > "$fixture_dir/sorry-ax.lean" <<'EOF'
-example : True := by sorryAx (synthetic := true)
-EOF
-expect_rejected "$fixture_dir/sorry-ax.lean" 'forbidden proof mechanism: sorryAx'
-
-cat > "$fixture_dir/operator-adjacent-sorry.lean" <<'EOF'
-#check 1+sorry
-EOF
-expect_rejected "$fixture_dir/operator-adjacent-sorry.lean" 'forbidden proof mechanism: sorry'
-
-cat > "$fixture_dir/string-adjacent-sorry.lean" <<'EOF'
-#check sorry"not a raw string"
-EOF
-expect_rejected "$fixture_dir/string-adjacent-sorry.lean" 'forbidden proof mechanism: sorry'
+expect_rejected private_axiom 'forbidden axiom declaration' \
+  'private axiom hiddenEscape : True'
+expect_rejected multiline_axiom 'forbidden axiom declaration' $'private\naxiom hiddenEscape : True'
+expect_rejected comment_axiom 'forbidden axiom declaration' \
+  '-- private axiom hiddenEscape : True'
+expect_rejected escaped_axiom 'forbidden axiom declaration' \
+  '#check «axiom»'
+expect_rejected operator_axiom 'forbidden axiom declaration' \
+  '#check 1+axiom'
+expect_rejected string_axiom 'forbidden axiom declaration' \
+  'def text := "axiom"'
+expect_rejected commented_heartbeat 'unparseable maxHeartbeats' \
+  'set_option maxHeartbeats /- parser gap -/ 0 in example : True := by trivial'
 
 for literal in 0 00 0_0 0x0 0X00 0x0_0 0b0 0B00 0b0_0 0o0 0O00 0o0_0; do
-  fixture="$fixture_dir/zero-${literal}.lean"
-  printf 'set_option maxHeartbeats %s in\nexample : True := by trivial\n' \
-    "$literal" > "$fixture"
-  expect_rejected "$fixture" 'unlimited maxHeartbeats'
+  expect_rejected "zero-${literal}" 'unlimited maxHeartbeats' \
+    "set_option maxHeartbeats ${literal} in example : True := by trivial"
 done
 
-cat > "$fixture_dir/comments-and-strings.lean" <<'EOF'
--- private axiom mentionedInComment : True
-/- Nested comments may mention set_option
-   maxHeartbeats 0 and /- sorry -/ safely. -/
-def policyWords : String := "admit native_decide CertifiedArtifact"
-def unicodeIdentifiers (βsorry sorryβ βsorryAx sorryAxβ : Nat) : Nat :=
-  βsorry + sorryβ + βsorryAx + sorryAxβ
-def interpolationText : String := s!"literal sorry; expression {"sorry"}"
-#check m!"literal sorry; expression {"sorry"}"
-#check f!"literal sorry; expression {"sorry"}"
-macro "safePolicyProbe " message:interpolatedStr(term) : command =>
-  `(command| #check $message)
-safePolicyProbe "literal sorry; expression {"sorry"}"
-def rawPolicyText : String := r###"sorry admit axiom " quoted"###
-def suffixIdentifiers (sorry? sorry! sorryAx? sorryAx! : Nat) : Nat :=
-  sorry? + sorry! + sorryAx? + sorryAx!
-def subscriptIdentifiers (sorry₀ sorryAx₉ : Nat) : Nat := sorry₀ + sorryAx₉
-def symbolIdentifiers (℘sorry sorry℘ ℘sorryAx sorryAx℘ : Nat) : Nat :=
-  ℘sorry + sorry℘ + ℘sorryAx + sorryAx℘
-set_option maxHeartbeats 1000 in
+cat > "$fixture_dir/accepted.lean" <<'EOF'
+#print axioms existingTheorem
+set_option maxHeartbeats 1000000 in
 example : True := by trivial
 EOF
-
-python3 "$scanner" "$fixture_dir/comments-and-strings.lean"
+python3 "$scanner" "$fixture_dir/accepted.lean"
 
 for literal in 1 01 1_0 0x1 0X10 0x1_0 0b1 0B10 0b1_0 0o1 0O10 0o1_0; do
-  fixture="$fixture_dir/nonzero-${literal}.lean"
   printf 'set_option maxHeartbeats %s in\nexample : True := by trivial\n' \
-    "$literal" > "$fixture"
-  python3 "$scanner" "$fixture"
+    "$literal" > "$fixture_dir/nonzero-${literal}.lean"
+  python3 "$scanner" "$fixture_dir/nonzero-${literal}.lean"
 done
-printf 'Lean proof-policy scanner self-test: PASS\n'
+
+printf 'Conservative Lean proof-policy scanner self-test: PASS\n'
