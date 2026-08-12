@@ -30,7 +30,7 @@ theorem pointAddPostState1_toLawful (st : EvmState)
     (by decide) (by decide) (by decide)
   simpa only [pointAddPostState1, pointAddPostSquareState, pow_two] using h
 
-private theorem pointAddPostState1_fp2At_after (st : EvmState)
+theorem pointAddPostState1_fp2At_after (st : EvmState)
     (ptr : U256) (hptrEnd : ptr.toNat + 96 < 2 ^ 256)
     (hptrHigh : 1920 ≤ ptr.toNat)
     (hafter : 2816 ≤ ptr.toNat) :
@@ -39,7 +39,7 @@ private theorem pointAddPostState1_fp2At_after (st : EvmState)
   exact fp2MulFinalState_fp2At_after_out st 2688 2048 2048 ptr
     hptrEnd hptrHigh (by rw [nat_2688]; omega) (by decide)
 
-private theorem pointAddPostLeftReadState_fp2At (st : EvmState)
+theorem pointAddPostLeftReadState_fp2At (st : EvmState)
     (ptr : U256) :
     fp2At (pointAddPostLeftReadState st) ptr = fp2At st ptr := by
   rfl
