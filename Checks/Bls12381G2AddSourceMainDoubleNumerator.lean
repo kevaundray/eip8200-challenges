@@ -1,0 +1,8 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainDoubleNumerator
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check mainDoubleState1_canonical
+#check mainDoubleState1_toLawful
+#check mainDoubleState2_canonical
+#check mainDoubleState2_toLawful
