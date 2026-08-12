@@ -39,7 +39,7 @@ private theorem exec_pointAddYZeroBranch (yst : EvmState) (out left right : U256
       pointAddYZeroState yst out left right, .leave) := by
   rfl
 
-private theorem soundStmt {n funs V st stmt V' st' outcome}
+theorem soundPointAddYZeroStmt {n funs V st stmt V' st' outcome}
     (h : Interp.execStmt Challenge.EvmProof.modexpExec n funs V st stmt =
       .ok (V', st', outcome)) :
     ExecStmt Challenge.EvmProof.modexpExec.toDialect funs V st stmt
@@ -56,6 +56,13 @@ theorem step_pointAddYZeroBranch (yst : EvmState) (out left right : U256)
       (pointAddYZeroState yst out left right) .leave := by
   rw [pointAddYZeroStmt_eq]
   exact Step.ifTrue (step_pointAddYZero yst out left right) hzero
-    (soundStmt (exec_pointAddYZeroBranch yst out left right))
+    (soundPointAddYZeroStmt (exec_pointAddYZeroBranch yst out left right))
+
+theorem step_pointAddYZeroBody (yst : EvmState) (out left right : U256) :
+    ExecStmt Challenge.EvmProof.modexpExec.toDialect pointAddBodyFuns
+      (pointAddYSumEnv yst out left right) (pointAddYSumState yst out left right)
+      (.block pointAddYZeroBody) (pointAddYSumEnv yst out left right)
+      (pointAddYZeroState yst out left right) .leave :=
+  soundPointAddYZeroStmt (exec_pointAddYZeroBranch yst out left right)
 
 end Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
