@@ -42,8 +42,8 @@ theorem pointAddUnequalDeltaConcreteEnv_lo (yst : EvmState)
 
 private theorem pointAddUnequalXSubEnv_lambdaHi (yst : EvmState)
     (out left right : U256) :
-    VEnv.get (pointAddUnequalXSubEnv yst out left right) "\x00120" =
-      some (pointAddDoubleLambdaResult yst out left right).1 := by
+    VEnv.get (pointAddUnequalXSubEnv yst out left right) "\x00134" =
+      some (pointAddUnequalLambdaResult yst out left right).1 := by
   rw [pointAddUnequalXSubEnv_eq]
   rw [venv_get_set_ne _ _ _ _ (by decide)]
   rw [venv_get_set_ne _ _ _ _ (by decide)]
@@ -54,8 +54,8 @@ private theorem pointAddUnequalXSubEnv_lambdaHi (yst : EvmState)
 
 private theorem pointAddUnequalXSubEnv_lambdaLo (yst : EvmState)
     (out left right : U256) :
-    VEnv.get (pointAddUnequalXSubEnv yst out left right) "\x00121" =
-      some (pointAddDoubleLambdaResult yst out left right).2 := by
+    VEnv.get (pointAddUnequalXSubEnv yst out left right) "\x00135" =
+      some (pointAddUnequalLambdaResult yst out left right).2 := by
   rw [pointAddUnequalXSubEnv_eq]
   rw [venv_get_set_ne _ _ _ _ (by decide)]
   rw [venv_get_set_ne _ _ _ _ (by decide)]
@@ -66,26 +66,26 @@ private theorem pointAddUnequalXSubEnv_lambdaLo (yst : EvmState)
 
 theorem pointAddUnequalDeltaConcreteEnv_lambdaHi (yst : EvmState)
     (out left right : U256) :
-    VEnv.get (pointAddUnequalDeltaConcreteEnv yst out left right) "\x00120" =
-      some (pointAddDoubleLambdaResult yst out left right).1 := by
+    VEnv.get (pointAddUnequalDeltaConcreteEnv yst out left right) "\x00134" =
+      some (pointAddUnequalLambdaResult yst out left right).1 := by
   rw [pointAddUnequalDeltaConcreteEnv, pointAddUnequalDeltaEnv_eq]
   rw [venv_get_set_ne _ _ _ _ (by decide)]
   rw [venv_get_set_ne _ _ _ _ (by decide)]
   change VEnv.get
-    (pointAddUnequalDeltaInitialConcreteEnv yst out left right) "\x00120" = _
+    (pointAddUnequalDeltaInitialConcreteEnv yst out left right) "\x00134" = _
   rw [pointAddUnequalDeltaInitialConcreteEnv]
   rw [venv_get_append_of_names_ne _ _ _ (by simp [bindZeros])]
   exact pointAddUnequalXSubEnv_lambdaHi yst out left right
 
 theorem pointAddUnequalDeltaConcreteEnv_lambdaLo (yst : EvmState)
     (out left right : U256) :
-    VEnv.get (pointAddUnequalDeltaConcreteEnv yst out left right) "\x00121" =
-      some (pointAddDoubleLambdaResult yst out left right).2 := by
+    VEnv.get (pointAddUnequalDeltaConcreteEnv yst out left right) "\x00135" =
+      some (pointAddUnequalLambdaResult yst out left right).2 := by
   rw [pointAddUnequalDeltaConcreteEnv, pointAddUnequalDeltaEnv_eq]
   rw [venv_get_set_ne _ _ _ _ (by decide)]
   rw [venv_get_set_ne _ _ _ _ (by decide)]
   change VEnv.get
-    (pointAddUnequalDeltaInitialConcreteEnv yst out left right) "\x00121" = _
+    (pointAddUnequalDeltaInitialConcreteEnv yst out left right) "\x00135" = _
   rw [pointAddUnequalDeltaInitialConcreteEnv]
   rw [venv_get_append_of_names_ne _ _ _ (by simp [bindZeros])]
   exact pointAddUnequalXSubEnv_lambdaLo yst out left right
