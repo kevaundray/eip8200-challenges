@@ -5,9 +5,9 @@ set_option warningAsError true
 /-!
 # Bounded G1ADD byte-assembly checks
 
-The 1,051 lowered instructions are checked in blocks of at most 100.  This
+The 1,083 lowered instructions are checked in blocks of at most 100.  This
 keeps kernel reduction bounded while preserving an ordinary proof that their
-assembled bytes equal the explicit 1,674-byte runtime.
+assembled bytes equal the explicit 1,723-byte runtime.
 -/
 
 namespace Challenge.Bls12381G1Add.Reference.Proofs.Compilation
@@ -35,9 +35,9 @@ def referenceByteOffset : Nat → Nat
   | 6 => 1022
   | 7 => 1177
   | 8 => 1325
-  | 9 => 1463
-  | 10 => 1603
-  | _ => 1674
+  | 9 => 1471
+  | 10 => 1609
+  | _ => 1723
 
 def referenceFrozenBytesChunk (index : Nat) : List UInt8 :=
   (frozenReferenceBytes.drop (referenceByteOffset index)).take

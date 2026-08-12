@@ -5,9 +5,7 @@ set_option warningAsError true
 /-!
 # Frozen normalized G1ADD block
 
-This is the explicit normalized Yul AST compiled into the checked reference
-runtime.  Keeping it as ordinary Lean data makes the compiler certificate
-kernel-reducible; the source parser equivalence is checked separately.
+This is generated ordinary Lean data for the exact normalized source AST.
 -/
 
 namespace Challenge.Bls12381G1Add.Reference.Proofs.Compilation
@@ -793,6 +791,32 @@ def frozenReferenceBlock : Block Op :=
               (YulSemantics.EVM.Op.mload)
               [YulSemantics.Expr.lit (YulSemantics.Literal.number 224)]]])
       [YulSemantics.Stmt.exprStmt
+         (YulSemantics.Expr.call
+           "\x0012"
+           [YulSemantics.Expr.lit (YulSemantics.Literal.number 0),
+            YulSemantics.Expr.lit (YulSemantics.Literal.number 0),
+            YulSemantics.Expr.lit (YulSemantics.Literal.number 0),
+            YulSemantics.Expr.lit (YulSemantics.Literal.number 0)]),
+       YulSemantics.Stmt.exprStmt
+         (YulSemantics.Expr.builtin
+           (YulSemantics.EVM.Op.ret)
+           [YulSemantics.Expr.lit (YulSemantics.Literal.number 0),
+            YulSemantics.Expr.lit (YulSemantics.Literal.number 128)])],
+    YulSemantics.Stmt.cond
+      (YulSemantics.Expr.call
+        "\x002"
+        [YulSemantics.Expr.builtin (YulSemantics.EVM.Op.mload) [YulSemantics.Expr.lit (YulSemantics.Literal.number 64)],
+         YulSemantics.Expr.builtin
+           (YulSemantics.EVM.Op.mload)
+           [YulSemantics.Expr.lit (YulSemantics.Literal.number 96)]])
+      [YulSemantics.Stmt.exprStmt
+         (YulSemantics.Expr.call
+           "\x0012"
+           [YulSemantics.Expr.lit (YulSemantics.Literal.number 0),
+            YulSemantics.Expr.lit (YulSemantics.Literal.number 0),
+            YulSemantics.Expr.lit (YulSemantics.Literal.number 0),
+            YulSemantics.Expr.lit (YulSemantics.Literal.number 0)]),
+       YulSemantics.Stmt.exprStmt
          (YulSemantics.Expr.builtin
            (YulSemantics.EVM.Op.ret)
            [YulSemantics.Expr.lit (YulSemantics.Literal.number 0),
@@ -967,4 +991,3 @@ def frozenReferenceBlock : Block Op :=
      [YulSemantics.Expr.lit (YulSemantics.Literal.number 0), YulSemantics.Expr.lit (YulSemantics.Literal.number 128)])]
 
 end Challenge.Bls12381G1Add.Reference.Proofs.Compilation
-
