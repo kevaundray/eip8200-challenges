@@ -186,6 +186,10 @@ theorem pointAddDoubleInvBody_eq : pointAddDoubleInvBody =
       pointAddDoubleInvStmt10, pointAddDoubleInvStmt11,
       pointAddDoubleInvStmt12, pointAddDoubleInvStmt13] := by rfl
 
+theorem hoist_pointAddDoubleInvBody :
+    hoist Challenge.EvmProof.modexpExec.toDialect pointAddDoubleInvBody = [] := by
+  rfl
+
 theorem pointAddDoubleInvStmt9_eq : pointAddDoubleInvStmt9 =
     .cond
       (.builtin .iszero
