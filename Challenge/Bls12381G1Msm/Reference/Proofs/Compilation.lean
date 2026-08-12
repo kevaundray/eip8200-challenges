@@ -1,0 +1,62 @@
+import Challenge.Bls12381G1Msm.Reference.Bytecode
+import Challenge.Bls12381G1Msm.Reference.Proofs.FrozenRawBlock
+import Challenge.Bls12381G1Msm.Reference.Proofs.FrozenOptimizedBlock
+import YulEvmCompiler.Optimizer.Implementation.Pipeline
+
+set_option warningAsError true
+
+/-!
+# G1MSM source/compiler boundary
+
+This module exposes only the exact raw block and optimized compiler candidate.
+Arithmetic and MSM semantics remain outside this executable boundary.
+-/
+
+namespace Challenge.Bls12381G1Msm.Reference.Proofs.Compilation
+
+open YulSemantics (Block)
+open YulSemantics.EVM (Op ExternalCalls ExternalCreates)
+open YulEvmCompiler
+
+def referenceParsedBlock : Block Op :=
+  Challenge.Bls12381G1Msm.referenceBlock?.getD []
+
+def referenceParsedRawBlock : Block Op :=
+  YulParser.pruneLinkerBlock (YulParser.decodeValueStmts referenceParsedBlock)
+
+/-- Proof-facing raw source block. The parser equality is kept as a separate
+executable regression because the parser itself is a partial definition. -/
+def referenceRawBlock : Block Op := frozenReferenceRawBlock
+
+def referenceNormalizedBlock : Block Op :=
+  Optimizer.Normalize.normalize
+    (D := YulSemantics.EVM.evmWithExternal ExternalCalls.none ExternalCreates.none)
+    referenceRawBlock
+
+def referenceComputedOptimizedBlock : Block Op :=
+  (Optimizer.optimizerPipeline
+    (calls := ExternalCalls.none) (creates := ExternalCreates.none)).run
+      referenceNormalizedBlock
+
+/-- Proof-facing optimized source block. Optimizer equality is retained as a
+separate executable regression rather than unfolded in semantic proofs. -/
+def referenceCompiledBlock : Block Op := frozenReferenceOptimizedBlock
+
+def referenceCleanedLayoutBlock : Block Op :=
+  Optimizer.cleanupAfterLayoutBlock
+    (calls := ExternalCalls.none) (creates := ExternalCreates.none)
+    (Optimizer.stackLayoutBlock referenceCompiledBlock)
+
+def referenceLayoutBlock : Block Op :=
+  Optimizer.stackLayoutBlock referenceCompiledBlock
+
+/-- Exact first optimized fallback chain used by `compileSource`. -/
+def referenceCompile? : Option (List Instr) :=
+  compile referenceCompiledBlock <|>
+    compile referenceCleanedLayoutBlock <|>
+    compile referenceLayoutBlock
+
+def referenceCompiledBytecode? : Option ByteArray :=
+  referenceCompile?.map assemble
+
+end Challenge.Bls12381G1Msm.Reference.Proofs.Compilation

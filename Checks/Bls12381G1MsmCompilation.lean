@@ -1,0 +1,14 @@
+import Challenge.Bls12381G1Msm.Reference.Proofs.Compilation
+
+set_option warningAsError true
+
+open Challenge.Bls12381G1Msm.Reference.Proofs.Compilation
+
+#guard toString (repr referenceParsedRawBlock) ==
+  toString (repr referenceRawBlock)
+#guard toString (repr referenceComputedOptimizedBlock) ==
+  toString (repr referenceCompiledBlock)
+#guard (YulEvmCompiler.compile referenceCompiledBlock).isNone
+#guard (YulEvmCompiler.compile referenceCleanedLayoutBlock).isSome
+#guard referenceCompile?.isSome
+#guard referenceCompiledBytecode? = some Challenge.Bls12381G1Msm.referenceBytecode
