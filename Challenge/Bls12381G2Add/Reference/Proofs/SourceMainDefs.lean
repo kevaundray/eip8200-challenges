@@ -73,6 +73,50 @@ def mainDecodedState (yst : EvmState) : EvmState :=
   let s14 := mainStoreWord s13 448
   mainStoreWord s14 480
 
+theorem mainDecodedState4_memory (yst : EvmState) :
+    (mainDecodedState4 yst).memory =
+      storeWord
+        (storeWord
+          (storeWord
+            (storeWord yst.memory 0 (mainInputWord yst 0))
+            32 (mainInputWord yst 32))
+          64 (mainInputWord yst 64))
+        96 (mainInputWord yst 96) := by
+  rfl
+
+theorem mainDecodedState8_memory (yst : EvmState) :
+    (mainDecodedState8 yst).memory =
+      storeWord
+        (storeWord
+          (storeWord
+            (storeWord (mainDecodedState4 yst).memory 128 (mainInputWord yst 128))
+            160 (mainInputWord yst 160))
+          192 (mainInputWord yst 192))
+        224 (mainInputWord yst 224) := by
+  rfl
+
+theorem mainDecodedState12_memory (yst : EvmState) :
+    (mainDecodedState12 yst).memory =
+      storeWord
+        (storeWord
+          (storeWord
+            (storeWord (mainDecodedState8 yst).memory 256 (mainInputWord yst 256))
+            288 (mainInputWord yst 288))
+          320 (mainInputWord yst 320))
+        352 (mainInputWord yst 352) := by
+  rfl
+
+theorem mainDecodedState_memory (yst : EvmState) :
+    (mainDecodedState yst).memory =
+      storeWord
+        (storeWord
+          (storeWord
+            (storeWord (mainDecodedState12 yst).memory 384 (mainInputWord yst 384))
+            416 (mainInputWord yst 416))
+          448 (mainInputWord yst 448))
+        480 (mainInputWord yst 480) := by
+  rfl
+
 def mainDecodedWord (yst : EvmState) (offset : Nat) : U256 :=
   loadWord (mainDecodedState yst).memory offset
 
