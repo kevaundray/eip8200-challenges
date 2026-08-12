@@ -1,4 +1,5 @@
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2InvRefinement
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceFpInvMemory
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFpMulMemory
 
 set_option warningAsError true
@@ -64,6 +65,74 @@ theorem fp2InvAfterSquare1Stores_square1 (yst : EvmState) (a : U256) :
     loadWord_storeWord_same, loadWord_storeWord_same]
   rfl
 
+theorem fp2InvAfterSquare0Stores_loadWord_high (yst : EvmState) (a : U256)
+    (offset : Nat) (hstart : 1600 ≤ offset) :
+    loadWord (fp2InvAfterSquare0Stores yst a).memory offset =
+      loadWord yst.memory offset := by
+  rw [fp2InvAfterSquare0Stores, fp2InvAfterSquare0High]
+  change loadWord
+    (storeWord
+      (storeWord (fp2InvAfterSquare0Call yst a).memory 1536
+        (fp2InvSquare0 yst a).1)
+      1568 (fp2InvSquare0 yst a).2) offset = _
+  rw [loadWord_storeWord_disjoint _ 1568 offset _ (by omega),
+    loadWord_storeWord_disjoint _ 1536 offset _ (by omega)]
+  unfold fp2InvAfterSquare0Call
+  rw [fpMulFinalState_loadWord_after_scratch (hstart := by omega)]
+  rfl
+
+theorem fp2InvAfterSquare1Stores_loadWord_high (yst : EvmState) (a : U256)
+    (offset : Nat) (hstart : 1664 ≤ offset) :
+    loadWord (fp2InvAfterSquare1Stores yst a).memory offset =
+      loadWord yst.memory offset := by
+  rw [fp2InvAfterSquare1Stores, fp2InvAfterSquare1High]
+  change loadWord
+    (storeWord
+      (storeWord (fp2InvAfterSquare1Call yst a).memory 1600
+        (fp2InvSquare1 yst a).1)
+      1632 (fp2InvSquare1 yst a).2) offset = _
+  rw [loadWord_storeWord_disjoint _ 1632 offset _ (by omega),
+    loadWord_storeWord_disjoint _ 1600 offset _ (by omega)]
+  unfold fp2InvAfterSquare1Call
+  rw [fpMulFinalState_loadWord_after_scratch (hstart := by omega)]
+  rw [fp2InvAfterSquare1Reads, fp2AddReadState_memory]
+  exact fp2InvAfterSquare0Stores_loadWord_high yst a offset (by omega)
+
+theorem fp2InvAfterScalarStores_scalar (yst : EvmState) (a : U256) :
+    fp2InvScalarStored yst a = pairWords (fp2InvScalar yst a) := by
+  rw [fp2InvScalarStored, fp2InvAfterScalarStores, fp2InvAfterScalarHigh]
+  change fpWords
+    (loadWord
+      (storeWord
+        (storeWord (fp2InvAfterScalarCall yst a).memory 1664
+          (fp2InvScalar yst a).1)
+        1696 (fp2InvScalar yst a).2) 1664)
+    (loadWord
+      (storeWord
+        (storeWord (fp2InvAfterScalarCall yst a).memory 1664
+          (fp2InvScalar yst a).1)
+        1696 (fp2InvScalar yst a).2) 1696) = _
+  rw [loadWord_storeWord_disjoint _ 1696 1664 _ (by omega),
+    loadWord_storeWord_same, loadWord_storeWord_same]
+  rfl
+
+theorem fp2InvAfterScalarStores_loadWord_high (yst : EvmState) (a : U256)
+    (offset : Nat) (hstart : 1728 ≤ offset) :
+    loadWord (fp2InvAfterScalarStores yst a).memory offset =
+      loadWord yst.memory offset := by
+  rw [fp2InvAfterScalarStores, fp2InvAfterScalarHigh]
+  change loadWord
+    (storeWord
+      (storeWord (fp2InvAfterScalarCall yst a).memory 1664
+        (fp2InvScalar yst a).1)
+      1696 (fp2InvScalar yst a).2) offset = _
+  rw [loadWord_storeWord_disjoint _ 1696 offset _ (by omega),
+    loadWord_storeWord_disjoint _ 1664 offset _ (by omega)]
+  unfold fp2InvAfterScalarCall
+  rw [fpInvFinalState_loadWord_after_scratch (hstart := by omega)]
+  rw [fp2InvAfterNormReads, fp2AddReadState_memory]
+  exact fp2InvAfterSquare1Stores_loadWord_high yst a offset (by omega)
+
 theorem fp2InvNorm_eq_squares (yst : EvmState) (a : U256) :
     pairWords (fp2InvNorm yst a) =
       Fp.addSource (pairWords (fp2InvSquare0 yst a))
@@ -83,22 +152,6 @@ theorem fp2InvNorm_hi_lt (yst : EvmState) (a : U256)
     (h1 : Fp.Canonical (pairWords (fp2InvSquare1 yst a))) :
     (fp2InvNorm yst a).1.toNat < 2 ^ 128 :=
   (fp2InvNorm_canonical yst a h0 h1).1
-
-theorem fp2InvAfterSquare0Stores_loadWord_high (yst : EvmState) (a : U256)
-    (offset : Nat) (hstart : 1600 ≤ offset) :
-    loadWord (fp2InvAfterSquare0Stores yst a).memory offset =
-      loadWord yst.memory offset := by
-  rw [fp2InvAfterSquare0Stores, fp2InvAfterSquare0High]
-  change loadWord
-    (storeWord
-      (storeWord (fp2InvAfterSquare0Call yst a).memory 1536
-        (fp2InvSquare0 yst a).1)
-      1568 (fp2InvSquare0 yst a).2) offset = _
-  rw [loadWord_storeWord_disjoint _ 1568 offset _ (by omega),
-    loadWord_storeWord_disjoint _ 1536 offset _ (by omega)]
-  unfold fp2InvAfterSquare0Call
-  rw [fpMulFinalState_loadWord_after_scratch (hstart := by omega)]
-  rfl
 
 theorem fp2InvSquare1Input_eq (yst : EvmState) (a : U256)
     (haHigh : 1920 ≤ a.toNat) (ha : a.toNat + 96 < 2 ^ 256) :

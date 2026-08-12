@@ -13,3 +13,6 @@ open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 #check fp2InvSquares_canonical
 #check fp2InvNorm_hi_lt_of_input
 #check step_fp2Inv_of_input
+#check fp2InvAfterSquare1Stores_loadWord_high
+#check fp2InvAfterScalarStores_scalar
+#check fp2InvAfterScalarStores_loadWord_high
