@@ -23,11 +23,11 @@ def sourcePoint2 (yst : EvmState) : WirePoint :=
       (Fp2.toField (sourceFp2 yst 384))
   else .infinity
 
-private theorem toField_eq_zero_of_repr_eq_zero {a : Fp2.Repr}
+theorem toField_eq_zero_of_repr_eq_zero {a : Fp2.Repr}
     (h : a = Challenge.Bls12381.ProofSupport.Fp2.zero) : Fp2.toField a = 0 := by
   rw [h, Fp2.toField_zero]
 
-private theorem wireFp2_eq_zero
+theorem wireFp2_eq_zero
     (a : EvmSemantics.Crypto.Bls12381.Fp2)
     (h0 : a.c0.val = 0) (h1 : a.c1.val = 0) : a = 0 := by
   have hc0 : a.c0 = 0 := Fin.ext h0
@@ -37,7 +37,7 @@ private theorem wireFp2_eq_zero
   subst_vars
   rfl
 
-private theorem repr_eq_zero_of_toField_eq_zero {a : Fp2.Repr}
+theorem repr_eq_zero_of_toField_eq_zero {a : Fp2.Repr}
     (ha : Fp2.Canonical a) (hzero : Fp2.toField a = 0) :
     a = Challenge.Bls12381.ProofSupport.Fp2.zero := by
   apply Fp2.eq_zero_of_isZeroSource_true
