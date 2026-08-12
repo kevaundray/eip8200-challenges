@@ -26,6 +26,16 @@ example (memory : Nat → UInt8) (dst size : Nat) (data : List UInt8)
       YulSemantics.EVM.wordFrom data start :=
   Challenge.EvmProof.loadWord_copyReturn memory dst size data start hsize hdata
 
+example (memory : Nat → UInt8) (dst size : Nat) (data : List UInt8)
+    (start width : Nat)
+    (hdisjoint : start + width ≤ dst ∨
+      dst + min size data.length ≤ start) :
+    YulSemantics.EVM.readBytes
+        (YulSemantics.EVM.copyReturn memory dst size data) start width =
+      YulSemantics.EVM.readBytes memory start width :=
+  Challenge.EvmProof.readBytes_copyReturn_disjoint
+    memory dst size data start width hdisjoint
+
 /-- info: 'Challenge.EvmProof.copyReturn_inside' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Challenge.EvmProof.copyReturn_inside
@@ -33,6 +43,10 @@ example (memory : Nat → UInt8) (dst size : Nat) (data : List UInt8)
 /-- info: 'Challenge.EvmProof.loadWord_copyReturn' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Challenge.EvmProof.loadWord_copyReturn
+
+/-- info: 'Challenge.EvmProof.readBytes_copyReturn_disjoint' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Challenge.EvmProof.readBytes_copyReturn_disjoint
 
 /-- info: 'Challenge.EvmProof.MemMatch.copyReturn' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

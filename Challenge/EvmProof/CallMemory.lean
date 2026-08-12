@@ -95,6 +95,24 @@ theorem copyReturn_inside (memory : Nat → UInt8) (dst size : Nat)
   · simp only [Nat.add_sub_cancel_left]
   · omega
 
+/-- A call-return copy outside a read window leaves that window unchanged. -/
+theorem readBytes_copyReturn_disjoint (memory : Nat → UInt8)
+    (dst size : Nat) (data : List UInt8) (start width : Nat)
+    (hdisjoint : start + width ≤ dst ∨
+      dst + min size data.length ≤ start) :
+    YulSemantics.EVM.readBytes
+        (YulSemantics.EVM.copyReturn memory dst size data) start width =
+      YulSemantics.EVM.readBytes memory start width := by
+  unfold YulSemantics.EVM.readBytes
+  apply List.map_congr_left
+  intro i hi
+  have hi' : i < width := by simpa using hi
+  unfold YulSemantics.EVM.copyReturn
+  rw [if_neg]
+  rcases hdisjoint with hbefore | hafter
+  · omega
+  · omega
+
 /-- A full word wholly inside a return-copy window is the corresponding
 zero-padded word of the returned byte list. -/
 theorem loadWord_copyReturn (memory : Nat → UInt8) (dst size : Nat)
