@@ -16,6 +16,12 @@ open Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
 #guard_msgs in
 #print axioms eval_fpEq
 
+/-- info: 'Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics.step_fpZero_of_args' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_fpZero_of_args
+
 /-- info: 'Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics.step_fpEq_of_args' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/

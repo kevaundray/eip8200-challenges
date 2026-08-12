@@ -64,6 +64,50 @@ theorem eval_fpEq (ahi alo bhi blo : U256) (yst : EvmState) :
     modexpExec, modexpBuiltinFn, stepOp, bin, fpEqValue,
     Dialect.zero, VEnv.get, VEnv.setMany, VEnv.set, bindZeros, restore]
 
+/-- Relational call boundary for `fpZero`, preserving the state produced by
+its (possibly effectful) argument evaluation. -/
+theorem step_fpZero_of_args {funs V st argState args} (hi lo : U256)
+    (hargs : EvalArgs modexpExec.toDialect funs V st args
+      (.vals [hi, lo] argState))
+    (hlookup : lookupFun funs "\x002" = some (fpZeroDecl, sourceFuns)) :
+    EvalExpr modexpExec.toDialect funs V st (.call "\x002" args)
+      (.vals [fpZeroValue hi lo] argState) := by
+  let initial : VEnv modexpExec.toDialect :=
+    [("\x0026", hi), ("\x0027", lo), ("\x0028", 0)]
+  let final : VEnv modexpExec.toDialect :=
+    [("\x0026", hi), ("\x0027", lo), ("\x0028", fpZeroValue hi lo)]
+  have hlo : EvalExpr modexpExec.toDialect ([] :: sourceFuns) initial argState
+      (.var "\x0027") (.vals [lo] argState) := Step.var rfl
+  have hzlo : EvalExpr modexpExec.toDialect ([] :: sourceFuns) initial argState
+      (.builtin .iszero [.var "\x0027"])
+      (.vals [b2w (lo = 0)] argState) :=
+    Step.builtinOk (Step.argsCons Step.argsNil hlo) rfl
+  have hhi : EvalExpr modexpExec.toDialect ([] :: sourceFuns) initial argState
+      (.var "\x0026") (.vals [hi] argState) := Step.var rfl
+  have hzhi : EvalExpr modexpExec.toDialect ([] :: sourceFuns) initial argState
+      (.builtin .iszero [.var "\x0026"])
+      (.vals [b2w (hi = 0)] argState) :=
+    Step.builtinOk (Step.argsCons Step.argsNil hhi) rfl
+  have hand : EvalExpr modexpExec.toDialect ([] :: sourceFuns) initial argState
+      (.builtin .and
+        [.builtin .iszero [.var "\x0026"],
+          .builtin .iszero [.var "\x0027"]])
+      (.vals [fpZeroValue hi lo] argState) :=
+    Step.builtinOk (Step.argsCons (Step.argsCons Step.argsNil hzlo) hzhi) rfl
+  have hstmt : ExecStmt modexpExec.toDialect ([] :: sourceFuns) initial argState
+      fpZeroStmt final argState .normal := by
+    rw [fpZeroStmt]
+    exact Step.assignVal hand rfl
+  have hseq : ExecStmts modexpExec.toDialect ([] :: sourceFuns) initial argState
+      fpZeroBody final argState .normal := by
+    rw [fpZeroBody_eq]
+    exact Step.seqCons hstmt Step.seqNil
+  have hblock : ExecStmt modexpExec.toDialect sourceFuns initial argState
+      (.block fpZeroBody) (restore initial final) argState .normal := Step.block hseq
+  have hcall := Step.callOk hargs hlookup rfl hblock (Or.inl rfl)
+  simpa [fpZeroDecl, initial, final, fpZeroValue, Dialect.zero, litValue,
+    bindZeros, VEnv.setMany, VEnv.set, VEnv.get, restore] using hcall
+
 /-- Relational call boundary for `fpEq`.  The argument evaluation may touch
 memory; the field predicate itself is pure and preserves that resulting state. -/
 theorem step_fpEq_of_args {funs V st argState args}
