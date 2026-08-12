@@ -108,12 +108,109 @@ theorem fp2AddFinalState_toLawful_after (yst : EvmState)
     haEnd haAfter (by bv_omega)
   have hB := fp2AddScheduledB_eq_after_out yst out a b
     hbEnd hbAfter (by bv_omega)
-  have hca : Fp2.Canonical (fp2AddScheduledA yst out a b) := hA.symm ▸ ha
-  have hcb : Fp2.Canonical (fp2AddScheduledB yst out a b) := hB.symm ▸ hb
+  change Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2AddScheduledA
+      yst out a b =
+    Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At yst a at hA
+  change Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2AddScheduledB
+      yst out a b =
+    Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At yst b at hB
+  have hca : Fp2.Canonical
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2AddScheduledA
+        yst out a b) := by rw [hA]; exact ha
+  have hcb : Fp2.Canonical
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2AddScheduledB
+        yst out a b) := by rw [hB]; exact hb
   change Fp2.toLawful
     (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At
       (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2AddFinalState
         yst out a b) out) = _
+  rw [fp2AddFinalState_output _ _ _ _ houtEnd, fp2AddResult_eq_addSource,
+    Fp2.toLawful_addSource hca hcb, hA, hB]
+
+theorem fp2AddFinalState_canonical_before (yst : EvmState)
+    (out a b : U256)
+    (ha : Fp2.Canonical (fp2At yst a))
+    (hb : Fp2.Canonical (fp2At yst b))
+    (haBefore : a.toNat + 128 ≤ out.toNat)
+    (hbBefore : b.toNat + 128 ≤ out.toNat)
+    (houtEnd : out.toNat + 96 < 2 ^ 256) :
+    Fp2.Canonical (fp2At (fp2AddFinalState yst out a b) out) := by
+  change Fp2.Canonical
+    (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2AddFinalState
+        yst out a b) out)
+  rw [fp2AddFinalState_output _ _ _ _ houtEnd]
+  apply fp2AddResult_canonical
+  · rw [fp2AddScheduledA_eq_before_out _ _ _ _ haBefore (by bv_omega)]
+    exact ha
+  · rw [fp2AddScheduledB_eq_before_out _ _ _ _ hbBefore (by bv_omega)]
+    exact hb
+
+theorem fp2AddFinalState_toLawful_before (yst : EvmState)
+    (out a b : U256)
+    (ha : Fp2.Canonical (fp2At yst a))
+    (hb : Fp2.Canonical (fp2At yst b))
+    (haBefore : a.toNat + 128 ≤ out.toNat)
+    (hbBefore : b.toNat + 128 ≤ out.toNat)
+    (houtEnd : out.toNat + 96 < 2 ^ 256) :
+    Fp2.toLawful (fp2At (fp2AddFinalState yst out a b) out) =
+      Fp2.toLawful (fp2At yst a) + Fp2.toLawful (fp2At yst b) := by
+  have hA := fp2AddScheduledA_eq_before_out yst out a b
+    haBefore (by bv_omega)
+  have hB := fp2AddScheduledB_eq_before_out yst out a b
+    hbBefore (by bv_omega)
+  have hca : Fp2.Canonical
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2AddScheduledA
+        yst out a b) := by rw [hA]; exact ha
+  have hcb : Fp2.Canonical
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2AddScheduledB
+        yst out a b) := by rw [hB]; exact hb
+  change Fp2.toLawful
+    (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2AddFinalState
+        yst out a b) out) = _
+  rw [fp2AddFinalState_output _ _ _ _ houtEnd, fp2AddResult_eq_addSource,
+    Fp2.toLawful_addSource hca hcb, hA, hB]
+
+theorem fp2AddFinalState_canonical_at_out_before (yst : EvmState)
+    (out b : U256)
+    (ha : Fp2.Canonical (fp2At yst out))
+    (hb : Fp2.Canonical (fp2At yst b))
+    (hbBefore : b.toNat + 128 ≤ out.toNat)
+    (houtEnd : out.toNat + 96 < 2 ^ 256) :
+    Fp2.Canonical (fp2At (fp2AddFinalState yst out out b) out) := by
+  change Fp2.Canonical
+    (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2AddFinalState
+        yst out out b) out)
+  rw [fp2AddFinalState_output _ _ _ _ houtEnd]
+  apply fp2AddResult_canonical
+  · rw [fp2AddScheduledA_eq_at_out _ _ _ houtEnd]
+    exact ha
+  · rw [fp2AddScheduledB_eq_before_out _ _ _ _ hbBefore (by bv_omega)]
+    exact hb
+
+theorem fp2AddFinalState_toLawful_at_out_before (yst : EvmState)
+    (out b : U256)
+    (ha : Fp2.Canonical (fp2At yst out))
+    (hb : Fp2.Canonical (fp2At yst b))
+    (hbBefore : b.toNat + 128 ≤ out.toNat)
+    (houtEnd : out.toNat + 96 < 2 ^ 256) :
+    Fp2.toLawful (fp2At (fp2AddFinalState yst out out b) out) =
+      Fp2.toLawful (fp2At yst out) + Fp2.toLawful (fp2At yst b) := by
+  have hA := fp2AddScheduledA_eq_at_out yst out b houtEnd
+  have hB := fp2AddScheduledB_eq_before_out yst out out b
+    hbBefore (by bv_omega)
+  have hca : Fp2.Canonical
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2AddScheduledA
+        yst out out b) := by rw [hA]; exact ha
+  have hcb : Fp2.Canonical
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2AddScheduledB
+        yst out out b) := by rw [hB]; exact hb
+  change Fp2.toLawful
+    (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2AddFinalState
+        yst out out b) out) = _
   rw [fp2AddFinalState_output _ _ _ _ houtEnd, fp2AddResult_eq_addSource,
     Fp2.toLawful_addSource hca hcb, hA, hB]
 
