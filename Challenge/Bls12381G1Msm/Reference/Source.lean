@@ -1,0 +1,26 @@
+import YulParser.Compile
+
+set_option warningAsError true
+
+namespace Challenge.Bls12381G1Msm
+
+open YulSemantics (Block)
+open YulSemantics.EVM (Op)
+
+/-- Proof-friendly naive G1MSM Yul implementation, with an explicit guarded
+scratch region available to the verified compiler's stack-spill fallback. -/
+def referenceSource : String := include_str "reference.yul"
+
+def referenceSourcePath : String :=
+  "Challenge/Bls12381G1Msm/Reference/reference.yul"
+
+def referenceBlock? : Option (Block Op) :=
+  match YulParser.parseSource referenceSource with
+  | some (.block statements) => some statements
+  | _ => none
+
+/-- Bytecode emitted by the verified Yul compiler from `referenceSource`. -/
+def referenceBytecode? : Option ByteArray :=
+  YulParser.compileSource referenceSource
+
+end Challenge.Bls12381G1Msm
