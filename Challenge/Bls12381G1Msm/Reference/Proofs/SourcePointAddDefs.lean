@@ -195,6 +195,24 @@ theorem pointAddYSumArgs_eq : pointAddYSumArgs =
             [.builtin .mload [.lit (.number 1600)], .lit (.number 96)]]] := by
   rfl
 
+def pointAddYZeroCondition : Expr Op :=
+  match pointAddYZeroStmt with
+  | .cond condition _ => condition
+  | _ => .lit (.number 0)
+
+def pointAddYZeroBody : Block Op :=
+  match pointAddYZeroStmt with
+  | .cond _ body => body
+  | _ => []
+
+theorem pointAddYZeroStmt_eq : pointAddYZeroStmt =
+    .cond pointAddYZeroCondition pointAddYZeroBody := by
+  rfl
+
+theorem pointAddYZeroCondition_eq : pointAddYZeroCondition =
+    .call "\x002" [.var "\x00110", .var "\x00111"] := by
+  rfl
+
 theorem pointAddLeftInfinityBody_eq : pointAddLeftInfinityBody =
     [pointAddLeftCopyStmt, .leave] := by
   rfl
