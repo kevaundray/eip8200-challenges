@@ -1,4 +1,5 @@
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFpInvExec
+import Challenge.Bls12381G1Add.Reference.Proofs.SourceFpInvMemory
 import Challenge.EvmProof.CallMemory
 import Challenge.EvmProof.ModexpMemory
 
@@ -13,6 +14,15 @@ re-elaborating the MODEXP input and return-copy graph.
 namespace Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 
 open YulSemantics.EVM
+
+/-- The scalar inversion helper's fixed scratch region starts at byte 1024,
+so decoded point words below it are preserved. -/
+theorem fpInvFinalState_loadWord_before_scratch (yst : EvmState)
+    (hi lo : U256) (offset : Nat) (hend : offset + 32 ≤ 1024) :
+    loadWord (fpInvFinalState yst hi lo).memory offset =
+      loadWord yst.memory offset := by
+  exact Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.fpInvFinalState_loadWord_before_scratch
+    yst hi lo offset hend
 
 theorem fpInvFinalState_readBytes_after_scratch (yst : EvmState)
     (hi lo : U256) (start size : Nat) (hstart : 1328 ≤ start) :
