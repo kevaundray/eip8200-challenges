@@ -150,6 +150,56 @@ theorem fp2SubFinalState_fp2At_after_out (yst : EvmState)
     rw [loadWord_storeWord_disjoint _ _ _ _ (by left; bv_omega),
       loadWord_storeWord_disjoint _ _ _ _ (by left; bv_omega)]
 
+private theorem fp2SubAfterC0Stores_fp2At_after_out (yst : EvmState)
+    (out a b ptr : U256)
+    (hptrEnd : ptr.toNat + 96 < 2 ^ 256)
+    (hafter : out.toNat + 64 ≤ ptr.toNat)
+    (houtEnd : out.toNat + 32 < 2 ^ 256) :
+    fp2At (fp2SubAfterC0Stores yst out a b) ptr = fp2At yst ptr := by
+  apply fp2At_eq_of_loads
+  all_goals
+    unfold fp2SubAfterC0Stores
+    unfold Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubAfterC0Stores
+      Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubAfterC0High
+    change loadWord
+      (storeWord
+        (storeWord
+          (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubAfterC0Reads
+            yst a b).memory out.toNat _)
+        (out + BitVec.ofNat 256 32).toNat _) _ = _
+    rw [loadWord_storeWord_disjoint _ _ _ _ (by left; bv_omega),
+      loadWord_storeWord_disjoint _ _ _ _ (by left; bv_omega)]
+    rfl
+
+theorem fp2SubScheduledA_eq_after_out (yst : EvmState) (out a b : U256)
+    (haEnd : a.toNat + 96 < 2 ^ 256)
+    (haAfter : out.toNat + 64 ≤ a.toNat)
+    (houtEnd : out.toNat + 32 < 2 ^ 256) :
+    fp2SubScheduledA yst out a b = fp2At yst a := by
+  unfold fp2SubScheduledA
+  unfold Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubScheduledA
+  have hp := fp2SubAfterC0Stores_fp2At_after_out yst out a b a
+    haEnd haAfter houtEnd
+  change Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubAfterC0Stores
+        yst out a b) a =
+    Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At yst a at hp
+  rw [hp]
+
+theorem fp2SubScheduledB_eq_after_out (yst : EvmState) (out a b : U256)
+    (hbEnd : b.toNat + 96 < 2 ^ 256)
+    (hbAfter : out.toNat + 64 ≤ b.toNat)
+    (houtEnd : out.toNat + 32 < 2 ^ 256) :
+    fp2SubScheduledB yst out a b = fp2At yst b := by
+  unfold fp2SubScheduledB
+  unfold Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubScheduledB
+  have hp := fp2SubAfterC0Stores_fp2At_after_out yst out a b b
+    hbEnd hbAfter houtEnd
+  change Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At
+      (Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2SubAfterC0Stores
+        yst out a b) b =
+    Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics.fp2At yst b at hp
+  rw [hp]
 private theorem fp2MulAfterRealStores_loadWord_after_out
     (yst : EvmState) (out a b : U256) (offset : Nat)
     (hstart : 1664 ≤ offset) (hafter : out.toNat + 64 ≤ offset)
