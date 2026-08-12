@@ -36,14 +36,41 @@ expect_rejected() {
 expect_rejected "$fixture_dir/private-axiom.lean" 'forbidden axiom declaration'
 expect_rejected "$fixture_dir/split-heartbeats.lean" 'unlimited maxHeartbeats'
 
+cat > "$fixture_dir/interpolated-sorry.lean" <<'EOF'
+def escapedProof : String := s!"{(by sorry : Nat)}"
+EOF
+expect_rejected "$fixture_dir/interpolated-sorry.lean" 'forbidden proof mechanism: sorry'
+
+cat > "$fixture_dir/sorry-ax.lean" <<'EOF'
+example : True := by sorryAx (synthetic := true)
+EOF
+expect_rejected "$fixture_dir/sorry-ax.lean" 'forbidden proof mechanism: sorryAx'
+
+for literal in 0 00 0_0 0x0 0X00 0x0_0 0b0 0B00 0b0_0 0o0 0O00 0o0_0; do
+  fixture="$fixture_dir/zero-${literal}.lean"
+  printf 'set_option maxHeartbeats %s in\nexample : True := by trivial\n' \
+    "$literal" > "$fixture"
+  expect_rejected "$fixture" 'unlimited maxHeartbeats'
+done
+
 cat > "$fixture_dir/comments-and-strings.lean" <<'EOF'
 -- private axiom mentionedInComment : True
 /- Nested comments may mention set_option
    maxHeartbeats 0 and /- sorry -/ safely. -/
 def policyWords : String := "admit native_decide CertifiedArtifact"
+def unicodeIdentifiers (βsorry sorryβ βsorryAx sorryAxβ : Nat) : Nat :=
+  βsorry + sorryβ + βsorryAx + sorryAxβ
+def interpolationText : String := s!"literal sorry; expression {"sorry"}"
 set_option maxHeartbeats 1000 in
 example : True := by trivial
 EOF
 
 python3 "$scanner" "$fixture_dir/comments-and-strings.lean"
+
+for literal in 1 01 1_0 0x1 0X10 0x1_0 0b1 0B10 0b1_0 0o1 0O10 0o1_0; do
+  fixture="$fixture_dir/nonzero-${literal}.lean"
+  printf 'set_option maxHeartbeats %s in\nexample : True := by trivial\n' \
+    "$literal" > "$fixture"
+  python3 "$scanner" "$fixture"
+done
 printf 'Lean proof-policy scanner self-test: PASS\n'

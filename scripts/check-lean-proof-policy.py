@@ -3,104 +3,196 @@
 
 from __future__ import annotations
 
-import re
 import sys
+import unicodedata
+from dataclasses import dataclass
 from pathlib import Path
 
 
-FORBIDDEN_WORDS = ("sorry", "admit", "native_decide", "CertifiedArtifact")
-IDENTIFIER_EDGE = r"A-Za-z0-9_'"
+FORBIDDEN_IDENTIFIERS = {
+    "sorry",
+    "sorryAx",
+    "admit",
+    "native_decide",
+    "CertifiedArtifact",
+}
 
 
-def mask_comments_and_strings(source: str) -> str:
-    """Replace Lean comments and string contents with spaces, preserving lines."""
-    result = list(source)
-    index = 0
-    block_depth = 0
-    in_line_comment = False
-    in_string = False
-    escaped = False
+def mask_comments_and_string_text(source: str) -> str:
+    """Mask comments/string text but retain code in interpolated expressions."""
+    result = ["\n" if character == "\n" else " " for character in source]
 
-    while index < len(source):
-        pair = source[index : index + 2]
-
-        if in_line_comment:
-            if source[index] == "\n":
-                in_line_comment = False
-            else:
-                result[index] = " "
+    def skip_line_comment(index: int) -> int:
+        while index < len(source) and source[index] != "\n":
             index += 1
-            continue
+        return index
 
-        if block_depth:
+    def skip_block_comment(index: int) -> int:
+        depth = 1
+        index += 2
+        while index < len(source) and depth:
+            pair = source[index : index + 2]
             if pair == "/-":
-                result[index] = result[index + 1] = " "
-                block_depth += 1
+                depth += 1
                 index += 2
             elif pair == "-/":
-                result[index] = result[index + 1] = " "
-                block_depth -= 1
+                depth -= 1
                 index += 2
             else:
-                if source[index] != "\n":
-                    result[index] = " "
                 index += 1
-            continue
+        return index
 
-        if in_string:
-            if source[index] != "\n":
-                result[index] = " "
+    def skip_plain_string(index: int) -> int:
+        index += 1
+        escaped = False
+        while index < len(source):
+            character = source[index]
             if escaped:
                 escaped = False
-            elif source[index] == "\\":
+            elif character == "\\":
                 escaped = True
-            elif source[index] == '"':
-                in_string = False
+            elif character == '"':
+                return index + 1
             index += 1
-            continue
+        return index
 
-        if pair == "--":
-            result[index] = result[index + 1] = " "
-            in_line_comment = True
-            index += 2
-        elif pair == "/-":
-            result[index] = result[index + 1] = " "
-            block_depth = 1
-            index += 2
-        elif source[index] == '"':
-            result[index] = " "
-            in_string = True
-            index += 1
-        else:
-            index += 1
+    def scan_interpolated_string(index: int) -> int:
+        index += 1
+        escaped = False
+        while index < len(source):
+            character = source[index]
+            if escaped:
+                escaped = False
+                index += 1
+            elif character == "\\":
+                escaped = True
+                index += 1
+            elif character == '"':
+                return index + 1
+            elif character == "{":
+                index = scan_code(index + 1, stop_at_closing_brace=True)
+            else:
+                index += 1
+        return index
 
+    def scan_code(index: int, *, stop_at_closing_brace: bool = False) -> int:
+        while index < len(source):
+            pair = source[index : index + 2]
+            character = source[index]
+            if pair == "--":
+                index = skip_line_comment(index)
+            elif pair == "/-":
+                index = skip_block_comment(index)
+            elif character == '"':
+                interpolated = index >= 2 and source[index - 2 : index] == "s!"
+                if interpolated:
+                    index = scan_interpolated_string(index)
+                else:
+                    index = skip_plain_string(index)
+            elif stop_at_closing_brace and character == "}":
+                return index + 1
+            elif stop_at_closing_brace and character == "{":
+                result[index] = character
+                index = scan_code(index + 1, stop_at_closing_brace=True)
+            else:
+                result[index] = character
+                index += 1
+        return index
+
+    scan_code(0)
     return "".join(result)
 
 
+def is_identifier_start(character: str) -> bool:
+    if character == "_" or character.isalpha():
+        return True
+    return unicodedata.category(character).startswith(("L", "M"))
+
+
+def is_identifier_continue(character: str) -> bool:
+    if character in "_'" or character.isalnum():
+        return True
+    return unicodedata.category(character).startswith(("L", "M", "N"))
+
+
+@dataclass(frozen=True)
+class Token:
+    text: str
+    start: int
+    kind: str
+
+
+def tokens(masked: str) -> list[Token]:
+    result: list[Token] = []
+    index = 0
+    while index < len(masked):
+        character = masked[index]
+        if character.isspace():
+            index += 1
+        elif is_identifier_start(character):
+            end = index + 1
+            while end < len(masked) and is_identifier_continue(masked[end]):
+                end += 1
+            result.append(Token(masked[index:end], index, "identifier"))
+            index = end
+        elif character.isdecimal():
+            end = index
+            base = 10
+            valid_digits = "0123456789_"
+            if masked[index : index + 2].lower() == "0x":
+                base = 16
+                valid_digits = "0123456789abcdefABCDEF_"
+                end = index + 2
+            elif masked[index : index + 2].lower() == "0b":
+                base = 2
+                valid_digits = "01_"
+                end = index + 2
+            elif masked[index : index + 2].lower() == "0o":
+                base = 8
+                valid_digits = "01234567_"
+                end = index + 2
+            while end < len(masked) and masked[end] in valid_digits:
+                end += 1
+            result.append(Token(masked[index:end], index, f"nat:{base}"))
+            index = end
+        else:
+            result.append(Token(character, index, "symbol"))
+            index += 1
+    return result
+
+
+def nat_value(token: Token) -> int | None:
+    if not token.kind.startswith("nat:"):
+        return None
+    base = int(token.kind.removeprefix("nat:"))
+    spelling = token.text.replace("_", "")
+    if base != 10:
+        spelling = spelling[2:]
+    if not spelling:
+        return None
+    return int(spelling, base)
+
+
 def violations(source: str) -> list[tuple[int, str]]:
-    masked = mask_comments_and_strings(source)
+    masked = mask_comments_and_string_text(source)
+    lexed = tokens(masked)
     findings: list[tuple[int, str]] = []
 
-    for word in FORBIDDEN_WORDS:
-        pattern = re.compile(
-            rf"(?<![{IDENTIFIER_EDGE}]){re.escape(word)}(?![{IDENTIFIER_EDGE}])"
-        )
-        for match in pattern.finditer(masked):
-            line = masked.count("\n", 0, match.start()) + 1
-            findings.append((line, f"forbidden proof mechanism: {word}"))
+    def add(token: Token, message: str) -> None:
+        line = masked.count("\n", 0, token.start) + 1
+        findings.append((line, message))
 
-    axiom_pattern = re.compile(rf"(?<![{IDENTIFIER_EDGE}])axiom(?![{IDENTIFIER_EDGE}])")
-    for match in axiom_pattern.finditer(masked):
-        line = masked.count("\n", 0, match.start()) + 1
-        findings.append((line, "forbidden axiom declaration"))
+    for token in lexed:
+        if token.kind == "identifier" and token.text in FORBIDDEN_IDENTIFIERS:
+            add(token, f"forbidden proof mechanism: {token.text}")
+        if token.kind == "identifier" and token.text == "axiom":
+            add(token, "forbidden axiom declaration")
 
-    heartbeat_pattern = re.compile(
-        rf"(?<![{IDENTIFIER_EDGE}])set_option(?![{IDENTIFIER_EDGE}])"
-        rf"\s+maxHeartbeats\s+0(?![0-9])"
-    )
-    for match in heartbeat_pattern.finditer(masked):
-        line = masked.count("\n", 0, match.start()) + 1
-        findings.append((line, "forbidden unlimited maxHeartbeats setting"))
+    for index in range(len(lexed) - 2):
+        option, name, value = lexed[index : index + 3]
+        if option.text == "set_option" and name.text == "maxHeartbeats":
+            if nat_value(value) == 0:
+                add(option, "forbidden unlimited maxHeartbeats setting")
 
     return sorted(findings)
 

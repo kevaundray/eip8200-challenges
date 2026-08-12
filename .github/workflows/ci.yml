@@ -41,12 +41,15 @@ jobs:
         env:
           DEPENDENCY_HASH: ${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
           PACKAGE_TARGET_HASH: ${{ hashFiles('.github/lean-package-cache-targets') }}
-          SHARED_HASH: ${{ hashFiles('lakefile.toml', 'Challenge/EvmProof.lean', 'Challenge/EvmProof/**/*.lean', 'Checks/EvmProof.lean', 'Challenge/Bls12381.lean', 'Challenge/Bls12381/**/*.lean', 'Challenge/Bls12381/Reference/Artifacts/*.hex', 'Checks/Bls12381*.lean', '!Checks/Bls12381Codec.lean', '!Checks/Bls12381Fp.lean', '!Checks/Bls12381Fp2.lean', '!Checks/Bls12381Fp6.lean', '!Checks/Bls12381Fp12.lean', '!Checks/Bls12381G1Add*.lean', '!Checks/Bls12381G1Msm.lean', '!Checks/Bls12381G1Projective.lean', '!Checks/Bls12381G2Add*.lean', '!Checks/Bls12381G2Msm.lean', '!Checks/Bls12381G2Projective.lean', '!Checks/Bls12381MapFp*.lean', '!Checks/Bls12381Pairing.lean', '!Checks/Bls12381PrimeCertificate.lean', '!Checks/Bls12381PrimeField.lean', '!Checks/Bls12381Conformance.lean', '!Checks/Bls12381ReferenceBaseline.lean') }}
+          SHARED_ARTIFACT_HASH: ${{ hashFiles('Challenge/Bls12381/Reference/Artifacts/*.hex') }}
+          SHARED_SOURCE_HASH: ${{ hashFiles('lakefile.toml', 'Challenge/EvmProof.lean', 'Challenge/EvmProof/**/*.lean', 'Checks/EvmProof.lean', 'Challenge/Bls12381.lean', 'Challenge/Bls12381/**/*.lean', 'Checks/Bls12381*.lean', '!Checks/Bls12381Codec.lean', '!Checks/Bls12381Fp.lean', '!Checks/Bls12381Fp2.lean', '!Checks/Bls12381Fp6.lean', '!Checks/Bls12381Fp12.lean', '!Checks/Bls12381G1Add*.lean', '!Checks/Bls12381G1Msm.lean', '!Checks/Bls12381G1Projective.lean', '!Checks/Bls12381G2Add*.lean', '!Checks/Bls12381G2Msm.lean', '!Checks/Bls12381G2Projective.lean', '!Checks/Bls12381MapFp*.lean', '!Checks/Bls12381Pairing.lean', '!Checks/Bls12381PrimeCertificate.lean', '!Checks/Bls12381PrimeField.lean', '!Checks/Bls12381Conformance.lean', '!Checks/Bls12381ReferenceBaseline.lean') }}
         run: |
           package_key="lake-packages-v4-${{ runner.os }}-${{ runner.arch }}-${DEPENDENCY_HASH}-${PACKAGE_TARGET_HASH}"
-          shared_key="project-shared-v3-${{ runner.os }}-${{ runner.arch }}-${DEPENDENCY_HASH}-${PACKAGE_TARGET_HASH}-${SHARED_HASH}"
+          shared_prefix="project-shared-v4-${{ runner.os }}-${{ runner.arch }}-${DEPENDENCY_HASH}-${PACKAGE_TARGET_HASH}-${SHARED_ARTIFACT_HASH}"
+          shared_key="${shared_prefix}-${SHARED_SOURCE_HASH}"
           echo "package-key=$package_key" >> "$GITHUB_OUTPUT"
           echo "shared-key=$shared_key" >> "$GITHUB_OUTPUT"
+          echo "shared-restore-prefix=${shared_prefix}-" >> "$GITHUB_OUTPUT"
 
       # This cache is the sole owner of dependency-package sources and build
       # outputs. Its target-set hash forces a new immutable cache whenever the
@@ -68,9 +71,7 @@ jobs:
           path: .lake/build
           key: ${{ steps.cache-keys.outputs.shared-key }}
           restore-keys: |
-            project-shared-v3-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
-            project-shared-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
-            project-shared-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+            ${{ steps.cache-keys.outputs.shared-restore-prefix }}
 
       - name: Set up Lean
         uses: leanprover/lean-action@v1
@@ -253,6 +254,7 @@ jobs:
 
       - name: Verify G2ADD soundness
         run: |
+          python3 scripts/test-bls-ci-cache-policy.py
           scripts/test-check-lean-proof-policy.sh
           python3 scripts/check-lean-proof-policy.py \
             Challenge/Bls12381G2Add Challenge/Bls12381G2Add.lean \
