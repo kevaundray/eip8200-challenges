@@ -53,6 +53,13 @@ def pointAddEqualYZeroBody : Block Op :=
 theorem pointAddEqualYZeroStmt_eq : pointAddEqualStmt1 =
     .cond pointAddEqualYZeroCondition pointAddEqualYZeroBody := by rfl
 
+theorem pointAddEqualYZeroCondition_eq : pointAddEqualYZeroCondition =
+    .call "\x0012" [.lit (.number 2048)] := by rfl
+
+theorem pointAddEqualYZeroBody_eq : pointAddEqualYZeroBody =
+    [.exprStmt (.call "\x0026"
+      [.builtin .mload [.lit (.number 1920)]]), .leave] := by rfl
+
 def pointAddUnequalCondition : Expr Op :=
   match pointAddStmt6 with
   | .cond condition _ => condition
