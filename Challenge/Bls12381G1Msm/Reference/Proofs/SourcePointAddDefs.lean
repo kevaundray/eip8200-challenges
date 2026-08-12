@@ -178,6 +178,20 @@ theorem pointAddDoubleXSqArgs_eq : pointAddDoubleXSqArgs =
         [.builtin .mload [.lit (.number 1568)], .lit (.number 32)]]] := by
   rfl
 
+def pointAddDoubleNum2Expr : Expr Op :=
+  match pointAddDoubleNum2Stmt with
+  | .letDecl _ (some expr) => expr
+  | _ => .lit (.number 0)
+
+theorem pointAddDoubleNum2Stmt_eq : pointAddDoubleNum2Stmt =
+    .letDecl ["\x00114", "\x00115"] (some pointAddDoubleNum2Expr) := by
+  rfl
+
+theorem pointAddDoubleNum2Expr_eq : pointAddDoubleNum2Expr =
+    .call "\x004"
+      [.var "\x00112", .var "\x00113", .var "\x00112", .var "\x00113"] := by
+  rfl
+
 def pointAddYSumExpr : Expr Op :=
   match pointAddYSumStmt with
   | .letDecl _ (some expr) => expr
