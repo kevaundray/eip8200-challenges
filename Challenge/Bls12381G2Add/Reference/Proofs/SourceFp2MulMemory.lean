@@ -411,4 +411,85 @@ theorem fp2MulFinalState_c0 (yst : EvmState) (out a b : U256)
       (by omega)]
   simpa [h32] using fp2MulAfterRealStores_result yst out a b (by omega)
 
+theorem fp2MulAfterRealStores_loadProduct (yst : EvmState) (out a b : U256)
+    (offset : Nat) (hend : offset + 32 ≤ 1664)
+    (houtHigh : 1920 ≤ out.toNat) (hout : out.toNat + 32 < 2 ^ 256) :
+    loadWord (fp2MulAfterRealStores yst out a b).memory offset =
+      loadWord (fp2MulAfterV1Stores yst a b).memory offset := by
+  have h32 : (out + BitVec.ofNat 256 32).toNat = out.toNat + 32 := by
+    bv_omega
+  rw [fp2MulAfterRealStores, fp2MulAfterRealHigh]
+  change loadWord
+    (storeWord
+      (storeWord (fp2MulAfterRealReads yst a b).memory out.toNat
+        (fp2MulReal yst a b).1)
+      (out + BitVec.ofNat 256 32).toNat (fp2MulReal yst a b).2) offset = _
+  rw [h32,
+    loadWord_storeWord_disjoint _ (out.toNat + 32) offset _ (by omega),
+    loadWord_storeWord_disjoint _ out.toNat offset _ (by omega)]
+  rfl
+
+theorem fp2MulAfterSumBStores_loadProduct (yst : EvmState) (out a b : U256)
+    (offset : Nat) (hend : offset + 32 ≤ 1664)
+    (houtHigh : 1920 ≤ out.toNat) (hout : out.toNat + 32 < 2 ^ 256) :
+    loadWord (fp2MulAfterSumBStores yst out a b).memory offset =
+      loadWord (fp2MulAfterV1Stores yst a b).memory offset := by
+  rw [fp2MulAfterSumBStores, fp2MulAfterSumBHigh]
+  change loadWord
+    (storeWord
+      (storeWord (fp2MulAfterSumAStores yst out a b).memory 1728
+        (fp2MulSumB yst out a b).1)
+      1760 (fp2MulSumB yst out a b).2) offset = _
+  rw [loadWord_storeWord_disjoint _ 1760 offset _ (by omega),
+    loadWord_storeWord_disjoint _ 1728 offset _ (by omega)]
+  rw [fp2MulAfterSumAStores, fp2MulAfterSumAHigh]
+  change loadWord
+    (storeWord
+      (storeWord (fp2MulAfterRealStores yst out a b).memory 1664
+        (fp2MulSumA yst out a b).1)
+      1696 (fp2MulSumA yst out a b).2) offset = _
+  rw [loadWord_storeWord_disjoint _ 1696 offset _ (by omega),
+    loadWord_storeWord_disjoint _ 1664 offset _ (by omega),
+    fp2MulAfterRealStores_loadProduct _ _ _ _ offset hend houtHigh hout]
+
+theorem fp2MulAfterCrossStores_loadProduct (yst : EvmState) (out a b : U256)
+    (offset : Nat) (hstart : 1328 ≤ offset) (hend : offset + 32 ≤ 1664)
+    (houtHigh : 1920 ≤ out.toNat) (hout : out.toNat + 32 < 2 ^ 256) :
+    loadWord (fp2MulAfterCrossStores yst out a b).memory offset =
+      loadWord (fp2MulAfterV1Stores yst a b).memory offset := by
+  rw [fp2MulAfterCrossStores, fp2MulAfterCrossHigh]
+  change loadWord
+    (storeWord
+      (storeWord (fp2MulAfterCrossCall yst out a b).memory 1792
+        (fp2MulCross yst out a b).1)
+      1824 (fp2MulCross yst out a b).2) offset = _
+  rw [loadWord_storeWord_disjoint _ 1824 offset _ (by omega),
+    loadWord_storeWord_disjoint _ 1792 offset _ (by omega)]
+  unfold fp2MulAfterCrossCall
+  rw [fpMulFinalState_loadWord_after_scratch (hstart := hstart)]
+  have hreads : (fp2MulAfterCrossReads yst out a b).memory =
+      (fp2MulAfterSumBStores yst out a b).memory := rfl
+  rw [hreads,
+    fp2MulAfterSumBStores_loadProduct _ _ _ _ offset hend houtHigh hout]
+
+theorem fp2MulAfterCrossStores_products (yst : EvmState) (out a b : U256)
+    (houtHigh : 1920 ≤ out.toNat) (hout : out.toNat + 32 < 2 ^ 256) :
+    fpWords (loadWord (fp2MulAfterCrossStores yst out a b).memory 1536)
+        (loadWord (fp2MulAfterCrossStores yst out a b).memory 1568) =
+        pairWords (fp2MulV0 yst a b) ∧
+      fpWords (loadWord (fp2MulAfterCrossStores yst out a b).memory 1600)
+        (loadWord (fp2MulAfterCrossStores yst out a b).memory 1632) =
+        pairWords (fp2MulV1 yst a b) := by
+  constructor
+  · rw [fp2MulAfterCrossStores_loadProduct _ _ _ _ 1536 (by omega)
+      (by omega) houtHigh hout,
+    fp2MulAfterCrossStores_loadProduct _ _ _ _ 1568 (by omega)
+      (by omega) houtHigh hout,
+    fp2MulAfterV1Stores_v0]
+  · rw [fp2MulAfterCrossStores_loadProduct _ _ _ _ 1600 (by omega)
+      (by omega) houtHigh hout,
+    fp2MulAfterCrossStores_loadProduct _ _ _ _ 1632 (by omega)
+      (by omega) houtHigh hout,
+    fp2MulAfterV1Stores_v1]
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics

@@ -26,3 +26,7 @@ open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 #check fp2MulAfterVSumStores_loadWord_high
 #check fp2MulFinalState_c1
 #check fp2MulFinalState_c0
+#check fp2MulAfterRealStores_loadProduct
+#check fp2MulAfterSumBStores_loadProduct
+#check fp2MulAfterCrossStores_loadProduct
+#check fp2MulAfterCrossStores_products
