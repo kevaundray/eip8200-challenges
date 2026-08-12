@@ -192,6 +192,20 @@ theorem pointAddDoubleNum2Expr_eq : pointAddDoubleNum2Expr =
       [.var "\x00112", .var "\x00113", .var "\x00112", .var "\x00113"] := by
   rfl
 
+def pointAddDoubleNum3Expr : Expr Op :=
+  match pointAddDoubleNum3Stmt with
+  | .assign _ expr => expr
+  | _ => .lit (.number 0)
+
+theorem pointAddDoubleNum3Stmt_eq : pointAddDoubleNum3Stmt =
+    .assign ["\x00114", "\x00115"] pointAddDoubleNum3Expr := by
+  rfl
+
+theorem pointAddDoubleNum3Expr_eq : pointAddDoubleNum3Expr =
+    .call "\x004"
+      [.var "\x00114", .var "\x00115", .var "\x00112", .var "\x00113"] := by
+  rfl
+
 def pointAddYSumExpr : Expr Op :=
   match pointAddYSumStmt with
   | .letDecl _ (some expr) => expr
