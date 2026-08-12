@@ -9,3 +9,5 @@ open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 #check fp2MulAfterV1Call_load1568
 #check fp2MulAfterV1Stores_v0
 #check fp2MulAfterV1Stores_v1
+#check fp2MulReal_eq_products
+#check fp2MulAfterRealStores_result

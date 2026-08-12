@@ -99,4 +99,38 @@ theorem fp2MulAfterV1Stores_v1 (yst : EvmState) (a b : U256) :
     loadWord_storeWord_same, loadWord_storeWord_same]
   rfl
 
+theorem fp2MulReal_eq_products (yst : EvmState) (a b : U256) :
+    pairWords (fp2MulReal yst a b) =
+      Challenge.Bls12381.ProofSupport.Fp.subSource
+        (pairWords (fp2MulV0 yst a b)) (pairWords (fp2MulV1 yst a b)) := by
+  rw [fp2MulReal_eq_subSource, fp2MulAfterV1Stores_v0,
+    fp2MulAfterV1Stores_v1]
+
+theorem fp2MulAfterRealStores_result (yst : EvmState) (out a b : U256)
+    (hout : out.toNat + 32 < 2 ^ 256) :
+    fpWords
+        (loadWord (fp2MulAfterRealStores yst out a b).memory out.toNat)
+        (loadWord (fp2MulAfterRealStores yst out a b).memory
+          (out + BitVec.ofNat 256 32).toNat) =
+      pairWords (fp2MulReal yst a b) := by
+  rw [fp2MulAfterRealStores, fp2MulAfterRealHigh]
+  change fpWords
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterRealReads yst a b).memory out.toNat
+          (fp2MulReal yst a b).1)
+        (out + BitVec.ofNat 256 32).toNat (fp2MulReal yst a b).2) out.toNat)
+    (loadWord
+      (storeWord
+        (storeWord (fp2MulAfterRealReads yst a b).memory out.toNat
+          (fp2MulReal yst a b).1)
+        (out + BitVec.ofNat 256 32).toNat (fp2MulReal yst a b).2)
+      (out + BitVec.ofNat 256 32).toNat) = _
+  rw [loadWord_storeWord_same]
+  have hoff : (out + BitVec.ofNat 256 32).toNat = out.toNat + 32 := by
+    bv_omega
+  rw [hoff, loadWord_storeWord_disjoint _ (out.toNat + 32) out.toNat _
+    (by omega), loadWord_storeWord_same]
+  rfl
+
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
