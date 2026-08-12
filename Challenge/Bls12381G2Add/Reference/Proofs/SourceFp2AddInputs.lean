@@ -55,6 +55,28 @@ private theorem fp2AddAfterC0Stores_c1_at_out
   have hreads : (fp2AddAfterC0Reads yst a b).memory = yst.memory := rfl
   rw [hreads]
 
+private theorem fp2AddAfterC0Stores_c1_after_out
+    (yst : EvmState) (out a b ptr : U256)
+    (hout : out.toNat + 32 < 2 ^ 256)
+    (hptr : out.toNat + 64 ≤ ptr.toNat)
+    (hptrEnd : ptr.toNat + 96 < 2 ^ 256) :
+    (fp2At (fp2AddAfterC0Stores yst out a b) ptr).c1 =
+      (fp2At yst ptr).c1 := by
+  unfold fp2At fp2AddAfterC0Stores fp2AddAfterC0High
+  change ({
+    hi := YulEvmCompiler.conv (loadWord
+      (storeWord (storeWord (fp2AddAfterC0Reads yst a b).memory
+        out.toNat _) (out + BitVec.ofNat 256 32).toNat _)
+      (ptr + BitVec.ofNat 256 64).toNat)
+    lo := YulEvmCompiler.conv (loadWord
+      (storeWord (storeWord (fp2AddAfterC0Reads yst a b).memory
+        out.toNat _) (out + BitVec.ofNat 256 32).toNat _)
+      (ptr + BitVec.ofNat 256 96).toNat) } :
+      Challenge.Bls12381.ProofSupport.Fp.Limbs) = _
+  repeat' rw [loadWord_storeWord_disjoint _ _ _ _ (by left; bv_omega)]
+  have hreads : (fp2AddAfterC0Reads yst a b).memory = yst.memory := rfl
+  rw [hreads]
+
 private theorem fp2Repr_ext {left right :
     Challenge.Bls12381.ProofSupport.Fp2.Repr}
     (h0 : left.c0 = right.c0) (h1 : left.c1 = right.c1) : left = right := by
@@ -85,5 +107,16 @@ theorem fp2AddScheduledA_eq_at_out (yst : EvmState) (out b : U256)
   apply fp2Repr_ext
   · rfl
   · exact fp2AddAfterC0Stores_c1_at_out yst out out b hout
+
+theorem fp2AddScheduledB_eq_after_out_c0
+    (yst : EvmState) (out a b : U256)
+    (hout : out.toNat + 32 < 2 ^ 256)
+    (hb : out.toNat + 64 ≤ b.toNat)
+    (hbEnd : b.toNat + 96 < 2 ^ 256) :
+    fp2AddScheduledB yst out a b = fp2At yst b := by
+  apply fp2Repr_ext
+  · rfl
+  · exact fp2AddAfterC0Stores_c1_after_out
+      yst out a b b hout hb hbEnd
 
 end Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics

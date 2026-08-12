@@ -1,4 +1,5 @@
 import Challenge.EvmProof.ProfiledLowerCorrect
+import Challenge.EvmProof.YulContract
 import YulEvmCompiler.Correctness
 
 set_option warningAsError true
@@ -129,6 +130,40 @@ theorem profiled_compiledAssembly_correct {config : PrecompileConfig}
       | leave =>
           rcases hout with ⟨fc, hfc, -⟩
           exact absurd hfc (by simp)
+
+/-- Transport a relational source contract through the explicit compiler
+certificates. The source postcondition remains attached to its existential Yul
+final state; the target execution supplies gas and a matching concrete EVM
+state separately. -/
+theorem profiled_compiledAssembly_contract_correct {config : PrecompileConfig}
+    (hcalls : ProfiledCallsRealized model.calls config)
+    (hcreates : model.creates = YulSemantics.EVM.ExternalCreates.none)
+    {prog : YulSemantics.Block Op} {asm : List Asm} {is : List Instr}
+    (hcompile : compileProgram prog = some asm)
+    (hlow : lowerProg (optimizeAsm asm) = some is)
+    (hbound : ∀ initial mid, ASteps (optimizeAsm asm)
+      ⟨optimizeAsm asm, [], initial⟩ mid → mid.stk.length ≤ 1023)
+    {pre : EvmState → Prop}
+    {post : EvmState → VEnv yulD → EvmState → Outcome → Prop}
+    (contract : YulRunContract yulD prog pre post) :
+    ∀ initial, pre initial →
+      ∃ finalEnv final outcome,
+        post initial finalEnv final outcome ∧
+        ∃ b : Nat, ∀ s0 : State,
+          FrameOK (assemble is) s0 → StateMatch initial s0 →
+          CallerProfile config s0 →
+          s0.pc = UInt256.ofNat 0 → s0.stack = [] →
+          b ≤ s0.gasAvailable →
+          ∃ s', Steps s0 s' ∧ s'.callStack = [] ∧ StateMatch final s' ∧
+            ((outcome = .normal ∧ s'.halt = .Success ∧
+                s'.hReturn = .empty) ∨
+              (outcome = .halt ∧ HaltedMatch final s')) := by
+  intro initial hinitial
+  obtain ⟨finalEnv, final, outcome, run, result⟩ :=
+    contract initial hinitial
+  exact ⟨finalEnv, final, outcome, result,
+    profiled_compiledAssembly_correct hcalls hcreates hcompile hlow
+      (hbound initial) run⟩
 
 /-- End-to-end compiler correctness for a model whose successful calls carry
 and preserve the target caller profile. -/

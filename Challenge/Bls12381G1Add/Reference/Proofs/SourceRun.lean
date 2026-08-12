@@ -1,4 +1,5 @@
 import Challenge.Bls12381G1Add.Reference.Proofs.SourceMainFull
+import Challenge.EvmProof.YulContract
 
 set_option warningAsError true
 
@@ -293,10 +294,8 @@ before `return(offset, size)`.
 
 Gas is not part of `YulSemantics.EVM.EvmState`; it remains a separate
 compiled-EVM contract rather than being approximated at this source layer. -/
-structure MainReturnContract (yst beforeReturn final : EvmState)
+structure MainReturnPost (beforeReturn final : EvmState)
     (offset size : Nat) : Prop where
-  run : Run Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
-    Compilation.referenceCompiledBlock yst [] final .halt
   returned : final.halted = some (.ret,
     readBytes beforeReturn.memory offset size)
   memory_eq : final.memory = beforeReturn.memory
@@ -309,6 +308,14 @@ structure MainReturnContract (yst beforeReturn final : EvmState)
   logs_eq : final.logs = beforeReturn.logs
   selfdestructs_eq : final.selfdestructs = beforeReturn.selfdestructs
 
+/-- Compatibility form of the return contract. New consumers should use the
+generic `YulRunContract` theorem and its separate `MainReturnPost`. -/
+structure MainReturnContract (yst beforeReturn final : EvmState)
+    (offset size : Nat) : Prop extends
+      MainReturnPost beforeReturn final offset size where
+  run : Run Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+    Compilation.referenceCompiledBlock yst [] final .halt
+
 /-- The both-infinity branch instantiates the common source-return contract at
 the validated state and the `return(0, 128)` window. -/
 abbrev MainBothInfinityContract (yst final : EvmState) : Prop :=
@@ -318,6 +325,47 @@ abbrev MainBothInfinityContract (yst final : EvmState) : Prop :=
 after copying the second input point into the output window. -/
 abbrev MainFirstInfinityContract (yst final : EvmState) : Prop :=
   MainReturnContract yst (mainFirstInfinityCopyState yst) final 0 128
+
+/-- Preconditions for the complete both-infinity source path. -/
+structure MainBothInfinityPre (yst : EvmState) : Prop where
+  calldata_length : yst.env.calldata.length = 256
+  padding_valid : mainPaddingValue yst = 0
+  coordinates_canonical : mainCanonicalValue yst ≠ 0
+  first_on_curve : mainCurve1ConditionValue yst = 0
+  second_on_curve : mainCurve2ConditionValue yst = 0
+  both_infinity : mainBothInfinityValue yst ≠ 0
+
+/-- Observable result of the both-infinity path. The constructed return state
+is absent from this boundary. -/
+def MainBothInfinityPost (yst : EvmState)
+    (finalEnv : VEnv Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect)
+    (final : EvmState) (outcome : Outcome) : Prop :=
+  finalEnv = [] ∧ outcome = .halt ∧
+    MainReturnPost (mainValidatedState yst) final 0 128
+
+/-- Execution and arithmetic assumptions for the finite unequal-x path. The
+derived lambda facts are bundled once so downstream consumers do not rebuild
+the exact final state. -/
+structure MainUnequalPre (yst : EvmState) : Prop where
+  calldata_length : yst.env.calldata.length = 256
+  padding_valid : mainPaddingValue yst = 0
+  coordinates_canonical : mainCanonicalValue yst ≠ 0
+  first_on_curve : mainCurve1ConditionValue yst = 0
+  second_on_curve : mainCurve2ConditionValue yst = 0
+  first_finite : mainInf1 yst = 0
+  second_finite : mainInf2 yst = 0
+  unequal_x : mainFiniteXEqValue yst = 0
+  x1_canonical : Fp.Canonical (mainFinitePostX1 yst)
+  y1_canonical : Fp.Canonical (mainFinitePostY1 yst)
+  x2_canonical : Fp.Canonical (mainFinitePostX2 yst)
+  y2_canonical : Fp.Canonical (mainFiniteUnequalY2 yst)
+
+/-- Observable result of the finite unequal-x path. -/
+def MainUnequalPost (yst : EvmState)
+    (finalEnv : VEnv Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect)
+    (final : EvmState) (outcome : Outcome) : Prop :=
+  finalEnv = [] ∧ outcome = .halt ∧
+    final.halted = some (.ret, mainFiniteUnequalExpected yst)
 
 /-- The exact frozen source runs through the complete nonexceptional doubling
 path and halts with the already-refined canonical output state. -/
@@ -358,6 +406,24 @@ theorem run_main_unequal (yst : EvmState)
         (mainFiniteUnequalLambdaWords yst)) .halt :=
   run_of_mainValid yst _ (step_mainValid_unequal yst hsize hpadding
     hcanonical hcurve1 hcurve2 hfirst hsecond hxeq hx1 hx2)
+
+/-- The complete finite unequal-x path behind the generic source contract.
+The constructed sequence of arithmetic states is private to this bridge. -/
+theorem main_unequal_yulContract : Challenge.EvmProof.YulRunContract
+    Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+    Compilation.referenceCompiledBlock MainUnequalPre MainUnequalPost := by
+  intro yst pre
+  refine ⟨[],
+    mainFinitePostReturnState yst (mainFiniteUnequalFinalState yst)
+      (mainFiniteUnequalLambdaWords yst),
+    .halt, ?_, rfl, rfl, ?_⟩
+  · exact run_main_unequal yst pre.calldata_length pre.padding_valid
+      pre.coordinates_canonical pre.first_on_curve pre.second_on_curve
+      pre.first_finite pre.second_finite pre.unequal_x
+      pre.x1_canonical pre.x2_canonical
+  · exact mainFiniteDispatcher_unequal_returned_expected_of_inputs yst
+      pre.x1_canonical pre.y1_canonical pre.x2_canonical pre.y2_canonical
+      pre.unequal_x
 
 /-- The exact frozen source returns infinity for opposite finite points. -/
 theorem run_main_opposite (yst : EvmState)
@@ -405,19 +471,19 @@ theorem run_main_bothInfinity (yst : EvmState)
   run_of_mainValid yst _ (step_mainValid_bothInfinity yst hsize hpadding
     hcanonical hcurve1 hcurve2 hboth)
 
-/-- The complete both-infinity path, exposed through a relational boundary
-instead of an equality to a fully expanded final state. -/
-theorem run_main_bothInfinity_contract (yst : EvmState)
-    (hsize : yst.env.calldata.length = 256)
-    (hpadding : mainPaddingValue yst = 0)
-    (hcanonical : mainCanonicalValue yst ≠ 0)
-    (hcurve1 : mainCurve1ConditionValue yst = 0)
-    (hcurve2 : mainCurve2ConditionValue yst = 0)
-    (hboth : mainBothInfinityValue yst ≠ 0) :
-    ∃ final, MainBothInfinityContract yst final := by
-  refine ⟨mainBothInfinityReturnState yst, ?_⟩
+/-- The complete both-infinity path as a reusable source-level Hoare
+contract. Its postcondition exposes only the run shape and return/frame facts. -/
+theorem main_bothInfinity_yulContract : Challenge.EvmProof.YulRunContract
+    Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+    Compilation.referenceCompiledBlock
+    MainBothInfinityPre MainBothInfinityPost := by
+  intro yst pre
+  refine ⟨[], mainBothInfinityReturnState yst, .halt,
+    run_main_bothInfinity yst pre.calldata_length pre.padding_valid
+      pre.coordinates_canonical pre.first_on_curve pre.second_on_curve
+      pre.both_infinity, ?_⟩
+  refine ⟨rfl, rfl, ?_⟩
   refine {
-    run := run_main_bothInfinity yst hsize hpadding hcanonical hcurve1 hcurve2 hboth
     returned := ?_
     memory_eq := ?_
     activeWords_eq := ?_
@@ -429,6 +495,23 @@ theorem run_main_bothInfinity_contract (yst : EvmState)
     selfdestructs_eq := ?_ }
   all_goals simp only [mainBothInfinityReturnState, touchMemory]
 
+/-- The complete both-infinity path, exposed through a relational boundary
+instead of an equality to a fully expanded final state. -/
+theorem run_main_bothInfinity_contract (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hboth : mainBothInfinityValue yst ≠ 0) :
+    ∃ final, MainBothInfinityContract yst final := by
+  obtain ⟨finalEnv, final, outcome, run, henv, houtcome, post⟩ :=
+    main_bothInfinity_yulContract yst
+      ⟨hsize, hpadding, hcanonical, hcurve1, hcurve2, hboth⟩
+  subst finalEnv
+  subst outcome
+  exact ⟨final, { toMainReturnPost := post, run := run }⟩
+
 /-- The selected return-value view needed by the source specification. -/
 theorem MainBothInfinityContract.returned_inputWindow
     {yst final : EvmState} (contract : MainBothInfinityContract yst final)
@@ -438,6 +521,20 @@ theorem MainBothInfinityContract.returned_inputWindow
   calc
     final.halted = (mainBothInfinityReturnState yst).halted := by
       rw [contract.returned]
+      rfl
+    _ = _ := mainBothInfinity_returned_inputWindow yst input hcalldata
+
+/-- Specification-facing return projection from the generic Yul contract's
+postcondition. -/
+theorem MainReturnPost.bothInfinity_returned_inputWindow
+    {yst final : EvmState}
+    (post : MainReturnPost (mainValidatedState yst) final 0 128)
+    (input : ByteArray) (hcalldata : yst.env.calldata = input.toList) :
+    final.halted = some (HaltKind.ret,
+      (EvmSemantics.MachineState.readPadded input 0 128).toList) := by
+  calc
+    final.halted = (mainBothInfinityReturnState yst).halted := by
+      rw [post.returned]
       rfl
     _ = _ := mainBothInfinity_returned_inputWindow yst input hcalldata
 

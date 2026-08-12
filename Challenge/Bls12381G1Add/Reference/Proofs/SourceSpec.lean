@@ -341,24 +341,11 @@ private theorem mainFinitePostX2_eq_source (yst : EvmState) :
 private theorem mainFiniteUnequalY2_eq_source (yst : EvmState) :
     mainFiniteUnequalY2 yst = sourceField yst 192 := rfl
 
-private theorem mainFiniteUnequalX1_eq_source (yst : EvmState) :
-    mainFiniteUnequalX1 yst = sourceField yst 0 := rfl
-
-private theorem mainFiniteUnequalY1_eq_source (yst : EvmState) :
-    mainFiniteUnequalY1 yst = sourceField yst 64 := rfl
-
-private theorem mainFiniteUnequalX2_eq_source (yst : EvmState) :
-    mainFiniteUnequalX2 yst = sourceField yst 128 := rfl
-
 private theorem mainFiniteDoubleX_eq_source (yst : EvmState) :
     mainFiniteDoubleX yst = sourceField yst 0 := rfl
 
 private theorem mainFiniteDoubleY_eq_source (yst : EvmState) :
     mainFiniteDoubleY yst = sourceField yst 64 := rfl
-
-private theorem mainFinitePostLambda_unequal_eq (yst : EvmState) :
-    mainFinitePostLambda (mainFiniteUnequalLambdaWords yst) =
-      mainFiniteUnequalLambda yst := rfl
 
 private theorem mainFinitePostLambda_double_eq (yst : EvmState) :
     mainFinitePostLambda (mainFiniteDoubleLambdaWords yst) =
@@ -369,23 +356,6 @@ private theorem mainFiniteXEq_one_lawful (yst : EvmState)
     toLawful (mainFinitePostX2 yst) = toLawful (mainFinitePostX1 yst) := by
   obtain ⟨hhi, hlo⟩ := (mainFiniteXEq_eq_one_iff yst).mp hxeq
   simp [toLawful, mainFinitePostX1, mainFinitePostX2, hhi, hlo]
-
-private theorem mainFiniteXEq_zero_lawful (yst : EvmState)
-    (hx1 : Fp.Canonical (mainFinitePostX1 yst))
-    (hx2 : Fp.Canonical (mainFinitePostX2 yst))
-    (hxeq : mainFiniteXEqValue yst = 0) :
-    toLawful (mainFinitePostX1 yst) ≠ toLawful (mainFinitePostX2 yst) := by
-  intro heq
-  have hvalue := Fp.value_eq_of_lawful_eq hx1 hx2 heq
-  have hlimbs := Fp.limbs_ext_of_value_eq hvalue
-  have hone : mainFiniteXEqValue yst = 1 := by
-    apply (mainFiniteXEq_eq_one_iff yst).mpr
-    constructor
-    · apply YulEvmCompiler.conv_injective
-      exact congrArg Fp.Limbs.hi hlimbs
-    · apply YulEvmCompiler.conv_injective
-      exact congrArg Fp.Limbs.lo hlimbs
-  exact (by decide : (0 : U256) ≠ 1) (hxeq.symm.trans hone)
 
 private theorem mainFiniteYZero_zero_lawful (yst : EvmState)
     (hy : Fp.Canonical (mainFinitePostY1 yst))
@@ -533,42 +503,24 @@ private theorem run_valid_matches_decoded (yst : EvmState) (input : ByteArray)
     · rcases fpEqValue_zero_or_one (mainDecodedWord yst 0)
           (mainDecodedWord yst 32) (mainDecodedWord yst 128)
           (mainDecodedWord yst 160) with hxeq | hxeq
-      · have hrun := run_main_unequal yst hlength hpadding hcanonical
-          hcurve1 hcurve2 hfirst hsecond hxeq hx1 hx2
-        refine ⟨_, hrun, ?_⟩
-        have hlam := canonical_mainFiniteUnequalLambda yst hx1 hy1 hx2 hy2
-        have hxne := mainFiniteXEq_zero_lawful yst hx1 hx2 hxeq
-        have hslope := mainFiniteUnequalLambda_toLawful yst hx1 hy1 hx2 hy2
-          hxne
-        have hlam' : Fp.Canonical
-            (mainFinitePostLambda (mainFiniteUnequalLambdaWords yst)) := by
-          rw [mainFinitePostLambda_unequal_eq]
-          exact hlam
-        have hslope' : toLawful
-              (mainFinitePostLambda (mainFiniteUnequalLambdaWords yst)) =
-            (toLawful (mainFiniteUnequalY2 yst) -
-              toLawful (mainFinitePostY1 yst)) /
-            (toLawful (mainFinitePostX2 yst) -
-              toLawful (mainFinitePostX1 yst)) := by
-          rw [mainFinitePostLambda_unequal_eq]
-          simpa [toLawful, mainFinitePostX1_eq_source,
-            mainFinitePostY1_eq_source, mainFinitePostX2_eq_source,
-            mainFiniteUnequalY2_eq_source, mainFiniteUnequalX1_eq_source,
-            mainFiniteUnequalY1_eq_source,
-            mainFiniteUnequalX2_eq_source] using hslope
-        have hout := mainFiniteDispatcher_unequal_returned_add yst hx1 hy1 hx2
-          hlam' hxne hslope'
-        change (mainFinitePostReturnState yst (mainFiniteUnequalFinalState yst)
-          (mainFiniteUnequalLambdaWords yst)).halted = some (.ret,
-            (Codec.encodeG1 (G1Affine.toWire (G1Affine.add
-              (.affine (toLawful (mainFinitePostX1 yst))
-                (toLawful (mainFinitePostY1 yst)))
-              (.affine (toLawful (mainFinitePostX2 yst))
-                (toLawful (mainFiniteUnequalY2 yst)))))).toList) at hout
-        rw [mainFinitePostX1_eq_source, mainFinitePostY1_eq_source,
-          mainFinitePostX2_eq_source, mainFiniteUnequalY2_eq_source] at hout
-        simpa [sourcePoint1, sourcePoint2, hfirst, hsecond, toLawful,
-          G1Affine.ofWire] using hout
+      · rcases main_unequal_yulContract yst
+            ⟨hlength, hpadding, hcanonical, hcurve1, hcurve2, hfirst,
+              hsecond, hxeq, hx1, hy1, hx2, hy2⟩ with
+          ⟨finalEnv, final, outcome, hrun, henv, houtcome, hreturned⟩
+        subst finalEnv
+        subst outcome
+        refine ⟨final, hrun, ?_⟩
+        calc
+          final.halted = some (.ret, mainFiniteUnequalExpected yst) := hreturned
+          _ = some (.ret,
+              (Codec.encodeG1 (G1Affine.toWire
+                (G1Affine.add (G1Affine.ofWire (sourcePoint1 yst))
+                  (G1Affine.ofWire (sourcePoint2 yst))))).toList) := by
+            unfold mainFiniteUnequalExpected
+            rw [mainFinitePostX1_eq_source, mainFinitePostY1_eq_source,
+              mainFinitePostX2_eq_source, mainFiniteUnequalY2_eq_source]
+            simp [sourcePoint1, sourcePoint2, hfirst, hsecond,
+              G1Affine.ofWire, Fp.finEquiv_toField]
       · rcases fpEqValue_zero_or_one (mainDecodedWord yst 64)
             (mainDecodedWord yst 96) (mainDecodedWord yst 192)
             (mainDecodedWord yst 224) with hyeq | hyeq
@@ -696,12 +648,15 @@ private theorem run_valid_matches_decoded (yst : EvmState) (input : ByteArray)
         rw [mainBothInfinityValue, mainInf1_eq_one_of_ne yst hfirst,
           mainInf2_eq_one_of_ne yst hsecond]
         decide
-      rcases run_main_bothInfinity_contract yst hlength hpadding hcanonical
-          hcurve1 hcurve2 hboth with ⟨final, contract⟩
-      refine ⟨final, contract.run, ?_⟩
+      rcases main_bothInfinity_yulContract yst
+          ⟨hlength, hpadding, hcanonical, hcurve1, hcurve2, hboth⟩ with
+        ⟨finalEnv, final, outcome, hrun, henv, houtcome, post⟩
+      subst finalEnv
+      subst outcome
+      refine ⟨final, hrun, ?_⟩
       have hleft := decodeG1_first_eq_sourcePoint yst input hcalldata hsize
         hpadding hcanonical hcurve1
-      rw [contract.returned_inputWindow input hcalldata,
+      rw [post.bothInfinity_returned_inputWindow input hcalldata,
         Challenge.EvmProof.Bytes.readPadded_eq_extract input 0 128 (by omega)]
       have hencode := Codec.encodeG1_decodeG1 hleft
       rw [Codec.g1Bytes] at hencode

@@ -140,6 +140,21 @@ def fp2WordsAt (yst : EvmState) (ptr : U256) : Fp2Words :=
     c1Hi := loadWord yst.memory (ptr + BitVec.ofNat 256 64).toNat
     c1Lo := loadWord yst.memory (ptr + BitVec.ofNat 256 96).toNat }
 
+/-- Two Fp2 memory views are equal when their four selected words are equal.
+Keeping this representation lemma below the arithmetic helpers prevents frame
+proofs from importing the complete `onCurve` development. -/
+theorem fp2At_eq_of_loads (left right : EvmState) (ptr : U256)
+    (h0 : loadWord left.memory ptr.toNat = loadWord right.memory ptr.toNat)
+    (h1 : loadWord left.memory (ptr + BitVec.ofNat 256 32).toNat =
+      loadWord right.memory (ptr + BitVec.ofNat 256 32).toNat)
+    (h2 : loadWord left.memory (ptr + BitVec.ofNat 256 64).toNat =
+      loadWord right.memory (ptr + BitVec.ofNat 256 64).toNat)
+    (h3 : loadWord left.memory (ptr + BitVec.ofNat 256 96).toNat =
+      loadWord right.memory (ptr + BitVec.ofNat 256 96).toNat) :
+    fp2At left ptr = fp2At right ptr := by
+  unfold fp2At
+  rw [h0, h1, h2, h3]
+
 def fp2ZeroWords : Fp2Words := ⟨0, 0, 0, 0⟩
 
 def fp2ZeroWordsValue (words : Fp2Words) : U256 :=

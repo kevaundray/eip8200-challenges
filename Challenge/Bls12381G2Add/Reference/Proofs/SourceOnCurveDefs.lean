@@ -1,5 +1,5 @@
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2MulCorrect
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2AddExec
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2AddPreservation
 
 set_option warningAsError true
 
@@ -76,7 +76,7 @@ def onCurveStateAfterConstant (yst : EvmState) (x y : U256) : EvmState :=
   mstoreState s2 2528 4
 
 def onCurveStateAfterAdd (yst : EvmState) (x y : U256) : EvmState :=
-  fp2AddFinalState (onCurveStateAfterConstant yst x y)
+  fp2AddContractState (onCurveStateAfterConstant yst x y)
     (BitVec.ofNat 256 2304) (BitVec.ofNat 256 2304)
     (BitVec.ofNat 256 2432)
 

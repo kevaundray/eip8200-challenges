@@ -30,8 +30,8 @@ theorem onCurveFinalState_loadWord_low (yst : EvmState) (x y : U256)
   rw [show (onCurveFinalState yst x y).memory =
       (onCurveStateAfterAdd yst x y).memory by rfl]
   unfold onCurveStateAfterAdd
-  rw [fp2AddFinalState_loadWord_before_out _ _ _ _ offset (by norm_num; omega)
-      (by norm_num),
+  rw [fp2AddContractState_loadWord_before_out _ _ _ _ (by norm_num)
+      offset (by norm_num; omega),
     onCurveStateAfterConstant_loadWord_low yst x y offset hend]
   unfold onCurveStateAfterX3
   rw [fp2MulFinalState_loadWord_before_scratch _ _ _ _ offset hend

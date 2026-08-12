@@ -1,4 +1,5 @@
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2AddPreservation
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceOnCurveY2Preservation
 
 set_option warningAsError true
 
@@ -12,7 +13,7 @@ private theorem onCurveAdd_y2 (yst : EvmState) (x y : U256) :
     fp2At (onCurveStateAfterAdd yst x y) (BitVec.ofNat 256 2048) =
       fp2At (onCurveStateAfterY2 yst y) (BitVec.ofNat 256 2048) := by
   rw [onCurveStateAfterAdd,
-    fp2AddFinalState_fp2At_before_out
+    fp2AddContractState_fp2At_before_out
       (onCurveStateAfterConstant yst x y) (BitVec.ofNat 256 2304)
       (BitVec.ofNat 256 2304) (BitVec.ofNat 256 2432)
       (BitVec.ofNat 256 2048) (by norm_num) (by norm_num) (by norm_num),

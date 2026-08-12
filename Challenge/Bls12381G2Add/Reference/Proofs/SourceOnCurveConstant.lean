@@ -1,5 +1,6 @@
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2AddOutput
 import Challenge.Bls12381G1Add.Reference.Proofs.SourceOnCurveRefinement
+import Challenge.Bls12381.ProofSupport.G2Affine
 
 set_option warningAsError true
 

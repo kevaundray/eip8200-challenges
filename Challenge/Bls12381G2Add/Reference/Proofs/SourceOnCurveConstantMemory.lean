@@ -1,4 +1,5 @@
 import Challenge.Bls12381G2Add.Reference.Proofs.SourceOnCurveConstant
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceOnCurveX3
 
 set_option warningAsError true
 

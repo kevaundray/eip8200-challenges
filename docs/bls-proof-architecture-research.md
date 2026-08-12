@@ -411,6 +411,23 @@ theorem execute_stage
 
 Arithmetic/source stages can additionally prove that their postcondition refines a mathematical operation. The final challenge correctness theorem composes stage contracts; the gas theorem sums the same `cost` fields. This avoids rerunning the full symbolic execution once for correctness and again for gas.
 
+The first complete G2 `fp2Add` caller migration refines this recommendation.
+An executable symbolic caller cannot generally use a `Classical.choose` final
+state without making every later state definition noncomputable. Use a
+computable representative, prove its selected execution/output/frame
+characterizations once, then make the representative irreducible. Reserve the
+existential theorem for proof-facing consumers.
+
+This migration was memory-neutral: `SourceOnCurveRhs` remained at roughly
+2.68 GiB warm RSS. The result separates two claims that must not be conflated:
+the contract prevents consumers from constructing the exact `fp2Add` graph,
+but it does not remove the imported environment or the exact bridge modules.
+An RSS win requires a measured target whose peak was caused by the eliminated
+construction, or a smaller import closure. A general in-place/output-order
+corollary did remove two caller-specific `onCurve` input adapters; the exact
+`fp2Add` stages are not removable until the remaining finite/double exact-state
+consumers migrate.
+
 ## Staged migration plan
 
 ### Stage 0: establish evidence before moving files

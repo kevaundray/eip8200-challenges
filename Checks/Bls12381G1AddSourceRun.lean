@@ -6,6 +6,18 @@ set_option warningAsError true
 
 namespace Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
 
+example : Challenge.EvmProof.YulRunContract
+    Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+    Compilation.referenceCompiledBlock
+    MainBothInfinityPre MainBothInfinityPost :=
+  main_bothInfinity_yulContract
+
+example : Challenge.EvmProof.YulRunContract
+    Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
+    Compilation.referenceCompiledBlock
+    MainUnequalPre MainUnequalPost :=
+  main_unequal_yulContract
+
 example (yst : YulSemantics.EVM.EvmState)
     (hsize : yst.env.calldata.length = 256)
     (hpadding : mainPaddingValue yst = 0)
@@ -32,6 +44,18 @@ example (yst : YulSemantics.EVM.EvmState)
  Quot.sound] -/
 #guard_msgs in
 #print axioms run_main_bothInfinity_contract
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.main_bothInfinity_yulContract' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms main_bothInfinity_yulContract
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.main_unequal_yulContract' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms main_unequal_yulContract
 
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.run_main_firstInfinity_contract' depends on axioms: [propext,
  Classical.choice,

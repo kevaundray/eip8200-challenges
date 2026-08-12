@@ -71,6 +71,22 @@ The root solution is to ensure those giant graphs are never presented together
 to one declaration. Module splitting helps cache intermediate results, but the
 proof interface must also change.
 
+The underlying Yul/EVM semantics is therefore a major source of *inherent*
+proof volume, but it is not by itself a defective component. Its job is to
+describe exact syntax, control flow, stack, memory, calls, and execution state.
+The architectural problem is that BLS proofs too often consume that
+foundational representation directly while also exposing expanded limb and
+field computations. A deeper proof-facing interface should connect the exact
+semantics once to relational procedure contracts; arithmetic callers should
+then see selected outputs, named memory regions, status, and frame conditions
+rather than a constructed final state.
+
+Gas also crosses a separate boundary. The source-level
+`YulSemantics.EVM.EvmState` used by these helper proofs does not itself contain
+gas; exact gas is recovered through the profiled compiler/bytecode layers.
+Consequently, "large EVM state" and "exact gas trace" are related sources of
+proof volume, not one large record that should be refactored as a unit.
+
 ## Three different kinds of memory pressure
 
 Treat these as separate failure modes.
@@ -97,10 +113,18 @@ jobs run concurrently.
 
 Remedies:
 
-- build heavy targets with `lake -Kjobs=1`;
+- explicitly serialize heavy module builds, and verify that the selected Lake
+  invocation really limits module concurrency;
 - ensure no unrelated Lean workers are active during measurement;
 - separate CI jobs and caches by challenge; and
 - avoid broad default builds while developing a leaf theorem.
+
+In the current Lake 5 toolchain, local observation showed that
+`lake -Kjobs=1 build ...` still elaborated independent sibling modules
+concurrently. Treat `-Kjobs=1` as unverified configuration rather than a
+portable scheduler guarantee. A deterministic alternative is to prebuild the
+known heavy leaves sequentially and then run the aggregate build against the
+cached artifacts.
 
 ### Ambient compiled environment is unnecessarily large
 
@@ -588,6 +612,106 @@ existential selected-field contract, with no new file and no larger import
 closure. The underlying exact-state stages are not yet obsolete because they
 still implement the bridge and serve other branches.
 
+### Generic Yul run contract and compiler lift
+
+The branch-local experiment was then lifted into a shared source-level
+boundary. `Challenge.EvmProof.YulContract` defines `YulRunContract` over
+`YulSemantics.Run`:
+
+```text
+pre initial
+  → ∃ finalEnv final outcome,
+      Run dialect program initial finalEnv final outcome
+      ∧ post initial finalEnv final outcome
+```
+
+The module imports only `YulSemantics.BigStep`. It does not import the Yul
+compiler or target EVM semantics. The G1ADD both-infinity path supplies a
+`MainBothInfinityPre` structure and a `MainBothInfinityPost` relation. Its
+frame facts are separated into `MainReturnPost`, while the previous
+`MainReturnContract` remains as a compatibility structure extending that post
+with the exact `Run` theorem.
+
+`SourceSpec` now applies `main_bothInfinity_yulContract` and consumes the
+existential run plus `MainReturnPost.bothInfinity_returned_inputWindow`. The
+migrated branch does not name `mainBothInfinityReturnState`; that constructor
+appears only inside the one-time contract proof.
+
+`profiled_compiledAssembly_contract_correct` is the separate cross-layer
+adapter. It applies existing compiler correctness to the existential source
+run and returns the source postcondition together with a gas threshold and
+matching target `EvmSemantics.EVM.Steps`. This preserves the truthful layering:
+gas is a property of the compiled EVM execution, not a fabricated field of the
+gas-free source state.
+
+Direct elaboration measurements were:
+
+| Leaf | Peak RSS (KiB) | Wall time |
+|---|---:|---:|
+| `Challenge/EvmProof/YulContract.lean` | 816,180 | 0.86 s |
+| G1ADD `SourceRun.lean` | 2,759,020 | 1.79 s |
+| G1ADD `SourceSpec.lean` | 2,782,420 | 2.21 s |
+| `Challenge/EvmProof/ProfiledCorrectness.lean` | 1,871,648 | 1.50 s |
+| G1ADD `CompilerCorrectness.lean` | 2,383,636 | 1.57 s |
+
+The `SourceRun` result is effectively identical to the earlier
+2,759,628--2,761,184 KiB range. This first genericization is therefore
+memory-neutral, not a demonstrated RSS reduction. It adds one shared
+production module and removes no exact-state stage yet. Its value is that
+future branches can converge on one proof-facing API; physical files become
+removable only after their last exact-state consumer migrates.
+
+The generic and challenge-specific bridge theorems retain the guarded
+`[propext, Classical.choice, Quot.sound]` footprint; the source-only
+postcondition consequence rule uses only `[propext]`. The conservative proof
+policy scanner, cache-policy self-test, shared bridge checks, and the complete
+G1ADD root plus all retained checks passed. The final integration build
+completed 2,343 jobs.
+
+#### Finite unequal-x follow-up
+
+The next migration exercised the generic contract on the complete arithmetic
+branch for two finite points with unequal x coordinates. `MainUnequalPre`
+contains only execution branch conditions and canonical input coordinates.
+Lambda canonicality, distinct lawful x values, and the general-addition slope
+are derived inside the lawful endpoint rather than supplied by `SourceSpec`.
+`MainUnequalPost` exposes the frozen source run's encoded affine sum through
+`mainFiniteUnequalExpected`.
+
+The first draft was rejected during implementation because it put lambda and
+slope proofs in the precondition. Although it compiled, that interface merely
+moved the existing proof obligations into a structure. The accepted deepened
+boundary adds
+`mainFiniteDispatcher_unequal_returned_expected_of_inputs`, which performs the
+representation conversions once and hides both the arithmetic schedule and
+the constructed `mainFiniteUnequalFinalState` from the consumer.
+
+The migrated `SourceSpec` branch no longer mentions
+`mainFiniteUnequalFinalState`, `mainFinitePostReturnState`, the concrete lambda
+state, or the slope proof. Four now-unused private representation bridge lemmas
+were deleted from `SourceSpec`. The exact unequal execution and memory stages
+remain necessary behind the contract, so this migration removes no complete
+production file.
+
+Repeated direct elaboration stayed in the normal range:
+
+| Leaf | Observed peak RSS range (KiB) |
+|---|---:|
+| `SourceMainFiniteDispatcherLawful.lean` | 2,653,416--2,660,108 |
+| `SourceRun.lean` | 2,720,812--2,726,188 |
+| `SourceSpec.lean` | 2,748,408--2,774,056 |
+
+These samples are slightly below the earlier one-shot 2,759,020 KiB
+`SourceRun` and 2,782,420 KiB `SourceSpec` measurements, but the roughly
+1 percent difference is not treated as a demonstrated memory improvement.
+The material gain is a smaller consumer proof and one reusable boundary for a
+real arithmetic path.
+
+The new contract and compact lawful endpoint retain the established
+`[propext, Classical.choice, Quot.sound]` trust footprint. The focused policy,
+cache, and axiom checks passed, followed by the complete G1ADD root and every
+retained G1ADD check: 2,343 jobs at 2,707,076 KiB peak RSS.
+
 ### Reusing the relational contract for first-infinity
 
 The second relational slice generalized the branch-specific structure into
@@ -611,6 +735,65 @@ The new theorem retains the guarded footprint `[propext, Classical.choice,
 Quot.sound]`. The full G1ADD root and all 43 retained checks passed 2,342 jobs
 at 2,716,696 KiB peak RSS. No production stage became obsolete: the
 first-infinity exact-state chain still implements the relational bridge once.
+
+### G2 `fp2Add`: opaque state boundary without an RSS drop
+
+A stronger G2 experiment migrated the complete `onCurve` addition step, not
+just an arithmetic consequence. `Fp2AddRunContract` now exposes exactly:
+
+- successful frozen-source evaluation to some final state;
+- the Fp2 value stored at the output pointer; and
+- preservation of every complete word below the output pointer.
+
+`fp2AddContractState` is a computable representative connected once to the
+existing exact evaluator proof. It is marked irreducible after its execution,
+output, and frame theorems are established. Consequently
+`SourceOnCurveDefs`, `SourceOnCurveAddExec`, `SourceOnCurveRhs`, and
+`SourceOnCurveCorrect` contain no occurrence of `fp2AddFinalState`; downstream
+execution remains computable and consumes only the named observations.
+
+The first version used `Classical.choose` to obtain an existential final state.
+That hid the graph but made the entire downstream source-state model
+noncomputable. The accepted design uses a computable definition plus an
+irreducibility boundary. This is an important distinction: existential
+contracts are appropriate for proof-only consumers, while executable symbolic
+state graphs need an opaque computable representative.
+
+The migration also exposed two reversed dependencies. The generic
+`fp2At_eq_of_loads` theorem lived in `SourceOnCurveMulLeft`, forcing
+`SourceFp2AddPreservation` to import through almost the complete `onCurve`
+development. `SourceFp2AddOutput` likewise obtained generic store/load lemmas
+through `SourceOnCurveX3`. Moving the extensionality theorem down to
+`SourceFp2PredicatesRefinement` and importing the memory leaf directly restored
+the intended arithmetic-to-caller dependency direction.
+
+Warm direct elaboration did not materially change:
+
+| Leaf | Before peak RSS (KiB) | After peak RSS (KiB) |
+|---|---:|---:|
+| `SourceFp2AddOutput.lean` | 2,700,520 | 2,690,440--2,691,984 |
+| `SourceOnCurveRhs.lean` | 2,682,040 | 2,682,152--2,687,168 |
+
+Those differences are ordinary run-to-run noise. This particular consumer did
+not contain the pathological full-state-versus-mathematics declaration; its
+roughly 2.68 GiB peak is dominated by the imported Lean/Yul/BLS environment.
+Opacity prevents future accidental unfolding but cannot lower already-loaded
+environment cost. A memory reduction requires either removing a genuinely
+large elaboration from the measured file or shrinking its transitive import
+floor.
+
+No `fp2Add` execution-stage file became dead. The exact evaluator chain still
+implements the contract once, and finite/double main branches continue to use
+the exact state API. A stronger in-place/output-order corollary did make the
+two shallow `SourceOnCurveAddInputA/B` adapters unreachable: their 102 lines
+were deleted and `SourceOnCurveRhs` now uses the general contract plus existing
+constant-memory facts. The public G2 roots and retained release checks passed
+after migration; the complete CI-shaped root-plus-all-checks build passed
+2,533 jobs. The new contract retains the established
+`[propext, Classical.choice, Quot.sound]` trust footprint. This is a successful
+architecture/ownership change with a two-file reduction and a neutral memory
+experiment, not a reason to claim an RSS win or delete the eight `fp2Add`
+stages.
 
 ## Import-boundary lessons
 
@@ -698,6 +881,12 @@ each deleted `StackCertificateSound.lean` merely imported the already
 aggregated chunk proof and instantiated the generic soundness API. Moving that
 unchanged bridge into `StackCertificateChunks.lean` preserves all individual
 chunk `.olean` barriers.
+
+The later `fp2Add` relational migration removed the two shallow
+`SourceOnCurveAddInputA/B` adapters. G2ADD now has 226 Lean modules including
+the top-level challenge entry point (225 below the challenge directory). The
+eight `fp2Add` execution stages remain because they implement the opaque
+contract and serve other exact-state consumers.
 
 ## Certificate lessons
 
@@ -801,10 +990,28 @@ This establishes two distinct opacity boundaries:
 - separate `.olean` files still prevent completed proof payloads from
   accumulating in one Lean environment.
 
-An attempted merge of two G2 100-entry groups into one file raised the peak to
-4,162,892 KiB, so the existing cross-file chunks remain justified. The result
-supports smaller declarations within measured compilation units, not wholesale
-concatenation of certificate files.
+An initial merge of two G2 100-entry groups into one file raised the peak to
+4,162,892 KiB. That measurement justified caution, but did not establish that
+100 entries was the largest safe compilation unit. Later guarded experiments
+kept the ten-entry opaque declarations while placing more groups in one file:
+
+| Prototype compilation unit | Peak RSS (KiB) | Result |
+|---|---:|---|
+| G2ADD, 300 frozen entries | 4,168,100 | passed |
+| G2ADD, 500 frozen entries | 4,680,252 | passed |
+| G1ADD, 500 frozen entries | 4,703,728 | passed |
+
+All remained below the repository's 6 GiB per-process stop threshold. The
+evidence now supports consolidating the ten G1ADD 100-entry files into two
+500-entry files and the fifteen G2ADD files into three, removing twenty
+production files while preserving the smaller opaque declarations inside each
+file.
+
+This consolidation still requires a CI concurrency guard. Several roughly
+4.7-million-KiB processes peaking together can exhaust a 16 GB runner even
+though every individual process is below its budget. The safe sequence is to
+serialize the five merged certificate units, validate a fresh-cache build on
+the actual CI runner, and only then remove the old 100-entry files.
 
 The trust census also exposed a composition trap. `List.drop_take` depends on
 `Classical.choice` and `Quot.sound` in this toolchain. Using it to align the ten
@@ -843,7 +1050,8 @@ Before changing a proof boundary:
 3. select the narrowest representative target;
 4. record commit, Lean version, cache state, command, other workers, elapsed
    time, maximum RSS, and exit status;
-5. use `lake -Kjobs=1` for heavy proof roots;
+5. serialize known heavy leaves explicitly for aggregate proof roots; do not
+   infer Lake module concurrency from `-Kjobs=1` without observing it;
 6. stop and restage a declaration trending toward 6 GiB RSS;
 7. compare cold with cold or warm with warm; and
 8. distinguish source LOC, `.olean` size, import closure, runtime performance,
@@ -852,8 +1060,11 @@ Before changing a proof boundary:
 Suggested command:
 
 ```sh
-/usr/bin/time -v lake -Kjobs=1 build +Exact.Module.Target
+/usr/bin/time -v lake env lean Exact/Module/Target.lean
 ```
+
+For an aggregate build, prebuild each known heavy target with separate
+sequential commands, then run the root build using those cached artifacts.
 
 Do not delete a shared build cache while another worker may use it. Use an
 isolated worktree or build directory for a controlled cold measurement.
@@ -882,7 +1093,7 @@ When narrowing imports or changing a deep boundary:
 ## What not to do
 
 - Do not respond to OOM by merely raising heartbeats or memory limits.
-- Do not assume `-Kjobs=1` fixes a single giant term.
+- Do not assume `-Kjobs=1` serializes modules or fixes a single giant term.
 - Do not combine files merely to lower the count.
 - Do not delete checks merely to lower the count.
 - Do not use a broad umbrella to make missing imports disappear.

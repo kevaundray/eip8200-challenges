@@ -1,4 +1,5 @@
-import Challenge.Bls12381G2Add.Reference.Proofs.SourceOnCurveX3
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2AddRefinement
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceFpMulMemory
 
 set_option warningAsError true
 

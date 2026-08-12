@@ -7,18 +7,6 @@ namespace Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
 
 open YulSemantics.EVM
 
-theorem fp2At_eq_of_loads (left right : EvmState) (ptr : U256)
-    (h0 : loadWord left.memory ptr.toNat = loadWord right.memory ptr.toNat)
-    (h1 : loadWord left.memory (ptr + BitVec.ofNat 256 32).toNat =
-      loadWord right.memory (ptr + BitVec.ofNat 256 32).toNat)
-    (h2 : loadWord left.memory (ptr + BitVec.ofNat 256 64).toNat =
-      loadWord right.memory (ptr + BitVec.ofNat 256 64).toNat)
-    (h3 : loadWord left.memory (ptr + BitVec.ofNat 256 96).toNat =
-      loadWord right.memory (ptr + BitVec.ofNat 256 96).toNat) :
-    fp2At left ptr = fp2At right ptr := by
-  unfold fp2At
-  rw [h0, h1, h2, h3]
-
 theorem fp2MulScheduledLeft_eq_of_low (yst : EvmState)
     (out a b : U256)
     (ha : a.toNat + 96 < 2 ^ 256) (haLow : a.toNat + 128 ≤ 1024)

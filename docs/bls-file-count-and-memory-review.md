@@ -245,6 +245,66 @@ passed at 2,897,300 KiB. The improvement is removal of the pathological proof
 shape, not a measurable reduction in ordinary leaf RSS, and no production
 stage is obsolete yet.
 
+The first generic source/target boundary is also in place.
+`Challenge.EvmProof.YulContract` defines a source-only `YulRunContract`, and
+the G1ADD both-infinity branch now instantiates it with explicit pre- and
+postconditions. `SourceSpec` consumes this generic contract without naming the
+constructed return state. A separate theorem in `ProfiledCorrectness` lifts
+the existential source run through the existing compiler certificates and
+attaches the target-EVM gas/execution guarantee. The source contract itself
+imports neither the compiler nor target EVM semantics.
+
+This spike was memory-neutral: `SourceRun` measured 2,759,020 KiB RSS versus
+the earlier 2,759,628--2,761,184 KiB range, and `SourceSpec` measured
+2,782,420 KiB. It adds one shared production file and removes none yet. That
+temporary count increase is acceptable only if subsequent branch migrations
+replace local contract shapes and eventually make exact-state consumer stages
+or compatibility wrappers removable.
+
+The finite unequal-x G1ADD path subsequently migrated to the same generic
+contract. Its accepted precondition contains branch conditions and canonical
+input coordinates only; lawful x-distinctness, lambda canonicality, and slope
+correctness are derived behind the contract. `SourceSpec` no longer names the
+unequal branch's constructed final state or lambda schedule, and four private
+representation bridge lemmas became removable. No whole production stage is
+obsolete because those exact execution and memory modules still implement the
+contract once.
+
+Repeated `SourceRun` samples were 2,720,812--2,726,188 KiB and `SourceSpec`
+samples were 2,748,408--2,774,056 KiB. Those figures are about one percent
+below the earlier one-shot measurements but are conservatively classified as
+memory-neutral. The generic contract therefore now has a substantive
+arithmetic consumer, but the repository still has one additional shared file
+and no net production-file deletion from this architectural path.
+The complete 2,343-job G1ADD integration gate passed after the migration at
+2,707,076 KiB peak RSS, with the proof-policy and trust guards unchanged.
+
+The next experiment applied the same principle to the complete G2ADD
+`onCurve` call to `fp2Add`. The caller now composes an irreducible computable
+`fp2AddContractState` through execution, selected-output, and lower-memory
+frame theorems; its execution and correctness modules no longer name
+`fp2AddFinalState`. A proof-only `Classical.choose` state was rejected because
+it would have made the remaining symbolic source model noncomputable.
+
+This migration repaired two accidental reversed imports by moving the generic
+four-word `fp2At` extensionality lemma below `fp2Add` and importing the direct
+store/load memory leaf. It did not lower warm RSS: `SourceOnCurveRhs` measured
+2,682,152--2,687,168 KiB after a 2,682,040 KiB baseline, and
+`SourceFp2AddOutput` measured 2,690,440--2,691,984 KiB after 2,700,520 KiB.
+The measured leaves sit on an approximately 2.68 GiB imported-environment
+floor and did not contain the known pathological equality shape.
+
+No `fp2Add` execution-stage file is dead yet. The eight `fp2Add` modules still
+implement the one concrete bridge, while main finite/double consumers still
+use the exact state API. However, a general in-place/output-order corollary
+replaced the only use of `SourceOnCurveAddInputA` and
+`SourceOnCurveAddInputB`; those two shallow production adapters (102 lines)
+were deleted. This is the intended deletion pattern: relational migration can
+remove caller-specific translations even while the measured RSS stays flat.
+The exact stages become removable only after the last exact-state consumer is
+migrated and a dependency scan confirms they are unreachable. The CI-shaped
+G2 root plus all retained G2 checks passed 2,533 jobs after deletion.
+
 ### 5. Extract the generic certificate checker later
 
 After import narrowing and check consolidation are measured, extract the
@@ -291,5 +351,7 @@ The objective is not the minimum number of `.lean` files. It is:
   challenges.
 
 Any proposed consolidation that crosses an existing proof boundary is a
-memory regression until a controlled `lake -Kjobs=1` build demonstrates
-otherwise.
+memory regression until a controlled narrow build demonstrates otherwise.
+Heavy aggregate builds must also have verified concurrency control; in the
+current local Lake 5 setup, `lake -Kjobs=1` did not serialize independent
+sibling modules.
