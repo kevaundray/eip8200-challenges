@@ -1,0 +1,33 @@
+import Challenge.Bls12381G1Add.Reference.Proofs.SourceMainFull
+
+set_option warningAsError true
+
+/-! # Complete G1ADD source/spec checks -/
+
+namespace Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointDispatcher_double' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_mainPointDispatcher_double
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointDispatcher_unequal' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_mainPointDispatcher_unequal
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointDispatcher_opposite' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_mainPointDispatcher_opposite
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.step_mainPointDispatcher_zeroY' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms step_mainPointDispatcher_zeroY
+
+end Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics

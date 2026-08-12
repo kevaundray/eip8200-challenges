@@ -9,10 +9,9 @@ namespace Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics
 open YulSemantics YulSemantics.EVM
 
 /-- Environment after the source's two-word slope declaration. -/
-def mainFiniteEnv (yst : EvmState) :
+def mainFiniteEnv (_yst : EvmState) :
     VEnv Challenge.EvmProof.modexpExec.toDialect :=
-  bindZeros Challenge.EvmProof.modexpExec.toDialect ["\x0098", "\x0099"] ++
-    mainPointEnv yst
+  bindZeros Challenge.EvmProof.modexpExec.toDialect ["\x0098", "\x0099"]
 
 /-- State after evaluating the equal-x dispatch's four loads. -/
 def mainFiniteXEqArgsState (yst : EvmState) : EvmState :=
