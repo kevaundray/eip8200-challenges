@@ -24,7 +24,7 @@ private theorem mainDoubleBody_shape : mainDoubleBody =
 theorem step_mainDoubleBody (yst : EvmState)
     (hinv : (fp2InvNorm (mainDoubleState3 yst) 2432).1.toNat < 2 ^ 128) :
     ExecStmts Challenge.EvmProof.modexpExec.toDialect mainFuns []
-      (mainAfterFiniteXEq1 yst) mainDoubleBody []
+      (mainAfterDoubleYZero yst) mainDoubleBody []
       (mainDoubleFinalState yst) .normal := by
   rw [mainDoubleBody_shape]
   exact Step.seqCons (Step.exprStmt (step_fp2MulLiteral [] _ 2176 0 0))
