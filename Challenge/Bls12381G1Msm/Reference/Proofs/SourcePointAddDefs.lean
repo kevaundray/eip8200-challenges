@@ -186,6 +186,14 @@ theorem pointAddDoubleInvBody_eq : pointAddDoubleInvBody =
       pointAddDoubleInvStmt10, pointAddDoubleInvStmt11,
       pointAddDoubleInvStmt12, pointAddDoubleInvStmt13] := by rfl
 
+theorem pointAddDoubleInvStmt9_eq : pointAddDoubleInvStmt9 =
+    .cond
+      (.builtin .iszero
+        [.builtin .staticcall
+          [.lit (.number 36576), .lit (.number 5), .lit (.number 1024),
+            .lit (.number 240), .lit (.number 1280), .lit (.number 48)]])
+      [.exprStmt (.builtin .invalid [])] := by rfl
+
 def pointAddDoubleXSqExpr : Expr Op :=
   match pointAddDoubleXSqStmt with
   | .letDecl _ (some expr) => expr
