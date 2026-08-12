@@ -1,0 +1,17 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceMainFiniteLowMemory
+
+set_option warningAsError true
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check mainDoubleState0_fp2At_low
+#check mainDoubleState1_fp2At_low
+#check mainDoubleState2_fp2At_low
+#check mainDoubleState3_fp2At_low
+#check mainDoubleState4_fp2At_low
+#check mainDoubleFinalState_fp2At_low
+#check mainAfterDoubleXEq2_fp2At_low
+#check mainUnequalState0_fp2At_low
+#check mainUnequalState1_fp2At_low
+#check mainUnequalState2_fp2At_low
+#check mainUnequalFinalState_fp2At_low
