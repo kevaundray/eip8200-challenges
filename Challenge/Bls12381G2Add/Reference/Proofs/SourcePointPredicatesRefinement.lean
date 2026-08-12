@@ -68,6 +68,18 @@ theorem pointValidValue_eq_one_iff (yst : EvmState) (point : U256) :
     pointPaddingZeroValue_eq_one_iff]
   tauto
 
+/-- A point-validity word is Boolean-valued.  Keeping this fact opaque avoids
+reopening all five scalar validity tests when the main validation conjunction
+is interpreted. -/
+theorem pointValidValue_zero_or_one (yst : EvmState) (point : U256) :
+    pointValidValue yst point = 0 ∨ pointValidValue yst point = 1 := by
+  unfold pointValidValue
+  exact land_zero_or_one
+    (land_zero_or_one
+      (fp2ValidValue_zero_or_one' yst point)
+      (fp2ValidValue_zero_or_one' yst (point + BitVec.ofNat 256 128)))
+    (pointPaddingZeroValue_zero_or_one yst point)
+
 theorem pointZeroValue_eq_one_iff (yst : EvmState) (point : U256) :
     pointZeroValue yst point = 1 ↔
       fp2WordsAt yst point = fp2ZeroWords ∧
