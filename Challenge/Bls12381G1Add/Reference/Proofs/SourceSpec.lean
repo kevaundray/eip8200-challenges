@@ -684,13 +684,13 @@ private theorem run_valid_matches_decoded (yst : EvmState) (input : ByteArray)
       exact mainSecondInfinity_returned_affineIdentity yst input hcalldata
         (sourcePoint1 yst) hleft
   · by_cases hsecond : mainInf2 yst = 0
-    · have hrun := run_main_firstInfinity yst hlength hpadding hcanonical
-          hcurve1 hcurve2 hfirst hsecond
-      refine ⟨_, hrun, ?_⟩
+    · rcases run_main_firstInfinity_contract yst hlength hpadding hcanonical
+          hcurve1 hcurve2 hfirst hsecond with ⟨final, contract⟩
+      refine ⟨final, contract.run, ?_⟩
       have hright := decodeG1_second_eq_sourcePoint yst input hcalldata hsize
         hpadding hcanonical hcurve2
       rw [ofWire_sourcePoint1_infinity yst hfirst]
-      exact mainFirstInfinity_returned_affineIdentity yst input hcalldata
+      exact contract.returned_affineIdentity input hcalldata
         (sourcePoint2 yst) hright
     · have hboth : mainBothInfinityValue yst ≠ 0 := by
         rw [mainBothInfinityValue, mainInf1_eq_one_of_ne yst hfirst,

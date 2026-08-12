@@ -551,6 +551,30 @@ existential selected-field contract, with no new file and no larger import
 closure. The underlying exact-state stages are not yet obsolete because they
 still implement the bridge and serve other branches.
 
+### Reusing the relational contract for first-infinity
+
+The second relational slice generalized the branch-specific structure into
+`MainReturnContract yst beforeReturn final offset size`. The original
+`MainBothInfinityContract` is now a transparent specialization at the
+validated state. `MainFirstInfinityContract` specializes the same interface at
+the state after copying the second input point into the output window. This
+keeps one deep interface for complete source execution, return bytes, active
+memory expansion, and frame preservation rather than adding a new structure
+for each branch.
+
+The boundary check was written first and failed because the first-infinity
+contract and constructor theorem did not exist. After implementation,
+`SourceSpec` stopped naming `mainFirstInfinityReturnState`; it consumes only
+`contract.run` and `contract.returned_affineIdentity`. The exact copy-and-return
+state remains private to the bridge proof.
+
+Direct single-process elaboration of `SourceRun.lean` moved from 2,759,628 KiB
+to 2,761,184 KiB RSS, a 1,556 KiB (0.06%) difference that is measurement noise.
+The new theorem retains the guarded footprint `[propext, Classical.choice,
+Quot.sound]`. The full G1ADD root and all 43 retained checks passed 2,342 jobs
+at 2,716,696 KiB peak RSS. No production stage became obsolete: the
+first-infinity exact-state chain still implements the relational bridge once.
+
 ## Import-boundary lessons
 
 1. Never import `Challenge.Bls12381.ProofSupport` from completed challenge proof

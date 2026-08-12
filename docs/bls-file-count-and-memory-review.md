@@ -227,6 +227,14 @@ to concrete execution once and compare its proof size and peak RSS with the
 current expanded-state chain. Do not roll this across G2ADD until the spike has
 clear evidence.
 
+Completed for two G1ADD identity branches on 2026-08-12. Both-infinity and
+first-infinity now specialize one `MainReturnContract` that hides the expanded
+final state from `SourceSpec`. The second slice was memory-neutral at the leaf
+(2,759,628 versus 2,761,184 KiB RSS), retained the same trust footprint, and
+passed the full 2,342-job G1ADD gate at 2,716,696 KiB. These contracts reduce
+consumer exposure to exact states, but the exact execution chains still
+implement the bridges and therefore are not yet removable memory barriers.
+
 ### 5. Extract the generic certificate checker later
 
 After import narrowing and check consolidation are measured, extract the

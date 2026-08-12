@@ -296,6 +296,21 @@ state chain is still the one-time implementation of the relational bridge, and
 other branches still consume exact states. Task 7 must therefore classify
 stages conservatively rather than deleting the both-infinity chain.
 
+**Follow-up first-infinity slice.** The branch-specific structure was deepened
+into `MainReturnContract yst beforeReturn final offset size`, with
+`MainBothInfinityContract` retained as a specialization and a new
+`MainFirstInfinityContract` specialization for the post-copy state. A failing
+boundary check preceded the implementation. `SourceSpec` now consumes only
+the existential run and its specification-facing affine-identity projection;
+it no longer names `mainFirstInfinityReturnState`.
+
+Apples-to-apples direct elaboration of `SourceRun.lean` measured 2,759,628 KiB
+before and 2,761,184 KiB after, a 0.06% difference treated as noise. The axiom
+footprint remains `[propext, Classical.choice, Quot.sound]`. The complete
+G1ADD root and all 43 checks passed 2,342 jobs at 2,716,696 KiB. The exact
+first-infinity execution module remains necessary to implement the bridge, so
+this slice removes no production file.
+
 ## Task 7: Consolidate only obsolete proof stages
 
 After Tasks 4-6, identify files whose only purpose has been replaced by a deep

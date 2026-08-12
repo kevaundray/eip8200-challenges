@@ -16,11 +16,28 @@ example (yst : YulSemantics.EVM.EvmState)
     ∃ final, MainBothInfinityContract yst final :=
   run_main_bothInfinity_contract yst hsize hpadding hcanonical hcurve1 hcurve2 hboth
 
+example (yst : YulSemantics.EVM.EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst ≠ 0) (hsecond : mainInf2 yst = 0) :
+    ∃ final, MainFirstInfinityContract yst final :=
+  run_main_firstInfinity_contract yst hsize hpadding hcanonical hcurve1 hcurve2
+    hfirst hsecond
+
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.run_main_bothInfinity_contract' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
 #guard_msgs in
 #print axioms run_main_bothInfinity_contract
+
+/-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.run_main_firstInfinity_contract' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms run_main_firstInfinity_contract
 
 /-- info: 'Challenge.Bls12381G1Add.Reference.Proofs.SourceSemantics.run_main_double' depends on axioms: [propext,
  Classical.choice,

@@ -284,30 +284,40 @@ private theorem run_of_mainValid (yst stend : EvmState)
     (D := Challenge.EvmProof.modexpExec.toDialect) hbody
   simpa [Run, mainFuns, restore] using hblock
 
-/-- A relational summary of the complete both-infinity source path.
+/-- A relational summary of a complete source path ending in `return`.
 
 The returned state is intentionally abstract: consumers see the execution,
-selected return value, and the frame facts of the final `return(0, 128)` stage,
-but not the expanded `mainBothInfinityReturnState`. The comparison state for
-the frame is the state immediately before that return.
+selected return value, and the final return's frame facts, but not an expanded
+branch-specific final state. `beforeReturn` is the comparison state immediately
+before `return(offset, size)`.
 
 Gas is not part of `YulSemantics.EVM.EvmState`; it remains a separate
 compiled-EVM contract rather than being approximated at this source layer. -/
-structure MainBothInfinityContract (yst final : EvmState) : Prop where
+structure MainReturnContract (yst beforeReturn final : EvmState)
+    (offset size : Nat) : Prop where
   run : Run Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect
     Compilation.referenceCompiledBlock yst [] final .halt
   returned : final.halted = some (.ret,
-    readBytes (mainValidatedState yst).memory 0 128)
-  memory_eq : final.memory = (mainValidatedState yst).memory
+    readBytes beforeReturn.memory offset size)
+  memory_eq : final.memory = beforeReturn.memory
   activeWords_eq : final.activeWords = BitVec.ofNat 256
-    (activeWordsAfter (mainValidatedState yst).activeWords.toNat 0 128)
-  storage_eq : final.storage = (mainValidatedState yst).storage
-  transient_eq : final.transient = (mainValidatedState yst).transient
-  env_eq : final.env = (mainValidatedState yst).env
-  returndata_eq : final.returndata = (mainValidatedState yst).returndata
-  logs_eq : final.logs = (mainValidatedState yst).logs
-  selfdestructs_eq : final.selfdestructs =
-    (mainValidatedState yst).selfdestructs
+    (activeWordsAfter beforeReturn.activeWords.toNat offset size)
+  storage_eq : final.storage = beforeReturn.storage
+  transient_eq : final.transient = beforeReturn.transient
+  env_eq : final.env = beforeReturn.env
+  returndata_eq : final.returndata = beforeReturn.returndata
+  logs_eq : final.logs = beforeReturn.logs
+  selfdestructs_eq : final.selfdestructs = beforeReturn.selfdestructs
+
+/-- The both-infinity branch instantiates the common source-return contract at
+the validated state and the `return(0, 128)` window. -/
+abbrev MainBothInfinityContract (yst final : EvmState) : Prop :=
+  MainReturnContract yst (mainValidatedState yst) final 0 128
+
+/-- The first-infinity branch instantiates the common source-return contract
+after copying the second input point into the output window. -/
+abbrev MainFirstInfinityContract (yst final : EvmState) : Prop :=
+  MainReturnContract yst (mainFirstInfinityCopyState yst) final 0 128
 
 /-- The exact frozen source runs through the complete nonexceptional doubling
 path and halts with the already-refined canonical output state. -/
@@ -443,6 +453,52 @@ theorem run_main_firstInfinity (yst : EvmState)
       (mainFirstInfinityReturnState yst) .halt :=
   run_of_mainValid yst _ (step_mainValid_firstInfinity yst hsize hpadding
     hcanonical hcurve1 hcurve2 hfirst hsecond)
+
+/-- The complete first-infinity path, exposed without revealing its expanded
+copy-and-return state to consumers. -/
+theorem run_main_firstInfinity_contract (yst : EvmState)
+    (hsize : yst.env.calldata.length = 256)
+    (hpadding : mainPaddingValue yst = 0)
+    (hcanonical : mainCanonicalValue yst ≠ 0)
+    (hcurve1 : mainCurve1ConditionValue yst = 0)
+    (hcurve2 : mainCurve2ConditionValue yst = 0)
+    (hfirst : mainInf1 yst ≠ 0) (hsecond : mainInf2 yst = 0) :
+    ∃ final, MainFirstInfinityContract yst final := by
+  refine ⟨mainFirstInfinityReturnState yst, ?_⟩
+  refine {
+    run := run_main_firstInfinity yst hsize hpadding hcanonical hcurve1 hcurve2
+      hfirst hsecond
+    returned := ?_
+    memory_eq := ?_
+    activeWords_eq := ?_
+    storage_eq := ?_
+    transient_eq := ?_
+    env_eq := ?_
+    returndata_eq := ?_
+    logs_eq := ?_
+    selfdestructs_eq := ?_ }
+  all_goals simp only [mainFirstInfinityReturnState, touchMemory]
+
+/-- The specification-facing result of the first-infinity branch. -/
+theorem MainFirstInfinityContract.returned_affineIdentity
+    {yst final : EvmState} (contract : MainFirstInfinityContract yst final)
+    (input : ByteArray) (hcalldata : yst.env.calldata = input.toList)
+    (right : EvmSemantics.Crypto.Bls12381.Point)
+    (hright : Challenge.Bls12381.ProofSupport.Codec.decodeG1 input 128 =
+      some right) :
+    final.halted = some (HaltKind.ret,
+      (Challenge.Bls12381.ProofSupport.Codec.encodeG1
+        (Challenge.Bls12381.ProofSupport.G1Affine.toWire
+          (Challenge.Bls12381.ProofSupport.G1Affine.add
+            (Challenge.Bls12381.ProofSupport.G1Affine.ofWire
+              (.infinity : EvmSemantics.Crypto.Bls12381.Point))
+            (Challenge.Bls12381.ProofSupport.G1Affine.ofWire right)))).toList) := by
+  calc
+    final.halted = (mainFirstInfinityReturnState yst).halted := by
+      rw [contract.returned]
+      rfl
+    _ = _ := mainFirstInfinity_returned_affineIdentity yst input hcalldata
+      right hright
 
 theorem run_main_secondInfinity (yst : EvmState)
     (hsize : yst.env.calldata.length = 256)
