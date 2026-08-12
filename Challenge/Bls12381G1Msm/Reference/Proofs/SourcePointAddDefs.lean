@@ -152,6 +152,21 @@ def pointAddDoubleInvInitStmt : Stmt Op := pointAddXEqMainBody[5]!
 def pointAddDoubleInvStmt : Stmt Op := pointAddXEqMainBody[6]!
 def pointAddDoubleLambdaStmt : Stmt Op := pointAddXEqMainBody[7]!
 def pointAddDoubleX3Stmt : Stmt Op := pointAddXEqMainBody[8]!
+def pointAddDoubleXSubStmt : Stmt Op := pointAddXEqMainBody[9]!
+
+def pointAddDoubleXSubBody : Block Op :=
+  match pointAddDoubleXSubStmt with
+  | .block body => body
+  | _ => []
+
+def pointAddDoubleXSubLeftStmt : Stmt Op := pointAddDoubleXSubBody[0]!
+
+def pointAddDoubleXSubLeftBody : Block Op :=
+  match pointAddDoubleXSubLeftStmt with
+  | .block body => body
+  | _ => []
+
+def pointAddDoubleXSubRightTail : Block Op := pointAddDoubleXSubBody.drop 1
 
 def pointAddDoubleInvBody : Block Op :=
   match pointAddDoubleInvStmt with
@@ -242,6 +257,34 @@ theorem pointAddDoubleX3Expr_eq : pointAddDoubleX3Expr =
 
 theorem pointAddDoubleX3Args_eq : pointAddDoubleX3Args =
     [.var "\x00120", .var "\x00121", .var "\x00120", .var "\x00121"] := by
+  rfl
+
+theorem pointAddDoubleXSubStmt_eq : pointAddDoubleXSubStmt =
+    .block pointAddDoubleXSubBody := by
+  rfl
+
+theorem pointAddDoubleXSubBody_eq : pointAddDoubleXSubBody =
+    pointAddDoubleXSubLeftStmt :: pointAddDoubleXSubRightTail := by
+  rfl
+
+theorem pointAddDoubleXSubLeftStmt_eq : pointAddDoubleXSubLeftStmt =
+    .block pointAddDoubleXSubLeftBody := by
+  rfl
+
+theorem pointAddDoubleXSubLeftBody_length :
+    pointAddDoubleXSubLeftBody.length = 5 := by
+  rfl
+
+theorem pointAddDoubleXSubRightTail_length :
+    pointAddDoubleXSubRightTail.length = 5 := by
+  rfl
+
+theorem hoist_pointAddDoubleXSubLeftBody :
+    hoist Challenge.EvmProof.modexpExec.toDialect pointAddDoubleXSubLeftBody = [] := by
+  rfl
+
+theorem hoist_pointAddDoubleXSubBody :
+    hoist Challenge.EvmProof.modexpExec.toDialect pointAddDoubleXSubBody = [] := by
   rfl
 
 def pointAddDoubleXSqExpr : Expr Op :=
