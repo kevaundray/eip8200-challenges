@@ -62,6 +62,19 @@ theorem scalarMulLoopPost_eq : scalarMulLoopPost =
 theorem scalarMulLoopBody_eq : scalarMulLoopBody =
     [scalarMulDoubleStmt, scalarMulAddStmt] := by rfl
 
+def scalarMulInitBlock : Block Op :=
+  [scalarMulStmt0, scalarMulStmt1, scalarMulStmt2, scalarMulStmt3,
+    scalarMulStmt4, scalarMulStmt5, scalarMulStmt6]
+
+theorem scalarMulBody_eq_init_loop : scalarMulBody =
+    scalarMulInitBlock ++ [scalarMulStmt7] := by rfl
+
+theorem hoist_scalarMulBody :
+    hoist Challenge.EvmProof.modexpExec.toDialect scalarMulBody = [] := by rfl
+
+def scalarMulBodyFuns : FunEnv Challenge.EvmProof.modexpExec.toDialect :=
+  [] :: sourceFuns
+
 def scalarMulDecl : FDecl Challenge.EvmProof.modexpExec.toDialect :=
   { params := ["\x00142", "\x00143", "\x00144"]
     rets := []
@@ -69,5 +82,9 @@ def scalarMulDecl : FDecl Challenge.EvmProof.modexpExec.toDialect :=
 
 theorem lookup_scalarMul : lookupFun sourceFuns "\x0017" =
     some (scalarMulDecl, sourceFuns) := by rfl
+
+def scalarMulInitialEnv (scalar point out : U256) :
+    VEnv Challenge.EvmProof.modexpExec.toDialect :=
+  [("\x00142", scalar), ("\x00143", point), ("\x00144", out)]
 
 end Challenge.Bls12381G1Msm.Reference.Proofs.SourceSemantics
