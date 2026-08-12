@@ -222,7 +222,7 @@ theorem decodeFp_eq_none_iff_sourceField (yst : EvmState) (input : ByteArray)
         exact False.elim (hinvalid.elim (fun h => h ha.2.1)
           (fun h => h hcanon))
 
-private theorem sourceFp2_eq_fields (yst : EvmState) (i : Nat) (hi : i < 4) :
+theorem sourceFp2_eq_fields (yst : EvmState) (i : Nat) (hi : i < 4) :
     sourceFp2 yst (128 * i) = Fp2.mkRepr
       (sourceField yst (128 * i)) (sourceField yst (128 * i + 64)) := by
   interval_cases i <;>
@@ -255,6 +255,63 @@ theorem decodeFp2_eq_some_sourceFp2 (yst : EvmState) (input : ByteArray)
     exact ⟨hp0, hp1, hc0, hc1⟩
   · rintro ⟨hp0, hp1, hc0, hc1⟩
     exact ⟨⟨hp0, hc0⟩, hp1, hc1⟩
+
+theorem decodeFp2_eq_none_iff_sourceFp2 (yst : EvmState) (input : ByteArray)
+    (hcalldata : yst.env.calldata = input.toList) (i : Nat) (hi : i < 4)
+    (hsize : 128 * i + 128 ≤ input.size) :
+    Codec.decodeFp2 input (128 * i) = none ↔
+      ¬ Codec.PaddingZero input (128 * i) ∨
+      ¬ Codec.PaddingZero input (128 * i + 64) ∨
+      ¬ Fp2.Canonical (sourceFp2 yst (128 * i)) := by
+  have hsome := decodeFp2_eq_some_sourceFp2 yst input hcalldata i hi hsize
+  constructor
+  · intro hnone
+    by_contra hvalid
+    push Not at hvalid
+    rw [hsome.mpr hvalid] at hnone
+    contradiction
+  · intro hinvalid
+    cases hdecode : Codec.decodeFp2 input (128 * i) with
+    | none => rfl
+    | some a =>
+        obtain ⟨h0, h1⟩ :=
+          (Codec.decodeFp2_eq_some_iff_components input (128 * i) a).mp hdecode
+        rcases hinvalid with hp0 | hp1 | hcanonical
+        · have hnone := (decodeFp_eq_none_iff_sourceField yst input hcalldata
+              (2 * i) (by omega) (by omega)).mpr (Or.inl (by
+                simpa [show 64 * (2 * i) = 128 * i by omega] using hp0))
+          rw [show 64 * (2 * i) = 128 * i by omega] at hnone
+          rw [hnone] at h0
+          contradiction
+        · have hnone := (decodeFp_eq_none_iff_sourceField yst input hcalldata
+              (2 * i + 1) (by omega) (by omega)).mpr (Or.inl (by
+                simpa [show 64 * (2 * i + 1) = 128 * i + 64 by omega]
+                  using hp1))
+          rw [show 64 * (2 * i + 1) = 128 * i + 64 by omega] at hnone
+          have h1' : Codec.decodeFp input (128 * i + 64) = some a.c1 := by
+            simpa [Codec.fpBytes] using h1
+          rw [hnone] at h1'
+          contradiction
+        · have hc : ¬ Fp.Canonical (sourceField yst (128 * i)) ∨
+              ¬ Fp.Canonical (sourceField yst (128 * i + 64)) := by
+            rw [sourceFp2_eq_fields yst i hi, Fp2.canonical_iff] at hcanonical
+            simpa only [Fp2.mkRepr, not_and_or] using hcanonical
+          rcases hc with hc0 | hc1
+          · have hnone := (decodeFp_eq_none_iff_sourceField yst input hcalldata
+                (2 * i) (by omega) (by omega)).mpr (Or.inr (by
+                  simpa [show 64 * (2 * i) = 128 * i by omega] using hc0))
+            rw [show 64 * (2 * i) = 128 * i by omega] at hnone
+            rw [hnone] at h0
+            contradiction
+          · have hnone := (decodeFp_eq_none_iff_sourceField yst input hcalldata
+                (2 * i + 1) (by omega) (by omega)).mpr (Or.inr (by
+                  simpa [show 64 * (2 * i + 1) = 128 * i + 64 by omega]
+                    using hc1))
+            rw [show 64 * (2 * i + 1) = 128 * i + 64 by omega] at hnone
+            have h1' : Codec.decodeFp input (128 * i + 64) = some a.c1 := by
+              simpa [Codec.fpBytes] using h1
+            rw [hnone] at h1'
+            contradiction
 
 theorem pointPaddingZero_iff_codec (yst : EvmState) (input : ByteArray)
     (hcalldata : yst.env.calldata = input.toList) (point : Nat)
