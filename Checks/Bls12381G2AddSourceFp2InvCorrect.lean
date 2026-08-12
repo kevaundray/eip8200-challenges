@@ -1,0 +1,9 @@
+import Challenge.Bls12381G2Add.Reference.Proofs.SourceFp2InvCorrect
+
+open Challenge.Bls12381G2Add.Reference.Proofs.SourceSemantics
+
+#check fp2InvRecovered_eq
+#check canonical_fp2InvRecovered
+#check toLawful_fp2InvRecovered
+#check fp2InvFinalState_eq_recovered
+#check fp2InvFinalState_toLawful
