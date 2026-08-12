@@ -231,4 +231,25 @@ theorem bytesNat_readBytes_storeWord (memory : Nat → UInt8) (start : Nat)
   rw [readBytes_storeWord]
   exact bytesNat_storedWordBytes value
 
+/-- Storing a calldata word and reading it back reproduces the exact padded
+32-byte source window. -/
+theorem readBytes_storeWord_wordFrom (memory : Nat → UInt8)
+    (destination source : Nat) (input : ByteArray) :
+    YulSemantics.EVM.readBytes
+        (YulSemantics.EVM.storeWord memory destination
+          (YulSemantics.EVM.wordFrom input.toList source))
+        destination 32 =
+      (EvmSemantics.MachineState.readPadded input source 32).toList := by
+  apply Challenge.EvmProof.Bytes.bytesNat_injective_of_length
+  · simp [YulSemantics.EVM.readBytes,
+      Challenge.EvmProof.Bytes.readPadded_toList]
+  · rw [bytesNat_readBytes_storeWord,
+      Challenge.EvmProof.Bytes.bytesNat_toList]
+    have hload := YulEvmCompiler.MemMatch.loadWord
+      (Challenge.EvmProof.Bytes.memMatch_toList input) source
+    have hnat := congrArg EvmSemantics.UInt256.toNat hload
+    rw [YulEvmCompiler.conv_toNat,
+      Challenge.EvmProof.Bytes.readWord_toNat] at hnat
+    exact hnat
+
 end Challenge.EvmProof.ModexpMemory

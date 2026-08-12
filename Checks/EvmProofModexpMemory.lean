@@ -12,6 +12,21 @@ example (memory : Nat → UInt8) (start : Nat) :
       List.replicate 32 0 :=
   readBytes_storeWord_zero memory start
 
+example (memory : Nat → UInt8) (destination source : Nat)
+    (input : ByteArray) :
+    YulSemantics.EVM.readBytes
+        (YulSemantics.EVM.storeWord memory destination
+          (YulSemantics.EVM.wordFrom input.toList source))
+        destination 32 =
+      (EvmSemantics.MachineState.readPadded input source 32).toList :=
+  readBytes_storeWord_wordFrom memory destination source input
+
+/-- info: 'Challenge.EvmProof.ModexpMemory.readBytes_storeWord_wordFrom' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms readBytes_storeWord_wordFrom
+
 /-- info: 'Challenge.EvmProof.ModexpMemory.readBytes_storeWord_zero' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms readBytes_storeWord_zero
