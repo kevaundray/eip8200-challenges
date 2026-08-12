@@ -10,7 +10,7 @@ set_option warningAsError true
 # Frozen G1ADD source/compiler certificate
 
 This module names the exact normalized and optimized Yul block whose verified
-compiler output is the frozen 1674-byte runtime.  It is an ordinary checked
+compiler output is the frozen 1723-byte runtime.  It is an ordinary checked
 source/assembly equality; it does not use a certified-artifact builder.
 -/
 

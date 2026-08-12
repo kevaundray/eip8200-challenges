@@ -1,5 +1,7 @@
 import Challenge.Bls12381G1Add
 import Challenge.Bls12381.Vectors
+import Checks.Bls12381G1AddFinalCorrectness
+import Checks.Bls12381G1AddReference
 set_option warningAsError true
 
 open Challenge.Bls12381.ProofSupport

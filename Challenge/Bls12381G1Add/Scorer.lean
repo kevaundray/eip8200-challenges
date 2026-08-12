@@ -2,6 +2,7 @@ import Challenge.Bls12381.Scorer
 import Challenge.Bls12381.Reference
 import Challenge.Bls12381.Vectors
 import Challenge.Bls12381G1Add.Spec
+import Challenge.Bls12381G1Add.Reference
 
 set_option warningAsError true
 
@@ -28,5 +29,11 @@ def baselineArtifact : Challenge.Bls12381.Reference.BaselineArtifact :=
 def scoreBaseline (vector : Challenge.Bls12381.Scorer.Vector) :
     Challenge.Bls12381.Scorer.Outcome :=
   Challenge.Bls12381.Scorer.score config baselineArtifact.runtimeBytecode vector.input
+
+/-- Execute and measure the frozen runtime certified by
+`Reference.Proofs.FinalCorrectness.reference_correct`. -/
+def scoreReference (vector : Challenge.Bls12381.Scorer.Vector) :
+    Challenge.Bls12381.Scorer.Outcome :=
+  Challenge.Bls12381.Scorer.score config referenceBytecode vector.input
 
 end Challenge.Bls12381G1Add.Scorer

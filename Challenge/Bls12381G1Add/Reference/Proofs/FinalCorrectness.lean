@@ -94,7 +94,7 @@ private theorem eval_resultOf_of_haltedMatch {s0 s' : State}
   rw [← hdone.2]
   exact Eval.iff_steps_halted.mpr ⟨s', hsteps, hdone.1, hstack, rfl⟩
 
-/-- The exact 1,674-byte runtime evaluates according to the local EIP-correct
+/-- The exact 1,723-byte runtime evaluates according to the local EIP-correct
 G1ADD specification at every gas budget above its checked compiler bound. -/
 theorem reference_correctWithSchedule :
     CorrectWithSchedule referenceBytecode gasSchedule := by

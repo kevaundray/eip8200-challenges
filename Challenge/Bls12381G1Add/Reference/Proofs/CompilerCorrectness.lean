@@ -31,7 +31,7 @@ theorem executionConfig_modexp_enabled :
   decide
 
 /-- A source execution of the exact frozen normalized block is simulated by
-the exact 1,674-byte lowered instruction artifact under the caller profile. -/
+the exact 1,723-byte lowered instruction artifact under the caller profile. -/
 theorem referenceCompiledBlock_correct
     {yst0 : EvmState}
     {V' : VEnv Challenge.Bls12381G1Add.ProofSupport.Yul.localDialect}
